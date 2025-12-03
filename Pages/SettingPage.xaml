@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EZ_Read.Pages.SettingPage">
+
+    <Grid RowDefinitions="*, Auto" Padding="20">
+
+        <!-- Main function area -->
+        <Grid Row="0" RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*">
+
+            <!-- Change password -->
+            <Button Grid.Row="0" Grid.Column="0"
+                    Text="Change password"
+                    Clicked="OnChangePasswordClicked"
+                    HorizontalOptions="Fill"
+                    BackgroundColor="LightGray"/>
+
+            <!-- Start password switch -->
+            <HorizontalStackLayout Grid.Row="1" Grid.Column="0">
+                <Label Text="Password switch" VerticalOptions="Center"/>
+                <Switch x:Name="StartupPasswordSwitch" Toggled="OnStartupPasswordToggled"/>
+            </HorizontalStackLayout>
+
+            <!-- Lock screen switch after exit -->
+            <HorizontalStackLayout Grid.Row="2" Grid.Column="0">
+                <Label Text="Automatically lock screen" VerticalOptions="Center"/>
+                <Switch x:Name="ExitLockSwitch" Toggled="OnExitLockToggled"/>
+            </HorizontalStackLayout>
+
+            <!-- Screen always on -->
+            <HorizontalStackLayout Grid.Row="3" Grid.Column="0">
+                <Label Text="Keep screen always on" VerticalOptions="Center"/>
+                <Switch x:Name="KeepScreenOnSwitch" Toggled="OnKeepScreenOnToggled"/>
+            </HorizontalStackLayout>
+
+        </Grid>
+
+        <!-- Bottom navigation bar -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" HeightRequest="60">
+            <Button Grid.Column="0" Text="📚 Bookshelf"
+                    BackgroundColor="LightGray"
+                    Clicked="OnBookshelfClicked"/>
+            <Button Grid.Column="1" Text="⚙️ Setting"
+                    BackgroundColor="LightGray"/>
+        </Grid>
+
+    </Grid>
+</ContentPage>

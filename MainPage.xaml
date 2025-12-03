@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EZ_Read.MainPage"
+             BackgroundColor="White">
+    <VerticalStackLayout Padding="30" Spacing="20"
+                         VerticalOptions="Center" HorizontalOptions="Center">
+
+        <Label Text="Please enter your password" FontSize="20" 
+               IsVisible="False" x:Name="PromptLabel"/>
+
+        <Entry x:Name="PasswordEntry"
+               IsPassword="True"
+               Placeholder="Please enter your password"
+               WidthRequest="250"
+               IsVisible="False" />
+
+        <Button Text="Entry"
+                x:Name="EnterButton"
+                WidthRequest="150"
+                IsVisible="False"
+                Clicked="OnEnterClicked" />
+
+    </VerticalStackLayout>
+</ContentPage>
+
+

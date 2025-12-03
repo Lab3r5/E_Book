@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EZ_Read.Pages.ReadingPage"
+             BackgroundColor="White">
+
+    <Grid>
+        <!-- File content display area -->
+        <Label x:Name="fileContentLabel"
+               Text="Loading..."
+               Padding="20"
+               FontSize="18"
+               LineBreakMode="WordWrap"
+               VerticalOptions="FillAndExpand"
+               HorizontalOptions="FillAndExpand"
+               TextColor="Black"
+               ZIndex="1"/>
+
+        <!-- Respond to clicks in three areas -->
+        <Grid ColumnDefinitions="Auto,*,Auto" InputTransparent="False" ZIndex="2">
+
+            <!-- Left: Previous page -->
+            <BoxView Grid.Column="0" BackgroundColor="Transparent" WidthRequest="100">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLeftTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- Middle: Show/Hide button -->
+            <BoxView Grid.Column="1" BackgroundColor="Transparent">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCenterTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- Right: Next page -->
+            <BoxView Grid.Column="2" BackgroundColor="Transparent" WidthRequest="100">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnRightTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+        </Grid>
+
+        <!-- Back button -->
+        <Button x:Name="BackButton"
+                Text="❮"
+                FontSize="24"
+                IsVisible="False"
+                BackgroundColor="Transparent"
+                TextColor="Black"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                Padding="10"
+                Margin="0"
+                Clicked="OnBackButtonClicked"
+                ZIndex="10"/>
+
+        <!-- Aa button -->
+        <Button x:Name="AaButton"
+                Text="Aa"
+                IsVisible="False"
+                FontSize="16"
+                BackgroundColor="LightGray"
+                CornerRadius="20"
+                WidthRequest="60"
+                HeightRequest="60"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="20"
+                Clicked="OnAaButtonClicked"
+                ZIndex="10" />
+
+        <!-- Aa menu -->
+        <Frame x:Name="AaMenu"
+               IsVisible="False"
+               BackgroundColor="White"
+               BorderColor="Gray"
+               CornerRadius="10"
+               Padding="15"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               ZIndex="20">
+
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Font size adjustment -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                    <Button Text="A-" Clicked="OnFontDecreaseClicked"/>
+                    <Label x:Name="FontSizeLabel" Text="18" VerticalOptions="Center"/>
+                    <Button Text="A+" Clicked="OnFontIncreaseClicked"/>
+                </HorizontalStackLayout>
+
+                <!-- Background color selection -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                    <Button BackgroundColor="#FFF8E8" WidthRequest="30" HeightRequest="30" CornerRadius="15"
+                            Clicked="OnColorButtonClicked" CommandParameter="#FFF8E8"/>
+                    <Button BackgroundColor="#E6E6E6" WidthRequest="30" HeightRequest="30" CornerRadius="15"
+                            Clicked="OnColorButtonClicked" CommandParameter="#E6E6E6"/>
+                    <Button BackgroundColor="#D8E3E3" WidthRequest="30" HeightRequest="30" CornerRadius="15"
+                            Clicked="OnColorButtonClicked" CommandParameter="#D8E3E3"/>
+                    <Button BackgroundColor="#D5E8D4" WidthRequest="30" HeightRequest="30" CornerRadius="15"
+                            Clicked="OnColorButtonClicked" CommandParameter="#D5E8D4"/>
+                    <Button BackgroundColor="#EDF7CD" WidthRequest="30" HeightRequest="30" CornerRadius="15"
+                            Clicked="OnColorButtonClicked" CommandParameter="#EDF7CD"/>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
+</ContentPage>

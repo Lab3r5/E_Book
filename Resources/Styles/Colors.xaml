@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ==== Brand Colors（参考你截图的 Job App 风格） ==== -->
+
+    <!-- 主色：深紫，用于顶部背景、主按钮、Tab bar 中间按钮等 -->
+    <Color x:Key="Primary">#221551</Color>
+    <!-- Deep Purple -->
+    <Color x:Key="PrimaryDark">#180F3D</Color>
+    <!-- 更深一点的紫 -->
+    <Color x:Key="PrimaryDarkText">#1A133B</Color>
+    <!-- 深紫文字 -->
+
+    <!-- 次要色：浅紫，用于卡片背景 / 统计小卡片 / 空状态图标背景 -->
+    <Color x:Key="Secondary">#F3EEFF</Color>
+    <!-- Very light lavender -->
+    <Color x:Key="SecondaryDarkText">#8D86C4</Color>
+
+    <!-- 强调色：橙色按钮（Browse Jobs、Apply Now 等） -->
+    <Color x:Key="Tertiary">#FF8A00</Color>
+    <!-- Accent Orange -->
+
+    <!-- 额外品牌色（可以视情况使用） -->
+    <Color x:Key="Success">#22C58B</Color>
+    <Color x:Key="Danger">#FF4B4B</Color>
+
+    <!-- 基础黑白 -->
+    <Color x:Key="White">#FFFFFF</Color>
+    <Color x:Key="Black">#000000</Color>
+    <Color x:Key="OffBlack">#1F1F1F</Color>
+
+    <!-- 通用灰度，偏柔和，适合你截图里的副标题 / 描述 -->
+    <Color x:Key="Gray100">#F5F4FA</Color>
+    <!-- 页面大背景 / 卡片分隔 -->
+    <Color x:Key="Gray200">#E4E2F0</Color>
+    <Color x:Key="Gray300">#C6C2D8</Color>
+    <Color x:Key="Gray400">#A39FBC</Color>
+    <!-- 描述文字 -->
+    <Color x:Key="Gray500">#8A869E</Color>
+    <Color x:Key="Gray600">#625F7A</Color>
+    <!-- 深一点的正文灰 -->
+    <Color x:Key="Gray900">#2B2645</Color>
+    <Color x:Key="Gray950">#191330</Color>
+
+    <!-- 方便布局用的扩展色（可选） -->
+    <Color x:Key="PageBackground">#F7F5FD</Color>
+    <!-- 整体页面背景 -->
+    <Color x:Key="CardBackground">#FFFFFF</Color>
+    <!-- 白色卡片 -->
+    <Color x:Key="ChipPurple">#E4DCF9</Color>
+    <!-- Part-time / Entry Level 紫色标签底 -->
+    <Color x:Key="ChipOrange">#FFE2C4</Color>
+    <!-- 高亮标签底 -->
+
+    <!-- ==== Brushes ==== -->
+
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}" />
+    <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}" />
+    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}" />
+    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}" />
+
+    <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}" />
+    <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}" />
+    <SolidColorBrush x:Key="Gray300Brush" Color="{StaticResource Gray300}" />
+    <SolidColorBrush x:Key="Gray400Brush" Color="{StaticResource Gray400}" />
+    <SolidColorBrush x:Key="Gray500Brush" Color="{StaticResource Gray500}" />
+    <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}" />
+    <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}" />
+    <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}" />
+
+    <!-- 额外 Brush，方便在 Styles.xaml 里用 -->
+    <SolidColorBrush x:Key="PageBackgroundBrush" Color="{StaticResource PageBackground}" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackground}" />
+    <SolidColorBrush x:Key="ChipPurpleBrush" Color="{StaticResource ChipPurple}" />
+    <SolidColorBrush x:Key="ChipOrangeBrush" Color="{StaticResource ChipOrange}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource Danger}" />
+</ResourceDictionary>
