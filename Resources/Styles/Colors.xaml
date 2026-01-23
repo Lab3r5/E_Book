@@ -41,6 +41,7 @@
     <!-- 描述文字 -->
     <Color x:Key="Gray500">#8A869E</Color>
     <Color x:Key="Gray600">#625F7A</Color>
+    <Color x:Key="Gray700">#4F4C66</Color>
     <!-- 深一点的正文灰 -->
     <Color x:Key="Gray900">#2B2645</Color>
     <Color x:Key="Gray950">#191330</Color>

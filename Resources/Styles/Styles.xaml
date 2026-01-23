@@ -322,7 +322,8 @@
     <Style TargetType="Label" x:Key="ChipLabel">
         <Setter Property="TextColor" Value="{StaticResource Primary}" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontAttributes" Value="SemiBold" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontAttributes" Value="None" />
     </Style>
 
     <Style TargetType="ListView">

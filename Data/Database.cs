@@ -9,11 +9,17 @@ namespace EZ_Read.Data
     {
         private static readonly string dbPath = Path.Combine(FileSystem.AppDataDirectory, "userData.db");
         private readonly SQLiteAsyncConnection database;
+        private readonly Task initializeTask;
 
         public Database()
         {
             database = new SQLiteAsyncConnection(dbPath);
-            InitializeDatabaseAsync().ConfigureAwait(false); // Initialize the database asynchronously
+            initializeTask = InitializeDatabaseAsync();
+        }
+
+        private Task EnsureInitializedAsync()
+        {
+            return initializeTask;
         }
 
         private async Task InitializeDatabaseAsync()
@@ -40,12 +46,14 @@ namespace EZ_Read.Data
         //Password Related Methods
         public async Task SavePasswordAsync(string password)
         {
+            await EnsureInitializedAsync();
             await database.DeleteAllAsync<UserPassword>(); // Store only one password
             await database.InsertAsync(new UserPassword { Password = password });
         }
 
         public async Task<string?> GetPasswordAsync()
         {
+            await EnsureInitializedAsync();
             var userPassword = await database.Table<UserPassword>().FirstOrDefaultAsync();
             return userPassword?.Password;
         }
@@ -54,6 +62,7 @@ namespace EZ_Read.Data
         //SettingPage related methods
         public async Task SaveSettingsAsync(bool keepScreenOn, bool startupPassword, bool exitLock)
         {
+            await EnsureInitializedAsync();
             var existingSettings = await database.Table<UserSettings>().FirstOrDefaultAsync();
             if (existingSettings != null)
             {
@@ -75,6 +84,7 @@ namespace EZ_Read.Data
 
         public async Task<UserSettings> GetUserSettingsAsync()
         {
+            await EnsureInitializedAsync();
             var settings = await database.Table<UserSettings>().FirstOrDefaultAsync();
             return settings ?? new UserSettings();
         }
@@ -83,6 +93,7 @@ namespace EZ_Read.Data
         //ReadingPage related methods
         public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor)
         {
+            await EnsureInitializedAsync();
             var existingReading = await database.Table<ReadingSettings>().FirstOrDefaultAsync();
             if (existingReading != null)
             {
@@ -102,6 +113,7 @@ namespace EZ_Read.Data
 
         public async Task<ReadingSettings> GetReadingSettingsAsync()
         {
+            await EnsureInitializedAsync();
             var settings = await database.Table<ReadingSettings>().FirstOrDefaultAsync();
             return settings ?? new ReadingSettings();
         }
@@ -110,6 +122,7 @@ namespace EZ_Read.Data
         //ReadingProgress Methods
         public async Task SaveReadingProgressAsync(string fileName, int page)
         {
+            await EnsureInitializedAsync();
             var existing = await database.Table<ReadingProgress>().FirstOrDefaultAsync(p => p.FileName == fileName);
             if (existing != null)
             {
@@ -124,6 +137,7 @@ namespace EZ_Read.Data
 
         public async Task<int> GetReadingProgressAsync(string fileName)
         {
+            await EnsureInitializedAsync();
             var existing = await database.Table<ReadingProgress>().FirstOrDefaultAsync(p => p.FileName == fileName);
             return existing?.LastPage ?? 0;
         }
