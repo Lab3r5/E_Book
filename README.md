@@ -1,3 +1,7 @@
+> 🎓 **课程作业说明**  
+> 本项目为 University of Newcastle 的 **INFT2051 – Mobile Application Development (.NET MAUI)** 课程作业示例，  
+> 主要用于展示 .NET MAUI 跨平台应用的基础架构设计、本地数据存储（SQLite）、页面导航以及用户设置与状态持久化等核心概念。
+
 # E-Book 📚
 
 E-Book 是一个基于 **.NET MAUI** 的跨平台电子书阅读应用，支持 Android / iOS / macOS / Windows（受平台与目标框架支持限制）。  
