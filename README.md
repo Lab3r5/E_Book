@@ -1,156 +1,225 @@
-````md
-# 📘 E-Book (EZ_Read)
+---
 
-## 项目简介 | Project Overview
+```md
+# E-Book 📚
 
-**E-Book（EZ_Read）** 是一个基于 **.NET MAUI** 与 **C#** 开发的跨平台电子书阅读应用。  
-该项目旨在探索使用 .NET MAUI 构建现代化、多平台一致体验的移动/桌面应用，并提供基础的电子书阅读与页面导航功能。
+E-Book 是一个基于 **.NET MAUI** 的跨平台电子书阅读应用，支持 Android / iOS / macOS / Windows（受平台与目标框架支持限制）。  
+项目提供基础而完整的电子书阅读能力，包括 **阅读设置、阅读进度保存、应用级设置以及 SQLite 本地数据存储**，适合课程项目、学习 .NET MAUI 或作为二次开发的起点。
 
-**E-Book (EZ_Read)** is a cross-platform e-book reading application developed using **.NET MAUI** and **C#**.  
-The project focuses on building a modern, unified reading experience across multiple platforms while demonstrating the use of MAUI architecture and XAML-based UI design.
+E-Book is a cross-platform e-book reader built with **.NET MAUI**, targeting Android / iOS / macOS / Windows (subject to platform and target framework support).  
+It provides essential e-book reading features such as **reading preferences, progress tracking, app-level settings, and SQLite-based local storage**, making it suitable for coursework, learning, and further extension.
 
 ---
 
-## ✨ 功能特性 | Features
+## ✨ 功能概览 | Features
 
-- 📚 基础电子书阅读界面  
-- 🧭 页面导航与路由管理（MAUI Shell）  
-- 🗂️ 清晰的页面、数据与资源分层结构  
-- 🎨 使用 XAML 构建的可维护 UI  
-- 📱 跨平台支持（Android / Windows / iOS / macOS，取决于运行环境）
+### 📖 阅读体验 | Reading Experience
+- 字体大小设置并可持久化保存  
+- 阅读背景颜色设置并自动恢复  
+- 简洁阅读界面，专注内容本身  
+
+- Adjustable font size with persistence  
+- Customizable background color with auto-restore  
+- Clean and distraction-free reading interface  
+
+### ⏱ 阅读进度 | Reading Progress
+- 按书籍/文件记录上次阅读位置  
+- 再次打开时自动跳转至上次阅读位置  
+
+- Per-book/file reading progress tracking  
+- Automatically resumes from last reading position  
+
+### ⚙️ 应用设置 | App Settings
+- 启动密码（可选）  
+- 退出锁定（可选）  
+- 保持屏幕常亮（可选）  
+
+- Optional startup passcode  
+- Optional exit lock  
+- Optional keep-screen-on setting  
+
+### 💾 数据与样式 | Data & Styling
+- SQLite 本地数据库存储用户设置与阅读进度  
+- 使用 ResourceDictionary 统一管理颜色与控件样式  
+
+- SQLite local database for settings and progress  
+- Centralized theming via ResourceDictionary  
 
 ---
 
-- 📚 Basic e-book reading interface  
-- 🧭 Page navigation and routing using MAUI Shell  
-- 🗂️ Well-structured separation of Pages, Data, and Resources  
-- 🎨 Maintainable UI built with XAML  
-- 📱 Cross-platform support (Android / Windows / iOS / macOS depending on environment)
-
----
-
-## 🧰 技术栈 | Tech Stack
-
+## 🧱 技术栈 | Tech Stack
 - **.NET MAUI**
 - **C#**
-- **XAML**
-- Visual Studio 2022
+- **SQLite**
 
 ---
 
-## 📦 环境要求 | Prerequisites
+## 📂 项目结构 | Project Structure
 
-### 推荐开发环境（Windows）  
-- Visual Studio 2022  
-- 勾选 **.NET Multi-platform App UI development** 工作负载  
-- 已安装 .NET SDK（与项目目标框架兼容）  
-- Android SDK（如需运行 Android 模拟器或真机）
+```
 
-### 命令行方式（可选）
-```bash
-dotnet --version
-dotnet workload install maui
+E-Book/
+├─ Data/                # SQLite 数据库、数据模型、初始化逻辑
+├─ Pages/               # 应用页面（阅读页、设置页等）
+├─ Resources/
+│  ├─ Styles/           # 颜色与控件样式资源
+│  └─ Fonts/            # 字体资源
+├─ Platforms/           # 平台相关代码（Android / iOS / Windows / macOS）
+├─ AppShell.xaml        # 路由与页面注册
+└─ MauiProgram.cs       # 应用启动与依赖注册
+
 ````
 
 ---
 
-### Recommended Environment (Windows)
+## ✅ 环境要求 | Requirements
 
-* Visual Studio 2022
-* **.NET Multi-platform App UI development** workload installed
-* Compatible .NET SDK
-* Android SDK (for Android emulator or device testing)
+> ⚠️ 项目使用 .NET 9 目标框架。若仅安装 .NET 8 或缺少 MAUI 工作负载，将无法成功构建。
+
+- **.NET SDK 9.x**
+- **.NET MAUI workload** (`maui`)
+- Android 运行：Android SDK + Emulator / 真实设备  
+- iOS / macCatalyst 运行：macOS + Xcode  
+- Windows 运行：仅支持 Windows 系统
+
+### 🔍 验证环境 | Verify Environment
+```bash
+dotnet --info
+dotnet workload list
+````
+
+### 🧩 安装 / 修复 MAUI Workload
+
+```bash
+dotnet workload install maui
+dotnet workload repair
+```
 
 ---
 
-## 🚀 运行项目 | How to Run
+## 🚀 快速开始 | Getting Started
 
-### 方法一：使用 Visual Studio（推荐）
+### 1️⃣ 克隆仓库 | Clone Repository
 
-1. 克隆仓库
+```bash
+git clone https://github.com/Lab3r5/E-Book.git
+cd E-Book
+```
 
-   ```bash
-   git clone https://github.com/Lab3r5/E-Book.git
-   ```
-2. 使用 Visual Studio 打开 `EZ_Read.sln`
-3. 选择运行平台（Android Emulator / Windows Machine 等）
-4. 点击 **Run**
-
----
-
-### 方法二：使用命令行
-
-在项目根目录执行：
+### 2️⃣ 还原依赖 | Restore Dependencies
 
 ```bash
 dotnet restore
-dotnet build
-dotnet run
 ```
 
-> 注意：不同平台（如 Android）需要在对应的 SDK 与环境下运行。
+### 3️⃣ 运行 Android | Run on Android
 
----
+> 需要已启动模拟器或连接真实设备
 
-## 🗂️ 项目结构 | Project Structure
+```bash
+dotnet build -t:Run -f net9.0-android
+```
 
-```text
-E-Book/
-├── Pages/              # 应用页面（XAML + Code-behind）
-├── Data/               # 数据模型与数据逻辑
-├── Resources/          # 图片、字体、样式等资源
-├── Platforms/          # 平台特定实现（Android / iOS / Windows）
-├── Properties/         # 项目配置与属性
-├── App.xaml            # 应用级资源与样式
-├── AppShell.xaml       # 路由与导航结构
-├── MainPage.xaml       # 默认主页
-├── MauiProgram.cs      # 应用启动与依赖注入配置
-├── EZ_Read.csproj      # 项目文件
-└── EZ_Read.sln         # 解决方案文件
+### 4️⃣ 运行 Windows | Run on Windows
+
+> 仅可在 Windows 系统上运行
+
+```bash
+dotnet build -t:Run -f net9.0-windows10.0.19041.0
 ```
 
 ---
 
-## 🧩 常见问题 | Troubleshooting
+## 🗃️ 数据库与存储 | Database & Storage
 
-### 构建失败
+* **数据库类型**：SQLite
 
-* 请确认已安装 MAUI workload
-* 检查 .NET SDK 版本是否匹配
+* **存储位置**：应用私有 AppData 目录
 
-### Android 无法运行
+* **用途**：
 
-* 确认 Android SDK 与 Emulator 已正确安装
-* 可尝试切换为 Windows 平台运行
+  * 用户应用设置（启动密码、常亮等）
+  * 阅读设置（字体大小、背景颜色）
+  * 阅读进度（按书籍/文件记录）
 
-### 资源未显示
+* **Database**: SQLite
 
-* 检查 `Resources/` 中文件的 **Build Action** 是否设置正确（如 `MauiImage`）
+* **Location**: Platform-specific AppData directory
 
----
+* **Used for**:
 
-## 🤝 贡献方式 | Contributing
+  * App-level settings
+  * Reading preferences
+  * Reading progress per book/file
 
-欢迎贡献代码或提出改进建议：
-
-1. Fork 本仓库
-2. 创建新分支：`feature/your-feature-name`
-3. 提交 Pull Request 并清晰描述修改内容
+数据库在应用首次启动时自动初始化，确保表结构与默认设置可用。
 
 ---
 
-## 📄 开源许可 | License
+## 🛠 常见问题 | Troubleshooting
 
-本项目当前 **未指定 License**。
-如需开源发布，建议添加 MIT 或 Apache-2.0 License。
+### ❓ MAUI workload 或 SDK 版本错误
 
-This project currently does not specify a license.
-Please add a suitable open-source license (e.g. MIT, Apache-2.0) if needed.
+**原因**：未安装 .NET MAUI 工作负载或 SDK 版本不匹配
+**解决**：
 
----
-
-## 👤 作者 | Author
-
-* **Lab3r5**
-
+```bash
+dotnet workload install maui
+dotnet workload repair
 ```
+
+---
+
+### ❓ SQLite 报错：`no such table: UserSettings`
+
+**原因**：数据库初始化未完成或旧数据损坏
+**解决**：
+
+* 清理应用数据或卸载重装
+* 确保数据库初始化方法在查询前已 `await`
+
+---
+
+### ❓ `StaticResource not found`
+
+**原因**：颜色或样式 key 未定义，或资源字典未正确合并
+**解决**：
+
+* 检查 `Resources/Styles/Colors.xaml` 中是否包含所有 key
+* 确认 `App.xaml` 中已正确合并资源字典
+
+---
+
+### ❓ 字体相关错误
+
+**原因**：不支持的 `FontAttributes` 枚举或字体未注册
+**解决**：
+
+* 使用已注册字体族名（如 `OpenSansRegular`）
+* 通过 `FontAttributes="Bold"` 实现加粗
+
+---
+
+## 🧭 未来计划 | Roadmap
+
+* [ ] 书架与本地文件导入
+* [ ] EPUB / PDF 格式支持
+* [ ] 目录、书签与阅读笔记
+* [ ] 搜索与文本高亮
+* [ ] 云同步与多设备进度同步
+
+---
+
+## 🤝 贡献 | Contributing
+
+欢迎提出 Issue 或 Pull Request。
+建议在提交前说明修改内容，并附上必要的截图或说明。
+
+---
+
+## 📄 License
+
+本项目目前未指定 License，仅用于学习与课程作业目的。
+如需开源复用，可自行添加 MIT / Apache-2.0 License。
+
+---
