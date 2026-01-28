@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using EZ_Read.Data;
+using E_Book.Data;
 
 namespace EZ_Read.Pages
 {

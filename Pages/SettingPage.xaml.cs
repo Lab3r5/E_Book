@@ -1,7 +1,7 @@
 using Microsoft.Maui.Controls;
 using System;
 using System.Threading.Tasks;
-using EZ_Read.Data;
+using E_Book.Data;
 
 namespace EZ_Read.Pages
 {
