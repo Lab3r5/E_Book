@@ -1,4 +1,4 @@
-﻿using EZ_Read.Pages;
+﻿using E_Book.Pages;
 
 namespace E_Book
 {
