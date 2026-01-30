@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 
-namespace EZ_Read.Pages
+namespace E_Book.Pages
 {
     public partial class Homepage : ContentPage
     {

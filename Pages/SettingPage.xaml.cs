@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 using E_Book.Data;
 
-namespace EZ_Read.Pages
+namespace E_Book.Pages
 {
     public partial class SettingPage : ContentPage
     {

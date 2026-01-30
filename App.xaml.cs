@@ -1,6 +1,6 @@
 ﻿using EZ_Read.Pages;
 
-namespace EZ_Read
+namespace E_Book
 {
     public partial class App : Application
     {

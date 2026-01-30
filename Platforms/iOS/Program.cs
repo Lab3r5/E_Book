@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace EZ_Read
+namespace E_book
 {
     public class Program
     {
