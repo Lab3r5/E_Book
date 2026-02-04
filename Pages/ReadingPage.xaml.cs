@@ -21,10 +21,20 @@ namespace E_Book.Pages
 
         private string themeMode = "Light"; // Light | Dark
 
-        // 主题色（你项目里常用的深蓝）
+        // UI colors
         private static readonly Color DeepBlue = Color.FromArgb("#24145A");
         private static readonly Color OffWhite = Color.FromArgb("#FFFFFF");
         private static readonly Color SoftGray = Color.FromArgb("#ECEAF6");
+
+        // Animation flags / params
+        private bool isAnimating = false;
+
+        private const uint PageAnimMs = 180;
+        private const double SlideDistance = 60;
+
+        private const uint MenuAnimMs = 170;
+        private const double MenuRestY = -68;    // same as XAML TranslationY
+        private const double MenuHiddenY = -30;  // slightly lower for enter/exit
 
         public ReadingPage(string filePath)
         {
@@ -79,7 +89,7 @@ namespace E_Book.Pages
             }
         }
 
-        // ===== robust paging =====
+        // ===================== Paging (safe) =====================
 
         private int GetTotalPages()
         {
@@ -91,6 +101,7 @@ namespace E_Book.Pages
         {
             int total = GetTotalPages();
             if (total <= 0) { currentPage = 0; return; }
+
             if (currentPage < 0) currentPage = 0;
             if (currentPage > total - 1) currentPage = total - 1;
         }
@@ -120,10 +131,20 @@ namespace E_Book.Pages
 
             var pageLines = new string[count];
             Array.Copy(lines, start, pageLines, 0, count);
+
             fileContentLabel.Text = string.Join(Environment.NewLine, pageLines);
         }
 
-        // ===== file =====
+        private void UpdateProgressUI()
+        {
+            int total = GetTotalPages();
+            int current = total <= 0 ? 1 : currentPage + 1;
+
+            ProgressText.Text = $"{Math.Max(1, current)} of {Math.Max(1, total)}";
+            ReadingProgressBar.Progress = total <= 0 ? 0 : current / (double)total;
+        }
+
+        // ===================== File =====================
 
         private async Task LoadFile(string filePath)
         {
@@ -156,16 +177,7 @@ namespace E_Book.Pages
             };
         }
 
-        // ===== progress =====
-
-        private void UpdateProgressUI()
-        {
-            int total = GetTotalPages();
-            int current = total <= 0 ? 1 : currentPage + 1;
-
-            ProgressText.Text = $"{Math.Max(1, current)} of {Math.Max(1, total)}";
-            ReadingProgressBar.Progress = total <= 0 ? 0 : current / (double)total;
-        }
+        // ===================== Persistence =====================
 
         private async Task SaveReadingProgress()
         {
@@ -179,67 +191,175 @@ namespace E_Book.Pages
             await dbHelper.SaveReadingSettingsAsync(currentFontSize, themeMode);
         }
 
-        // ===== swipe paging =====
+        // ===================== Page animations =====================
+
+        private async Task AnimatePageChangeAsync(int direction)
+        {
+            // direction: +1 next (slide left), -1 prev (slide right)
+            if (isAnimating) return;
+            isAnimating = true;
+
+            try
+            {
+                double outX = direction > 0 ? -SlideDistance : SlideDistance;
+
+                await Task.WhenAll(
+                    fileContentLabel.TranslateTo(outX, 0, PageAnimMs, Easing.CubicIn),
+                    fileContentLabel.FadeTo(0, PageAnimMs, Easing.CubicIn)
+                );
+
+                DisplayPage();
+                UpdateProgressUI();
+
+                double inX = direction > 0 ? SlideDistance : -SlideDistance;
+                fileContentLabel.TranslationX = inX;
+
+                await Task.WhenAll(
+                    fileContentLabel.TranslateTo(0, 0, PageAnimMs, Easing.CubicOut),
+                    fileContentLabel.FadeTo(1, PageAnimMs, Easing.CubicOut)
+                );
+            }
+            finally
+            {
+                fileContentLabel.TranslationX = 0;
+                fileContentLabel.Opacity = 1;
+                isAnimating = false;
+            }
+        }
 
         private async Task NextPageAsync()
         {
             int total = GetTotalPages();
             if (total <= 0) return;
+            if (currentPage >= total - 1) return;
 
-            if (currentPage < total - 1)
-            {
-                currentPage++;
-                DisplayPage();
-                UpdateProgressUI();
-                await SaveReadingProgress();
-            }
+            currentPage++;
+            await AnimatePageChangeAsync(direction: +1);
+            await SaveReadingProgress();
         }
 
         private async Task PrevPageAsync()
         {
             int total = GetTotalPages();
             if (total <= 0) return;
+            if (currentPage <= 0) return;
 
-            if (currentPage > 0)
+            currentPage--;
+            await AnimatePageChangeAsync(direction: -1);
+            await SaveReadingProgress();
+        }
+
+        // ===================== Button press animation =====================
+
+        private async void OnButtonPressed(object sender, EventArgs e)
+        {
+            if (sender is VisualElement v)
             {
-                currentPage--;
-                DisplayPage();
-                UpdateProgressUI();
-                await SaveReadingProgress();
+                try { await v.ScaleTo(0.96, 80, Easing.CubicOut); } catch { }
             }
         }
 
-        // ===== buttons =====
+        private async void OnButtonReleased(object sender, EventArgs e)
+        {
+            if (sender is VisualElement v)
+            {
+                try { await v.ScaleTo(1.0, 110, Easing.CubicOut); } catch { }
+            }
+        }
+
+        // ===================== Menu animations =====================
+
+        private async void OnMenuClicked(object sender, EventArgs e)
+        {
+            if (isAnimating) return;
+
+            if (!MenuPopup.IsVisible)
+                await ShowMenuAsync();
+            else
+                await HideMenuAsync();
+        }
+
+        private async void OnDismissTapped(object sender, EventArgs e)
+        {
+            if (isAnimating) return;
+            await HideMenuAsync();
+        }
+
+        private async Task ShowMenuAsync()
+        {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            try
+            {
+                FontSlider.Value = fontIndex;
+                UpdateFontSizeLabel();
+                UpdateFontButtonStyles();
+                UpdateThemeButtonStyles();
+
+                Overlay.IsVisible = true;
+                Overlay.Opacity = 0;
+
+                MenuPopup.IsVisible = true;
+                MenuPopup.Opacity = 0;
+                MenuPopup.Scale = 0.98;
+                MenuPopup.TranslationY = MenuHiddenY;
+
+                await Task.WhenAll(
+                    Overlay.FadeTo(1, 160, Easing.CubicOut),
+                    MenuPopup.FadeTo(1, MenuAnimMs, Easing.CubicOut),
+                    MenuPopup.ScaleTo(1.0, MenuAnimMs, Easing.CubicOut),
+                    MenuPopup.TranslateTo(0, MenuRestY, MenuAnimMs, Easing.CubicOut)
+                );
+            }
+            finally
+            {
+                isAnimating = false;
+            }
+        }
+
+        private async Task HideMenuAsync()
+        {
+            if (!MenuPopup.IsVisible)
+            {
+                Overlay.IsVisible = false;
+                Overlay.Opacity = 0;
+                return;
+            }
+
+            if (isAnimating) return;
+            isAnimating = true;
+
+            try
+            {
+                await Task.WhenAll(
+                    Overlay.FadeTo(0, 140, Easing.CubicIn),
+                    MenuPopup.FadeTo(0, 140, Easing.CubicIn),
+                    MenuPopup.ScaleTo(0.98, 140, Easing.CubicIn),
+                    MenuPopup.TranslateTo(0, MenuHiddenY, 140, Easing.CubicIn)
+                );
+
+                MenuPopup.IsVisible = false;
+                Overlay.IsVisible = false;
+            }
+            finally
+            {
+                Overlay.Opacity = 0;
+                MenuPopup.Opacity = 0;
+                MenuPopup.Scale = 0.98;
+                MenuPopup.TranslationY = MenuRestY;
+                isAnimating = false;
+            }
+        }
+
+        // ===================== Navigation =====================
 
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
             await Navigation.PopAsync();
         }
 
-        private void OnMenuClicked(object sender, EventArgs e)
-        {
-            bool open = !MenuPopup.IsVisible;
-            MenuPopup.IsVisible = open;
-
-            // ✅ 半透明黑遮罩（不再蓝色），还能看到文字
-            Overlay.IsVisible = open;
-
-            if (open)
-            {
-                FontSlider.Value = fontIndex;
-                UpdateFontSizeLabel();
-                UpdateFontButtonStyles();
-                UpdateThemeButtonStyles();
-            }
-        }
-
-        private void OnDismissTapped(object sender, EventArgs e)
-        {
-            MenuPopup.IsVisible = false;
-            Overlay.IsVisible = false;
-        }
-
-        // ===== font =====
+        // ===================== Font controls =====================
 
         private async void OnFontPresetClicked(object sender, EventArgs e)
         {
@@ -277,13 +397,10 @@ namespace E_Book.Pages
             await SaveCurrentReadingSettings();
         }
 
-        // ✅ Font Size 单选高亮逻辑（按你描述的规则做成一致版）
         private void UpdateFontButtonStyles()
         {
             bool dark = themeMode == "Dark";
 
-            // Light: selected deepblue, others white
-            // Dark : selected white, others deepblue
             StyleFontButton(SmallBtn, fontIndex == 0, dark);
             StyleFontButton(MediumBtn, fontIndex == 1, dark);
             StyleFontButton(LargeBtn, fontIndex == 2, dark);
@@ -296,19 +413,17 @@ namespace E_Book.Pages
 
             if (!dark)
             {
-                // Light mode
                 b.BackgroundColor = selected ? DeepBlue : OffWhite;
                 b.TextColor = selected ? OffWhite : DeepBlue;
             }
             else
             {
-                // Dark mode
                 b.BackgroundColor = selected ? OffWhite : DeepBlue;
                 b.TextColor = selected ? DeepBlue : OffWhite;
             }
         }
 
-        // ===== theme =====
+        // ===================== Theme =====================
 
         private static string NormalizeTheme(string stored)
         {
@@ -324,22 +439,34 @@ namespace E_Book.Pages
         {
             bool dark = mode == "Dark";
 
-            // ✅ 去掉“蓝色背景块”：阅读区和页面背景跟主题一致
-            var pageBg = dark ? Color.FromArgb("#0B0B0F") : Color.FromArgb("#F7F6FB");
+            // Page background
+            var pageBg = dark ? Color.FromArgb("#0B0B0F") : Colors.White;
+
             this.BackgroundColor = pageBg;
             ReadingArea.BackgroundColor = pageBg;
-            fileContentLabel.BackgroundColor = Colors.Transparent;
 
-            // Top bar contrast
+            // Top bar
             BackButton.TextColor = dark ? OffWhite : Color.FromArgb("#6C6883");
             MenuButton.TextColor = dark ? OffWhite : Color.FromArgb("#6C6883");
             TitleLabel.TextColor = dark ? OffWhite : Color.FromArgb("#2B2B33");
 
-            // Content text
+            // Content
             fileContentLabel.TextColor = dark ? Color.FromArgb("#EAE8F5") : Color.FromArgb("#4B475A");
 
-            // Progress
+            // Progress text
             ProgressText.TextColor = dark ? Color.FromArgb("#C9C7D6") : Color.FromArgb("#8C8A9A");
+
+            // Progress bar (brighter in Dark)
+            if (dark)
+            {
+                ReadingProgressBar.ProgressColor = Color.FromArgb("#C7B9FF");
+                ReadingProgressBar.BackgroundColor = Color.FromArgb("#33FFFFFF");
+            }
+            else
+            {
+                ReadingProgressBar.ProgressColor = Color.FromArgb("#5E4DB2");
+                ReadingProgressBar.BackgroundColor = Color.FromArgb("#E5E3F2");
+            }
 
             // Popup
             MenuPopup.BackgroundColor = dark ? Color.FromArgb("#2B2B33") : OffWhite;
@@ -354,7 +481,20 @@ namespace E_Book.Pages
             SmallLabel.TextColor = popupSub;
             LargeLabel.TextColor = popupSub;
 
-            // 更新按钮状态
+            // ✅ 关键：Dark 模式把 Slider 调亮一点
+            if (dark)
+            {
+                FontSlider.MinimumTrackColor = Color.FromArgb("#C7B9FF"); // 亮紫/亮色
+                FontSlider.MaximumTrackColor = Color.FromArgb("#8F8AA8"); // 比 Gray600 亮很多
+                FontSlider.ThumbColor = Colors.White;
+            }
+            else
+            {
+                FontSlider.MinimumTrackColor = Color.FromArgb("#5E4DB2");
+                FontSlider.MaximumTrackColor = Color.FromArgb("#D8D5EA");
+                FontSlider.ThumbColor = Color.FromArgb("#5E4DB2");
+            }
+
             UpdateFontButtonStyles();
             UpdateThemeButtonStyles();
         }
@@ -369,18 +509,15 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ Theme 两按钮：颜色相反 + 未选中变“浅一点”
         private void UpdateThemeButtonStyles()
         {
             bool dark = themeMode == "Dark";
 
             if (!dark)
             {
-                // Light theme selected
                 LightBtn.BackgroundColor = DeepBlue;
                 LightBtn.TextColor = OffWhite;
 
-                // Dark button becomes lighter (unselected)
                 DarkBtn.BackgroundColor = SoftGray;
                 DarkBtn.TextColor = DeepBlue;
 
@@ -390,11 +527,9 @@ namespace E_Book.Pages
             }
             else
             {
-                // Dark theme selected
                 DarkBtn.BackgroundColor = OffWhite;
                 DarkBtn.TextColor = DeepBlue;
 
-                // Light button becomes darker-ish (unselected)
                 LightBtn.BackgroundColor = Color.FromArgb("#3B3560");
                 LightBtn.TextColor = OffWhite;
 
