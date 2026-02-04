@@ -35,42 +35,51 @@ namespace E_Book.Pages
             if (!File.Exists(guidePath))
             {
                 string guideContent = """
-                Welcome to E_Book 📚
+                Welcome to E_Book 📘
 
-                Your lightweight Android reading app for TXT files.
+                E_Book is a lightweight TXT reading application built with .NET MAUI.
+                It helps you organize, read, and customize your text-based documents
+                with a clean and distraction-free experience.
 
                 ────────────────────────────
-                📂 Basic Usage:
+                📂 Bookshelf & File Management:
                 ────────────────────────────
-                ➕ Tap the plus button in the top-left to import TXT files  
+                ➕ Tap the plus button in the top-left to import TXT files from your device   
                 📖 Tap the book icon next to a file to start reading  
-                🗑️ Tap the trash icon to delete unwanted files  
+                🗑️ Tap the trash icon to remove unwanted files from the bookshelf   
 
+                Imported files are stored locally and managed automatically by the app.
+                
                 ────────────────────────────
-                🛠️ Reading Tools:
+                🛠️ Reading Features:
                 ────────────────────────────
-                • Tap the center of the screen to show tools  
-                • Tap the ❮ button to return to the bookshelf  
-                • Tap the Aa button to customize:
-                   - Font Size (A- / A+)
-                   - Background Color (5 themes available)
+                • Tap the center of the screen to show or hide reading tools  
+                • Tap the ❮ back button to return to the bookshelf  
+                • Tap the Aa button to customize your reading experience:
+                   - Adjust font size (A- / A+)
+                   - Switch background color (multiple themes available)
 
+                Your changes are applied instantly for comfortable reading.
                 ────────────────────────────
                 🔐 Settings (from ⚙️ page):
                 ────────────────────────────
-                • Enable password protection on startup  
-                • Lock screen after exit (requires password enabled)  
-                • Keep screen on during reading  
+                From the Settings page, you can:
+                • Enable password protection when launching the app  
+                • Automatically lock the app after exiting (password required)  
+                • Keep the screen on while reading to avoid interruptions  
 
+                These options help protect your privacy and improve usability.
+                
                 ────────────────────────────
-                📌 Tips:
+                📌 Reading Tips:
                 ────────────────────────────
-                ✓ Your reading settings will be saved automatically  
-                ✓ Reading progress is tracked per file — you’ll resume where you left off  
-                ✓ Use a comfortable background color and font size for better readability  
-
+                ✓ Reading progress is saved automatically for each file  
+                ✓ You will continue reading from where you last stopped  
+                ✓ Adjust font size and background color to reduce eye strain  
+                ✓ All data is stored locally on your device
                 ────────────────────────────
                 Thank you for using E_Book!
+                Enjoy a simple and focused reading experience.
                 """;
                 File.WriteAllText(guidePath, guideContent);
             }
