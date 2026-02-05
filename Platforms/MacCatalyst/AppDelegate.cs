@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace EZ_Read
+namespace E_Book
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

@@ -1,6 +1,6 @@
 ﻿using E_Book.Data;
 
-namespace EZ_Read
+namespace E_Book
 {
     public partial class MainPage : ContentPage
     {

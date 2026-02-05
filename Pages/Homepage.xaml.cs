@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 
-namespace EZ_Read.Pages
+namespace E_Book.Pages
 {
     public partial class Homepage : ContentPage
     {
@@ -35,7 +35,7 @@ namespace EZ_Read.Pages
             if (!File.Exists(guidePath))
             {
                 string guideContent = """
-                Welcome to EZ-Read 📚
+                Welcome to E_Book 📚
 
                 Your lightweight Android reading app for TXT files.
 
@@ -70,8 +70,7 @@ namespace EZ_Read.Pages
                 ✓ Use a comfortable background color and font size for better readability  
 
                 ────────────────────────────
-                Thank you for using EZ-Read!
-                Developed by Team Shawarma  
+                Thank you for using E_Book!
                 """;
                 File.WriteAllText(guidePath, guideContent);
             }

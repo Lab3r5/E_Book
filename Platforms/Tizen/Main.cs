@@ -2,7 +2,7 @@ using System;
 using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
 
-namespace EZ_Read
+namespace E_Book
 {
     internal class Program : MauiApplication
     {
