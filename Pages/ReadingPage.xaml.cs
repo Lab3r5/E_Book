@@ -1,21 +1,34 @@
 ﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using E_Book.Data;
+
+using VersOne.Epub;
+using Mammoth;
+using RtfPipe;
 
 namespace E_Book.Pages
 {
     public partial class ReadingPage : ContentPage
     {
-        private string[] lines = Array.Empty<string>();
         private int currentPage = 0;
+
+        // TXT mode
+        private string[] lines = Array.Empty<string>();
         private int linesPerPage = 16;
+
+        // HTML-based mode (EPUB chapters, HTML file, DOCX->HTML, RTF->HTML)
+        private List<string> htmlPages = new();
 
         public string FilePath { get; set; }
         private readonly Database dbHelper = new();
 
-        private readonly int[] fontSizes = new[] { 18, 22, 26 }; // Small/Medium/Large
+        // Font presets
+        private readonly int[] fontSizes = new[] { 18, 22, 26 };
         private int fontIndex = 1;
         private int currentFontSize = 22;
 
@@ -26,15 +39,18 @@ namespace E_Book.Pages
         private static readonly Color OffWhite = Color.FromArgb("#FFFFFF");
         private static readonly Color SoftGray = Color.FromArgb("#ECEAF6");
 
-        // Animation flags / params
+        // Animation flags/params
         private bool isAnimating = false;
 
         private const uint PageAnimMs = 180;
         private const double SlideDistance = 60;
 
         private const uint MenuAnimMs = 170;
-        private const double MenuRestY = -68;    // same as XAML TranslationY
-        private const double MenuHiddenY = -30;  // slightly lower for enter/exit
+        private const double MenuRestY = -68;
+        private const double MenuHiddenY = -30;
+
+        private enum ReaderMode { TxtPaged, HtmlPaged, PdfExternal, Unknown }
+        private ReaderMode mode = ReaderMode.Unknown;
 
         public ReadingPage(string filePath)
         {
@@ -68,6 +84,7 @@ namespace E_Book.Pages
 
             currentFontSize = fontSizes[fontIndex];
             fileContentLabel.FontSize = currentFontSize;
+
             UpdateLinesPerPage();
             UpdateFontSizeLabel();
             FontSlider.Value = fontIndex;
@@ -78,7 +95,7 @@ namespace E_Book.Pages
             // Load file + progress
             if (!string.IsNullOrEmpty(FilePath))
             {
-                await LoadFile(FilePath);
+                await LoadByTypeAsync(FilePath);
 
                 string fileName = Path.GetFileName(FilePath);
                 currentPage = await dbHelper.GetReadingProgressAsync(fileName);
@@ -89,24 +106,206 @@ namespace E_Book.Pages
             }
         }
 
-        // ===================== Paging (safe) =====================
+        // ===================== Multi-format router =====================
+
+        private async Task LoadByTypeAsync(string filePath)
+        {
+            lines = Array.Empty<string>();
+            htmlPages.Clear();
+            currentPage = 0;
+
+            var ext = Path.GetExtension(filePath)?.ToLowerInvariant() ?? "";
+
+            try
+            {
+                switch (ext)
+                {
+                    case ".txt":
+                        mode = ReaderMode.TxtPaged;
+                        await LoadTxtAsync(filePath);
+                        ShowTxtView();
+                        break;
+
+                    case ".html":
+                    case ".htm":
+                        mode = ReaderMode.HtmlPaged;
+                        await LoadHtmlFileAsync(filePath);
+                        ShowWebView();
+                        break;
+
+                    case ".epub":
+                        mode = ReaderMode.HtmlPaged;
+                        await LoadEpubAsync(filePath);
+                        ShowWebView();
+                        break;
+
+                    case ".docx":
+                        mode = ReaderMode.HtmlPaged;
+                        await LoadDocxAsync(filePath);
+                        ShowWebView();
+                        break;
+
+                    case ".rtf":
+                        mode = ReaderMode.HtmlPaged;
+                        await LoadRtfAsync(filePath);
+                        ShowWebView();
+                        break;
+
+                    case ".pdf":
+                        mode = ReaderMode.PdfExternal;
+                        await OpenPdfExternalAsync(filePath);
+                        ShowTxtView();
+                        fileContentLabel.Text = "PDF opened in an external viewer.\n\nUse the Back button to return.";
+                        break;
+
+                    default:
+                        mode = ReaderMode.Unknown;
+                        ShowTxtView();
+                        fileContentLabel.Text = $"Unsupported format: {ext}";
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                mode = ReaderMode.Unknown;
+                ShowTxtView();
+                fileContentLabel.Text = "Unable to load file: " + ex.Message;
+            }
+        }
+
+        private void ShowTxtView()
+        {
+            fileContentLabel.IsVisible = true;
+            ContentWebView.IsVisible = false;
+        }
+
+        private void ShowWebView()
+        {
+            fileContentLabel.IsVisible = false;
+            ContentWebView.IsVisible = true;
+        }
+
+        // ===================== TXT =====================
+
+        private async Task LoadTxtAsync(string filePath)
+        {
+            string fileContent = await File.ReadAllTextAsync(filePath);
+            lines = fileContent.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        }
+
+        private void UpdateLinesPerPage()
+        {
+            if (currentFontSize == 18) linesPerPage = 20;
+            else if (currentFontSize == 22) linesPerPage = 16;
+            else linesPerPage = 12;
+        }
+
+        // ===================== HTML file =====================
+
+        private async Task LoadHtmlFileAsync(string filePath)
+        {
+            var html = await File.ReadAllTextAsync(filePath);
+            htmlPages = new List<string> { html };
+        }
+
+        // ===================== EPUB =====================
+
+        private async Task LoadEpubAsync(string filePath)
+        {
+            // Each chapter HTML = one page
+            var book = await EpubReader.ReadBookAsync(filePath);
+
+            var chapters = book.ReadingOrder
+                               .Select(c => c.Content)
+                               .Where(x => !string.IsNullOrWhiteSpace(x))
+                               .ToList();
+
+            if (chapters.Count == 0)
+                chapters.Add("<p>(No readable chapters found)</p>");
+
+            htmlPages = chapters;
+        }
+
+        // ===================== DOCX =====================
+
+        private Task LoadDocxAsync(string filePath)
+        {
+            var converter = new DocumentConverter();
+            var result = converter.ConvertToHtml(filePath);
+
+            var html = result?.Value;
+            htmlPages = new List<string> { string.IsNullOrWhiteSpace(html) ? "<p>(Empty DOCX)</p>" : html! };
+
+            return Task.CompletedTask;
+        }
+
+        // ===================== RTF =====================
+
+        private async Task LoadRtfAsync(string filePath)
+        {
+            var rtfText = await File.ReadAllTextAsync(filePath);
+            var html = Rtf.ToHtml(rtfText);
+            htmlPages = new List<string> { string.IsNullOrWhiteSpace(html) ? "<p>(Empty RTF)</p>" : html };
+        }
+
+        // ===================== PDF (MVP: external open) =====================
+
+        private async Task OpenPdfExternalAsync(string filePath)
+        {
+            try
+            {
+                await Launcher.Default.OpenAsync(new OpenFileRequest
+                {
+                    File = new ReadOnlyFile(filePath)
+                });
+            }
+            catch
+            {
+                // keep silent (do not crash)
+            }
+        }
+
+        // ===================== Paging =====================
 
         private int GetTotalPages()
         {
-            if (lines == null || lines.Length == 0) return 0;
-            return (int)Math.Ceiling(lines.Length / (double)linesPerPage);
+            return mode switch
+            {
+                ReaderMode.TxtPaged => (lines == null || lines.Length == 0) ? 0
+                    : (int)Math.Ceiling(lines.Length / (double)linesPerPage),
+
+                ReaderMode.HtmlPaged => (htmlPages == null || htmlPages.Count == 0) ? 0 : htmlPages.Count,
+
+                _ => 0
+            };
         }
 
         private void ClampCurrentPage()
         {
             int total = GetTotalPages();
             if (total <= 0) { currentPage = 0; return; }
-
             if (currentPage < 0) currentPage = 0;
             if (currentPage > total - 1) currentPage = total - 1;
         }
 
         private void DisplayPage()
+        {
+            ClampCurrentPage();
+
+            if (mode == ReaderMode.TxtPaged)
+            {
+                DisplayTxtPage();
+                return;
+            }
+
+            if (mode == ReaderMode.HtmlPaged)
+            {
+                DisplayHtmlPage();
+                return;
+            }
+        }
+
+        private void DisplayTxtPage()
         {
             if (lines == null || lines.Length == 0)
             {
@@ -114,10 +313,8 @@ namespace E_Book.Pages
                 return;
             }
 
-            ClampCurrentPage();
-
             int start = currentPage * linesPerPage;
-            if (start < 0) start = 0;
+            start = Math.Max(0, start);
 
             if (start >= lines.Length)
             {
@@ -135,6 +332,62 @@ namespace E_Book.Pages
             fileContentLabel.Text = string.Join(Environment.NewLine, pageLines);
         }
 
+        private void DisplayHtmlPage()
+        {
+            if (htmlPages == null || htmlPages.Count == 0)
+            {
+                ContentWebView.Source = new HtmlWebViewSource { Html = WrapHtml("<p>(Empty)</p>") };
+                return;
+            }
+
+            var html = htmlPages[Math.Clamp(currentPage, 0, htmlPages.Count - 1)];
+            ContentWebView.Source = new HtmlWebViewSource { Html = WrapHtml(html) };
+        }
+
+        private string WrapHtml(string bodyHtml)
+        {
+            bool dark = themeMode == "Dark";
+
+            string bg = dark ? "#0B0B0F" : "#FFFFFF";
+            string fg = dark ? "#EAE8F5" : "#2B2B33";
+
+            int px = currentFontSize switch
+            {
+                18 => 16,
+                22 => 18,
+                _ => 20
+            };
+
+            return $@"
+<!doctype html>
+<html>
+<head>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<style>
+    body {{
+        margin: 0;
+        padding: 0;
+        background: {bg};
+        color: {fg};
+        font-size: {px}px;
+        line-height: 1.6;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+    }}
+    .wrap {{ padding: 8px 2px; }}
+    img {{ max-width: 100%; height: auto; }}
+    a {{ color: #7B6CFF; }}
+</style>
+</head>
+<body>
+<div class='wrap'>
+{bodyHtml}
+</div>
+</body>
+</html>";
+        }
+
         private void UpdateProgressUI()
         {
             int total = GetTotalPages();
@@ -142,39 +395,6 @@ namespace E_Book.Pages
 
             ProgressText.Text = $"{Math.Max(1, current)} of {Math.Max(1, total)}";
             ReadingProgressBar.Progress = total <= 0 ? 0 : current / (double)total;
-        }
-
-        // ===================== File =====================
-
-        private async Task LoadFile(string filePath)
-        {
-            try
-            {
-                string fileContent = await File.ReadAllTextAsync(filePath);
-                lines = fileContent.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-            }
-            catch (Exception ex)
-            {
-                fileContentLabel.Text = "Unable to load file: " + ex.Message;
-                lines = Array.Empty<string>();
-            }
-        }
-
-        private void UpdateLinesPerPage()
-        {
-            if (currentFontSize == 18) linesPerPage = 20;
-            else if (currentFontSize == 22) linesPerPage = 16;
-            else linesPerPage = 12;
-        }
-
-        private void UpdateFontSizeLabel()
-        {
-            FontSizeLabel.Text = fontIndex switch
-            {
-                0 => "Small",
-                1 => "Medium",
-                _ => "Large"
-            };
         }
 
         // ===================== Persistence =====================
@@ -191,38 +411,43 @@ namespace E_Book.Pages
             await dbHelper.SaveReadingSettingsAsync(currentFontSize, themeMode);
         }
 
-        // ===================== Page animations =====================
+        // ===================== Animations =====================
 
         private async Task AnimatePageChangeAsync(int direction)
         {
-            // direction: +1 next (slide left), -1 prev (slide right)
             if (isAnimating) return;
             isAnimating = true;
 
             try
             {
+                VisualElement target = (mode == ReaderMode.HtmlPaged) ? (VisualElement)ContentWebView : fileContentLabel;
+
                 double outX = direction > 0 ? -SlideDistance : SlideDistance;
 
                 await Task.WhenAll(
-                    fileContentLabel.TranslateTo(outX, 0, PageAnimMs, Easing.CubicIn),
-                    fileContentLabel.FadeTo(0, PageAnimMs, Easing.CubicIn)
+                    target.TranslateTo(outX, 0, PageAnimMs, Easing.CubicIn),
+                    target.FadeTo(0, PageAnimMs, Easing.CubicIn)
                 );
 
                 DisplayPage();
                 UpdateProgressUI();
 
                 double inX = direction > 0 ? SlideDistance : -SlideDistance;
-                fileContentLabel.TranslationX = inX;
+                target.TranslationX = inX;
 
                 await Task.WhenAll(
-                    fileContentLabel.TranslateTo(0, 0, PageAnimMs, Easing.CubicOut),
-                    fileContentLabel.FadeTo(1, PageAnimMs, Easing.CubicOut)
+                    target.TranslateTo(0, 0, PageAnimMs, Easing.CubicOut),
+                    target.FadeTo(1, PageAnimMs, Easing.CubicOut)
                 );
             }
             finally
             {
                 fileContentLabel.TranslationX = 0;
                 fileContentLabel.Opacity = 1;
+
+                ContentWebView.TranslationX = 0;
+                ContentWebView.Opacity = 1;
+
                 isAnimating = false;
             }
         }
@@ -234,7 +459,7 @@ namespace E_Book.Pages
             if (currentPage >= total - 1) return;
 
             currentPage++;
-            await AnimatePageChangeAsync(direction: +1);
+            await AnimatePageChangeAsync(+1);
             await SaveReadingProgress();
         }
 
@@ -245,11 +470,16 @@ namespace E_Book.Pages
             if (currentPage <= 0) return;
 
             currentPage--;
-            await AnimatePageChangeAsync(direction: -1);
+            await AnimatePageChangeAsync(-1);
             await SaveReadingProgress();
         }
 
-        // ===================== Button press animation =====================
+        // ===================== UI interactions =====================
+
+        private async void OnBackButtonClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopAsync();
+        }
 
         private async void OnButtonPressed(object sender, EventArgs e)
         {
@@ -266,8 +496,6 @@ namespace E_Book.Pages
                 try { await v.ScaleTo(1.0, 110, Easing.CubicOut); } catch { }
             }
         }
-
-        // ===================== Menu animations =====================
 
         private async void OnMenuClicked(object sender, EventArgs e)
         {
@@ -352,13 +580,6 @@ namespace E_Book.Pages
             }
         }
 
-        // ===================== Navigation =====================
-
-        private async void OnBackButtonClicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
-
         // ===================== Font controls =====================
 
         private async void OnFontPresetClicked(object sender, EventArgs e)
@@ -394,7 +615,21 @@ namespace E_Book.Pages
 
             UpdateFontButtonStyles();
 
+            // Re-render HTML with new CSS
+            if (mode == ReaderMode.HtmlPaged && htmlPages.Count > 0)
+                DisplayHtmlPage();
+
             await SaveCurrentReadingSettings();
+        }
+
+        private void UpdateFontSizeLabel()
+        {
+            FontSizeLabel.Text = fontIndex switch
+            {
+                0 => "Small",
+                1 => "Medium",
+                _ => "Large"
+            };
         }
 
         private void UpdateFontButtonStyles()
@@ -439,24 +674,19 @@ namespace E_Book.Pages
         {
             bool dark = mode == "Dark";
 
-            // Page background
             var pageBg = dark ? Color.FromArgb("#0B0B0F") : Colors.White;
 
             this.BackgroundColor = pageBg;
             ReadingArea.BackgroundColor = pageBg;
 
-            // Top bar
             BackButton.TextColor = dark ? OffWhite : Color.FromArgb("#6C6883");
             MenuButton.TextColor = dark ? OffWhite : Color.FromArgb("#6C6883");
             TitleLabel.TextColor = dark ? OffWhite : Color.FromArgb("#2B2B33");
 
-            // Content
             fileContentLabel.TextColor = dark ? Color.FromArgb("#EAE8F5") : Color.FromArgb("#4B475A");
 
-            // Progress text
             ProgressText.TextColor = dark ? Color.FromArgb("#C9C7D6") : Color.FromArgb("#8C8A9A");
 
-            // Progress bar (brighter in Dark)
             if (dark)
             {
                 ReadingProgressBar.ProgressColor = Color.FromArgb("#C7B9FF");
@@ -468,7 +698,6 @@ namespace E_Book.Pages
                 ReadingProgressBar.BackgroundColor = Color.FromArgb("#E5E3F2");
             }
 
-            // Popup
             MenuPopup.BackgroundColor = dark ? Color.FromArgb("#2B2B33") : OffWhite;
             MenuPopup.Stroke = dark ? Color.FromArgb("#33FFFFFF") : Color.FromArgb("#22000000");
 
@@ -481,11 +710,10 @@ namespace E_Book.Pages
             SmallLabel.TextColor = popupSub;
             LargeLabel.TextColor = popupSub;
 
-            // ✅ 关键：Dark 模式把 Slider 调亮一点
             if (dark)
             {
-                FontSlider.MinimumTrackColor = Color.FromArgb("#C7B9FF"); // 亮紫/亮色
-                FontSlider.MaximumTrackColor = Color.FromArgb("#8F8AA8"); // 比 Gray600 亮很多
+                FontSlider.MinimumTrackColor = Color.FromArgb("#C7B9FF");
+                FontSlider.MaximumTrackColor = Color.FromArgb("#8F8AA8");
                 FontSlider.ThumbColor = Colors.White;
             }
             else
@@ -494,6 +722,9 @@ namespace E_Book.Pages
                 FontSlider.MaximumTrackColor = Color.FromArgb("#D8D5EA");
                 FontSlider.ThumbColor = Color.FromArgb("#5E4DB2");
             }
+
+            if (this.mode == ReaderMode.HtmlPaged && htmlPages.Count > 0)
+                DisplayHtmlPage();
 
             UpdateFontButtonStyles();
             UpdateThemeButtonStyles();

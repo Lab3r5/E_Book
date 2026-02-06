@@ -46,8 +46,9 @@
                         x:Name="ReadingArea"
                         Padding="18,12">
 
-            <!-- Reading text -->
+            <!-- TXT reading text (paged) -->
             <Label x:Name="fileContentLabel"
+                   IsVisible="True"
                    Text="Loading..."
                    FontSize="22"
                    LineBreakMode="WordWrap"
@@ -56,6 +57,13 @@
                    BackgroundColor="Transparent"
                    AbsoluteLayout.LayoutBounds="0,0,1,1"
                    AbsoluteLayout.LayoutFlags="All"/>
+
+            <!-- HTML/EPUB/DOCX/RTF reading (WebView) -->
+            <WebView x:Name="ContentWebView"
+                     IsVisible="False"
+                     BackgroundColor="Transparent"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All"/>
 
             <!-- Overlay (fade in/out) -->
             <BoxView x:Name="Overlay"
@@ -127,7 +135,7 @@
                                     CornerRadius="14"/>
                         </Grid>
 
-                        <!-- ✅ 这里就是“字体大小滑动条” -->
+                        <!-- Font size slider -->
                         <Slider x:Name="FontSlider"
                                 Minimum="0"
                                 Maximum="2"

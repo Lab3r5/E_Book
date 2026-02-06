@@ -5,35 +5,46 @@
 
     <Grid RowDefinitions="*, Auto" Padding="10">
 
-        <!-- Main content area at the top -->
+        <!-- Main content area -->
         <Grid Row="0" RowDefinitions="Auto, *" ColumnDefinitions="Auto, *">
-            <!-- ➕Button -->
+
+            <!-- ➕ Add file -->
             <Button Grid.Row="0" Grid.Column="0"
                     Text="➕"
                     Clicked="OnAddFileClicked"
                     FontSize="20"
                     Padding="10"/>
 
-            <!-- Reserved search bar or other functions -->
+            <!-- Reserved for search bar / future -->
             <ContentView Grid.Row="0" Grid.Column="1"/>
 
-            <!-- File list (CollectionView) -->
+            <!-- File list -->
             <CollectionView Grid.Row="1" Grid.ColumnSpan="2"
-                            ItemsSource="{Binding TxtFiles}">
+                            ItemsSource="{Binding Books}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border Stroke="Black" StrokeThickness="1" Padding="10" Margin="5" Background="White">
-                            <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                                <!-- File name -->
-                                <Label Text="{Binding .}" FontSize="18" VerticalOptions="Center" HorizontalOptions="StartAndExpand"/>
+                        <Border Stroke="Black" StrokeThickness="1"
+                                Padding="10" Margin="5" Background="White">
+                            <StackLayout Orientation="Horizontal"
+                                         HorizontalOptions="FillAndExpand">
 
-                                <!-- Delete button -->
+                                <!-- File name + format -->
+                                <VerticalStackLayout HorizontalOptions="StartAndExpand" Spacing="2">
+                                    <Label Text="{Binding FileName}"
+                                           FontSize="16"
+                                           LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Format}"
+                                           FontSize="11"
+                                           Opacity="0.7" />
+                                </VerticalStackLayout>
+
+                                <!-- Delete -->
                                 <Button Text="🗑️"
                                         Clicked="OnDeleteFileClicked"
                                         CommandParameter="{Binding .}"
                                         VerticalOptions="Center" />
 
-                                <!-- Read button -->
+                                <!-- Read -->
                                 <Button Text="📖"
                                         Clicked="OnFileClicked"
                                         CommandParameter="{Binding .}"

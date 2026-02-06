@@ -60,9 +60,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Mammoth" Version="1.11.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="RtfPipe" Version="2.0.7677.4303" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+		<PackageReference Include="VersOne.Epub" Version="3.3.5" />
 	</ItemGroup>
 
 	<ItemGroup>
