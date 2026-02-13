@@ -7,9 +7,12 @@
     <Grid RowDefinitions="56,*,34">
 
         <!-- Top Bar -->
-        <Grid Grid.Row="0"
+        <Grid x:Name="TopBar"
+              Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
-              Padding="16,10">
+              Padding="16,10"
+              Opacity="1"
+              TranslationY="0">
 
             <Button x:Name="BackButton"
                     Text="‹ Back"
@@ -44,7 +47,13 @@
         <!-- Content + overlay + popup -->
         <AbsoluteLayout Grid.Row="1"
                         x:Name="ReadingArea"
-                        Padding="18,12">
+                        Padding="18,12"
+                        ZIndex="0">
+
+            <!-- Tap to toggle immersive mode -->
+            <AbsoluteLayout.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnReadingAreaTapped"/>
+            </AbsoluteLayout.GestureRecognizers>
 
             <!-- TXT reading text (paged) -->
             <Label x:Name="fileContentLabel"
@@ -64,6 +73,28 @@
                      BackgroundColor="Transparent"
                      AbsoluteLayout.LayoutBounds="0,0,1,1"
                      AbsoluteLayout.LayoutFlags="All"/>
+
+            <!-- Loading layer (overlay on reading area only) -->
+            <Grid x:Name="LoadingLayer"
+                  IsVisible="False"
+                  Opacity="0"
+                  BackgroundColor="#55FFFFFF"
+                  AbsoluteLayout.LayoutBounds="0,0,1,1"
+                  AbsoluteLayout.LayoutFlags="All">
+
+                <VerticalStackLayout HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="10">
+                    <ActivityIndicator x:Name="LoadingIndicator"
+                                       IsRunning="True"
+                                       WidthRequest="42"
+                                       HeightRequest="42"/>
+                    <Label x:Name="LoadingText"
+                           Text="Loading..."
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </Grid>
 
             <!-- Overlay (fade in/out) -->
             <BoxView x:Name="Overlay"
@@ -135,7 +166,6 @@
                                     CornerRadius="14"/>
                         </Grid>
 
-                        <!-- Font size slider -->
                         <Slider x:Name="FontSlider"
                                 Minimum="0"
                                 Maximum="2"
@@ -179,10 +209,13 @@
         </AbsoluteLayout>
 
         <!-- Bottom progress -->
-        <Grid Grid.Row="2"
+        <Grid x:Name="BottomBar"
+              Grid.Row="2"
               Padding="18,0"
               ColumnDefinitions="*,Auto"
-              VerticalOptions="Center">
+              VerticalOptions="Center"
+              Opacity="1"
+              TranslationY="0">
 
             <ProgressBar x:Name="ReadingProgressBar"
                          Progress="0"
@@ -196,6 +229,41 @@
                    VerticalOptions="Center"
                    Margin="12,0,0,0"/>
         </Grid>
+
+        <!-- TOC floating button -->
+        <Border x:Name="TocButtonContainer"
+                Grid.Row="1"
+                Grid.RowSpan="2"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                WidthRequest="52"
+                HeightRequest="52"
+                Margin="0,0,18,52"
+                StrokeThickness="0"
+                ZIndex="999"
+                Opacity="1"
+                TranslationY="0">
+
+            <Border.Shadow>
+                <Shadow Brush="#66000000"
+                        Offset="0,6"
+                        Radius="14"
+                        Opacity="0.35"/>
+            </Border.Shadow>
+
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="26"/>
+            </Border.StrokeShape>
+
+            <Button x:Name="TocButton"
+                    Text="≡"
+                    FontSize="18"
+                    Padding="0"
+                    BackgroundColor="Transparent"
+                    Clicked="OnTocClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"/>
+        </Border>
 
     </Grid>
 </ContentPage>
