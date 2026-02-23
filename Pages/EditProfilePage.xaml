@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="E_Book.Pages.EditProfilePage"
+    Title="Edit Profile"
+    Padding="16">
+
+    <VerticalStackLayout Spacing="12">
+        <Entry x:Name="NameEntry" Placeholder="Full Name" />
+        <Entry x:Name="EmailEntry" Placeholder="Email" IsEnabled="False" />
+
+        <Button x:Name="ChangePasswordButton" Text="Change Password" Clicked="OnChangePasswordClicked"/>
+        <Button x:Name="SaveButton" Text="Save" Clicked="OnSaveClicked"/>
+
+        <Button Text="Log Out" Clicked="OnLogoutClicked" />
+    </VerticalStackLayout>
+</ContentPage>

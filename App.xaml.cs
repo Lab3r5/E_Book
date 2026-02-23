@@ -11,7 +11,7 @@ namespace E_Book
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new NavigationPage(new MainPage()));
+            return new Window(new AppShell());
         }
     }
 }

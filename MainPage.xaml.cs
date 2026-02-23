@@ -23,7 +23,7 @@ namespace E_Book
             if (!needPassword)
             {
                 // No need to enter a password, jump directly to the home page.
-                await Navigation.PushAsync(new Pages.Homepage());
+                await Navigation.PushAsync(new Pages.BookshelfPage());
             }
             else
             {
@@ -41,7 +41,7 @@ namespace E_Book
 
             if (inputPassword == savedPassword)
             {
-                await Navigation.PushAsync(new Pages.Homepage());
+                await Navigation.PushAsync(new Pages.BookshelfPage());
             }
             else
             {

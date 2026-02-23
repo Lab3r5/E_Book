@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="E_Book.Pages.SettingsHomePage"
+    Title="Setting"
+    Padding="16">
+
+    <VerticalStackLayout Spacing="14">
+
+        <!-- Profile Card -->
+        <Border StrokeThickness="1" Padding="14">
+            <VerticalStackLayout Spacing="6">
+                <Label x:Name="NameLabel" Text="Guest" FontSize="18" FontAttributes="Bold"/>
+                <Label x:Name="EmailLabel" Text="" Opacity="0.7"/>
+
+                <Button Text="Edit Profile" Clicked="OnEditProfileClicked"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <Button Text="Appearance" Clicked="OnAppearanceClicked"/>
+        <Button Text="Help &amp; Support" Clicked="OnHelpClicked"/>
+
+        <Button Text="Log Out" Clicked="OnLogoutClicked"/>
+    </VerticalStackLayout>
+</ContentPage>

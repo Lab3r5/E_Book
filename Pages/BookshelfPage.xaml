@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="E_Book.Pages.Homepage">
+             x:Class="E_Book.Pages.BookshelfPage">
 
     <Grid RowDefinitions="*, Auto" Padding="10">
 
@@ -55,15 +55,6 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </Grid>
-
-        <!-- Bottom navigation bar -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" HeightRequest="60">
-            <Button Grid.Column="0" Text="📚 Bookshelf"
-                    BackgroundColor="LightGray"/>
-            <Button Grid.Column="1" Text="⚙️ Setting"
-                    BackgroundColor="LightGray"
-                    Clicked="OnSettingClicked"/>
-        </Grid>
-
+        
     </Grid>
 </ContentPage>

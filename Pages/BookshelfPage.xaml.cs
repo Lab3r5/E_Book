@@ -9,7 +9,7 @@ using Microsoft.Maui.Storage;
 
 namespace E_Book.Pages
 {
-    public partial class Homepage : ContentPage
+    public partial class BookshelfPage : ContentPage
     {
         public ObservableCollection<BookItem> Books { get; set; } = new();
 
@@ -20,7 +20,7 @@ namespace E_Book.Pages
             ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf"
         };
 
-        public Homepage()
+        public BookshelfPage()
         {
             InitializeComponent();
 
@@ -236,8 +236,8 @@ namespace E_Book.Pages
                     LoadSavedFiles();
                     return;
                 }
-
-                await Navigation.PushAsync(new ReadingPage(book.FullPath));
+                // ✅ 用 Shell 路由打开 Reading
+                await Shell.Current.GoToAsync($"reading?path={Uri.EscapeDataString(book.FullPath)}&title={Uri.EscapeDataString(book.FileName)}");
             }
         }
 
@@ -264,7 +264,7 @@ namespace E_Book.Pages
 
         private async void OnSettingClicked(object sender, EventArgs e)
         {
-            await Navigation.PushAsync(new SettingPage());
+            await Shell.Current.GoToAsync("//tabs/settings");
         }
     }
 

@@ -1,5 +1,81 @@
-<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:local="clr-namespace:E_Book.Pages"
-       x:Class="E_Book.AppShell">
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:E_Book.Pages"
+    x:Class="E_Book.AppShell">
+
+    <!--
+        LOGIN (NO TABS)
+        - This page is outside the TabBar.
+        - We navigate here using: Shell.Current.GoToAsync("//login")
+    -->
+    <ShellContent
+        Route="login"
+        ContentTemplate="{DataTemplate pages:LoginPage}" />
+
+    <!--
+        MAIN TABS (TabBar visible ONLY here)
+        - Only these three pages should show the TabBar.
+        - We navigate between tabs using routes like: //tabs/bookshelf, //tabs/search, //tabs/settings
+    -->
+    <TabBar Route="tabs">
+
+        <ShellContent
+            Title="Bookshelf"
+            Route="bookshelf"
+            Icon="tab_bookshelf.png"
+            ContentTemplate="{DataTemplate pages:BookshelfPage}" />
+
+        <ShellContent
+            Title="Search"
+            Route="search"
+            Icon="tab_search.png"
+            ContentTemplate="{DataTemplate pages:SearchPage}" />
+
+        <ShellContent
+            Title="Setting"
+            Route="settings"
+            Icon="tab_settings.png"
+            ContentTemplate="{DataTemplate pages:SettingsHomePage}" />
+
+    </TabBar>
+
+    <!--
+        SUB PAGES (NO TAB BAR)
+        - These pages are declared as ShellContent OUTSIDE the TabBar.
+        - PresentationMode is set to ModalAnimated, so they open full-screen without TabBar.
+        - You can navigate using: Shell.Current.GoToAsync("appearance") / "help" / "edit-profile" / etc.
+    -->
+
+    <ShellContent
+        Route="signup"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:SignUpPage}" />
+
+    <ShellContent
+        Route="edit-profile"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:EditProfilePage}" />
+
+    <ShellContent
+        Route="appearance"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:AppearancePage}" />
+
+    <ShellContent
+        Route="help"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:HelpSupportPage}" />
+
+    <ShellContent
+        Route="password"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:PasswordPage}" />
+
+    <ShellContent
+        Route="reading"
+        Shell.PresentationMode="ModalAnimated"
+        ContentTemplate="{DataTemplate pages:ReadingPage}" />
+
 </Shell>
