@@ -236,8 +236,8 @@ namespace E_Book.Pages
                     LoadSavedFiles();
                     return;
                 }
-                // ✅ 用 Shell 路由打开 Reading
-                await Shell.Current.GoToAsync($"reading?path={Uri.EscapeDataString(book.FullPath)}&title={Uri.EscapeDataString(book.FileName)}");
+                // Open as MODAL so TabBar will NOT appear
+                await Navigation.PushModalAsync(new NavigationPage(new ReadingPage(book.FullPath)));
             }
         }
 
@@ -264,7 +264,7 @@ namespace E_Book.Pages
 
         private async void OnSettingClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//tabs/settings");
+            await Shell.Current.GoToAsync("//settings");
         }
     }
 

@@ -16,17 +16,18 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            // 加载已保存姓名（按用户隔离，Guest也有自己的）
+            // Load saved name (per user)
             var savedName = Preferences.Get(ProfileKey, UserSession.DisplayName);
 
             NameEntry.Text = savedName;
             EmailEntry.Text = UserSession.IsGuest ? "" : UserSession.UserId;
 
-            // Guest：不显示账号/密码修改，不允许保存
+            // Guest: hide account-related UI
             EmailEntry.IsVisible = !UserSession.IsGuest;
             ChangePasswordButton.IsVisible = !UserSession.IsGuest;
             SaveButton.IsVisible = !UserSession.IsGuest;
 
+            // Guest: lock editing
             if (UserSession.IsGuest)
             {
                 NameEntry.IsEnabled = false;
@@ -34,10 +35,16 @@ namespace E_Book.Pages
             }
         }
 
+        // Close this modal page
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopModalAsync();
+        }
+
         private async void OnChangePasswordClicked(object sender, EventArgs e)
         {
-            // 先跳你已有 PasswordPage（你后面再把它升级成“账户密码/Pin”）
-            await Shell.Current.GoToAsync("password");
+            // Push into the modal NavigationPage stack
+            await Navigation.PushAsync(new PasswordPage());
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)
@@ -51,17 +58,13 @@ namespace E_Book.Pages
 
             Preferences.Set(ProfileKey, name);
 
-            // 同步到Session显示名（简单做法：直接覆盖DisplayName）
+            // Sync display name in session
             UserSession.SetUser(UserSession.UserId, name);
 
             await DisplayAlert("Saved", "Profile updated.", "OK");
-            await Shell.Current.GoToAsync("..");
-        }
 
-        private async void OnLogoutClicked(object sender, EventArgs e)
-        {
-            UserSession.Logout();
-            await Shell.Current.GoToAsync("//login");
+            // Close this modal page
+            await Navigation.PopModalAsync();
         }
     }
 }

@@ -15,12 +15,18 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            // Keep Screen On（你之前在SettingPage里用了DeviceDisplay.KeepScreenOn）
+            // Sync Keep Screen On state
             KeepScreenOnSwitch.IsToggled = DeviceDisplay.KeepScreenOn;
 
-            // Theme（简单存Preferences）
+            // Sync Theme state (simple preference)
             var theme = Preferences.Get(ThemeKey, "Light");
             Application.Current!.UserAppTheme = theme == "Dark" ? AppTheme.Dark : AppTheme.Light;
+        }
+
+        // Close this modal page
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopModalAsync();
         }
 
         private void OnLightClicked(object sender, EventArgs e)

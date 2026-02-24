@@ -3,19 +3,69 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="E_Book.Pages.AppearancePage"
-    Title="Appearance"
-    Padding="16">
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
-    <VerticalStackLayout Spacing="14">
-        <Label Text="Theme" FontAttributes="Bold" />
-        <HorizontalStackLayout Spacing="10">
-            <Button Text="Light" Clicked="OnLightClicked"/>
-            <Button Text="Dark" Clicked="OnDarkClicked"/>
-        </HorizontalStackLayout>
+    <Grid RowDefinitions="56,*">
 
-        <HorizontalStackLayout Spacing="10">
-            <Label Text="Keep Screen On" VerticalOptions="Center"/>
-            <Switch x:Name="KeepScreenOnSwitch" Toggled="OnKeepScreenOnToggled"/>
-        </HorizontalStackLayout>
-    </VerticalStackLayout>
+        <!-- Top Bar -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*"
+              Padding="16,10">
+
+            <Button Text="‹ Back"
+                    FontSize="16"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+                   Text="Appearance"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+        </Grid>
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16" Spacing="18">
+
+                <!-- Theme section -->
+                <Label Text="Theme"
+                       FontAttributes="Bold"
+                       FontSize="16"
+                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+
+                <HorizontalStackLayout Spacing="12">
+                    <Button Text="Light"
+                            CornerRadius="24"
+                            HeightRequest="56"
+                            Clicked="OnLightClicked" />
+
+                    <Button Text="Dark"
+                            CornerRadius="24"
+                            HeightRequest="56"
+                            Clicked="OnDarkClicked" />
+                </HorizontalStackLayout>
+
+                <!-- Keep screen on section -->
+                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <Label Text="Keep Screen On"
+                           FontSize="16"
+                           TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}"
+                           VerticalOptions="Center" />
+
+                    <Switch x:Name="KeepScreenOnSwitch"
+                            Grid.Column="1"
+                            Toggled="OnKeepScreenOnToggled"
+                            VerticalOptions="Center" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
 </ContentPage>

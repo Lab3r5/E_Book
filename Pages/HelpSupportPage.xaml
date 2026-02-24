@@ -3,11 +3,47 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="E_Book.Pages.HelpSupportPage"
-    Title="Help &amp; Support"
-    Padding="16">
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
-    <VerticalStackLayout Spacing="12">
-        <Button Text="FAQs" Clicked="OnFaqClicked"/>
-        <Button Text="Privacy Policy" Clicked="OnPrivacyClicked"/>
-    </VerticalStackLayout>
+    <Grid RowDefinitions="56,*" Padding="0">
+
+        <!-- Top Bar -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*"
+              Padding="16,10">
+
+            <Button Text="‹ Back"
+                    FontSize="16"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+                   Text="Help &amp; Support"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+        </Grid>
+
+        <!-- Content -->
+        <VerticalStackLayout Grid.Row="1"
+                             Padding="16"
+                             Spacing="16">
+
+            <Button Text="FAQs"
+                    HeightRequest="64"
+                    CornerRadius="28"
+                    Clicked="OnFaqClicked" />
+
+            <Button Text="Privacy Policy"
+                    HeightRequest="64"
+                    CornerRadius="28"
+                    Clicked="OnPrivacyClicked" />
+
+        </VerticalStackLayout>
+    </Grid>
 </ContentPage>

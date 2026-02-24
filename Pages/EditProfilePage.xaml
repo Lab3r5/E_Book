@@ -3,16 +3,64 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="E_Book.Pages.EditProfilePage"
-    Title="Edit Profile"
-    Padding="16">
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
-    <VerticalStackLayout Spacing="12">
-        <Entry x:Name="NameEntry" Placeholder="Full Name" />
-        <Entry x:Name="EmailEntry" Placeholder="Email" IsEnabled="False" />
+    <Grid RowDefinitions="56,*">
 
-        <Button x:Name="ChangePasswordButton" Text="Change Password" Clicked="OnChangePasswordClicked"/>
-        <Button x:Name="SaveButton" Text="Save" Clicked="OnSaveClicked"/>
+        <!-- Top Bar -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*"
+              Padding="16,10">
 
-        <Button Text="Log Out" Clicked="OnLogoutClicked" />
-    </VerticalStackLayout>
+            <Button Text="‹ Back"
+                    FontSize="16"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+                   Text="Edit Profile"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+        </Grid>
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16" Spacing="14">
+
+                <!-- Name -->
+                <Label Text="Name"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+                <Entry x:Name="NameEntry"
+                       Placeholder="Enter your name" />
+
+                <!-- Email -->
+                <Label Text="Email"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+                <Entry x:Name="EmailEntry"
+                       Placeholder="Email"
+                       Keyboard="Email"
+                       IsEnabled="False" />
+
+                <!-- Change Password -->
+                <Button x:Name="ChangePasswordButton"
+                        Text="Change Password"
+                        Clicked="OnChangePasswordClicked" />
+
+                <!-- Save -->
+                <Button x:Name="SaveButton"
+                        Text="Save"
+                        Clicked="OnSaveClicked" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
 </ContentPage>

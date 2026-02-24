@@ -2,11 +2,12 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     x:Class="E_Book.Pages.ReadingPage"
     shell:Shell.NavBarIsVisible="False"
+    Padding="0"
     BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
-
+    
     <Grid RowDefinitions="56,*,34">
 
         <!-- Top Bar -->
@@ -14,7 +15,9 @@
               Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
               Padding="16,10"
-              BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+              Opacity="1"
+              TranslationY="0"
+              BackgroundColor="Transparent">
 
             <Button x:Name="BackButton"
                     Text="‹ Back"
@@ -173,14 +176,16 @@
                                TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"/>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                            <Button Text="☀ Light"
+                            <Button x:Name="LightBtn"
+                                    Text="☀ Light"
                                     Clicked="OnThemeClicked"
                                     CommandParameter="Light"
                                     Pressed="OnButtonPressed"
                                     Released="OnButtonReleased"
                                     CornerRadius="14"/>
 
-                            <Button Grid.Column="1"
+                            <Button x:Name="DarkBtn"
+                                    Grid.Column="1"
                                     Text="☾ Dark"
                                     Clicked="OnThemeClicked"
                                     CommandParameter="Dark"
