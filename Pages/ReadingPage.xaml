@@ -5,12 +5,13 @@
     xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     x:Class="E_Book.Pages.ReadingPage"
     shell:Shell.NavBarIsVisible="False"
+    shell:Shell.TabBarIsVisible="False"
     Padding="0"
     BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
-    
-    <Grid RowDefinitions="56,*,34">
 
-        <!-- Top Bar -->
+    <Grid RowDefinitions="Auto,*,34">
+
+        <!-- Top Bar (Auto height, will get status bar padding from code-behind) -->
         <Grid x:Name="TopBar"
               Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
@@ -196,7 +197,6 @@
 
                     </VerticalStackLayout>
                 </ScrollView>
-
             </Border>
 
         </AbsoluteLayout>

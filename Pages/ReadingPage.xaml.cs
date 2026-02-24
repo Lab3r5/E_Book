@@ -16,6 +16,8 @@ using RtfPipe;
 
 namespace E_Book.Pages
 {
+    // ✅ Shell route: reading?filePath=...
+    [QueryProperty(nameof(FilePath), "filePath")]
     public partial class ReadingPage : ContentPage
     {
         // -----------------------------
@@ -31,7 +33,14 @@ namespace E_Book.Pages
         private List<string> htmlPages = new();
         private readonly List<string> htmlPageKeys = new(); // Used for EPUB href mapping
 
-        public string FilePath { get; set; } = string.Empty;
+        // ✅ QueryProperty target
+        private string _filePath = string.Empty;
+        public string FilePath
+        {
+            get => _filePath;
+            set => _filePath = Uri.UnescapeDataString(value ?? string.Empty);
+        }
+
         private readonly Database dbHelper = new();
 
         // Font presets
@@ -78,18 +87,11 @@ namespace E_Book.Pages
         private readonly List<TocItem> tocItems = new();
 
         // -----------------------------
-        // Constructors
+        // Constructor
         // -----------------------------
         public ReadingPage()
         {
             InitializeComponent();
-            SetupGestures();
-        }
-
-        public ReadingPage(string filePath)
-        {
-            InitializeComponent();
-            FilePath = filePath ?? string.Empty;
             SetupGestures();
         }
 
@@ -162,6 +164,12 @@ namespace E_Book.Pages
                 {
                     await DisplayAlert("Error", ex.Message, "OK");
                 }
+            }
+            else
+            {
+                ShowTxtView();
+                fileContentLabel.Text = "No file selected.";
+                UpdateProgressUI();
             }
         }
 
@@ -615,7 +623,7 @@ namespace E_Book.Pages
 
             if (choice == "Go to page…")
             {
-                // ✅ 兼容所有 MAUI 版本：不传 keyboard，避免 CS1503
+                // Compatible prompt
                 string? input = await DisplayPromptAsync(
                     title: "Go to",
                     message: $"Enter page/chapter number (1 - {total})",
@@ -991,7 +999,15 @@ namespace E_Book.Pages
         // -----------------------------
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
-            // 兼容 PushModalAsync(new NavigationPage(...)) / PushAsync(...)
+            // ✅ Shell modal back
+            try
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+            catch { }
+
+            // fallback
             try
             {
                 if (Navigation.ModalStack.Count > 0)
@@ -999,10 +1015,7 @@ namespace E_Book.Pages
                 else
                     await Navigation.PopAsync();
             }
-            catch
-            {
-                try { await Navigation.PopAsync(); } catch { }
-            }
+            catch { }
         }
 
         private async void OnButtonPressed(object sender, EventArgs e)
@@ -1205,14 +1218,12 @@ namespace E_Book.Pages
         {
             themeMode = mode == "Dark" ? "Dark" : "Light";
 
-            // 让 XAML 的 AppThemeBinding 生效
+            // let AppThemeBinding work
             Application.Current!.UserAppTheme =
                 themeMode == "Dark" ? AppTheme.Dark : AppTheme.Light;
 
-            // 主题变化时，字体按钮配色也要刷新（因为 dark 下反色）
             UpdateFontButtonStyles();
 
-            // WebView 内容用 WrapHtml，因此也需要刷新
             if (this.mode == ReaderMode.HtmlPaged && htmlPages.Count > 0)
                 DisplayHtmlPage();
         }

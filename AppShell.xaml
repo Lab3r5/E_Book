@@ -5,20 +5,13 @@
     xmlns:pages="clr-namespace:E_Book.Pages"
     x:Class="E_Book.AppShell">
 
-    <!--
-        LOGIN (NO TABS)
-        - This page is outside the TabBar.
-        - We navigate here using: Shell.Current.GoToAsync("//login")
-    -->
+    <!-- LOGIN -->
     <ShellContent
         Route="login"
+        Shell.NavBarIsVisible="False"
         ContentTemplate="{DataTemplate pages:LoginPage}" />
 
-    <!--
-        MAIN TABS (TabBar visible ONLY here)
-        - Only these three pages should show the TabBar.
-        - We navigate between tabs using routes like: //tabs/bookshelf, //tabs/search, //tabs/settings
-    -->
+    <!-- MAIN TABS -->
     <TabBar Route="tabs">
 
         <ShellContent
@@ -38,16 +31,9 @@
             Route="settings"
             Icon="tab_settings.png"
             ContentTemplate="{DataTemplate pages:SettingsHomePage}" />
-
     </TabBar>
 
-    <!--
-        SUB PAGES (NO TAB BAR)
-        - These pages are declared as ShellContent OUTSIDE the TabBar.
-        - PresentationMode is set to ModalAnimated, so they open full-screen without TabBar.
-        - You can navigate using: Shell.Current.GoToAsync("appearance") / "help" / "edit-profile" / etc.
-    -->
-
+    <!-- SUB PAGES (MODAL) -->
     <ShellContent
         Route="signup"
         Shell.PresentationMode="ModalAnimated"

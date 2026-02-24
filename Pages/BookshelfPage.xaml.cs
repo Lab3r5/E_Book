@@ -116,7 +116,6 @@ namespace E_Book.Pages
                 Format = GetFormatTag(f)
             }).ToList();
 
-            // Only update if changed (by filename order)
             bool same = Books.Count == list.Count &&
                         !Books.Where((t, i) => t.FileName != list[i].FileName).Any();
 
@@ -155,7 +154,7 @@ namespace E_Book.Pages
                         "text/html",
                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         "application/rtf",
-                        "*/*" // fallback; we validate extension after picking
+                        "*/*"
                     }
                 },
                 {
@@ -192,7 +191,6 @@ namespace E_Book.Pages
 
             string targetPath = Path.Combine(LibraryPath, result.FileName);
 
-            // Prevent duplicates
             if (File.Exists(targetPath))
             {
                 await DisplayAlert("Notice", "This file has already been imported!", "OK");
@@ -201,7 +199,6 @@ namespace E_Book.Pages
 
             await SaveFileToLibrary(result, targetPath);
 
-            // Reload to keep order consistent
             LoadSavedFiles();
         }
 
@@ -226,6 +223,7 @@ namespace E_Book.Pages
             }
         }
 
+        // ✅ FIX: Open ReadingPage via Shell route (ModalAnimated), NOT NavigationPage
         private async void OnFileClicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is BookItem book)
@@ -236,8 +234,9 @@ namespace E_Book.Pages
                     LoadSavedFiles();
                     return;
                 }
-                // Open as MODAL so TabBar will NOT appear
-                await Navigation.PushModalAsync(new NavigationPage(new ReadingPage(book.FullPath)));
+
+                var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(route);
             }
         }
 
@@ -272,6 +271,6 @@ namespace E_Book.Pages
     {
         public string FileName { get; set; } = "";
         public string FullPath { get; set; } = "";
-        public string Format { get; set; } = ""; // TXT/EPUB/PDF/HTML/DOCX/RTF
+        public string Format { get; set; } = "";
     }
 }

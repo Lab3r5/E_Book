@@ -2,19 +2,32 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
     x:Class="E_Book.Pages.LoginPage"
-    Title="Login"
-    Padding="24">
+    shell:Shell.NavBarIsVisible="False"
+    Padding="24"
+    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
 
     <VerticalStackLayout Spacing="14" VerticalOptions="Center">
-        <Label Text="Welcome Back" FontSize="28" FontAttributes="Bold" />
+        <Label Text="Welcome Back"
+               FontSize="28"
+               FontAttributes="Bold"
+               TextColor="{AppThemeBinding Light=#2E2A3B, Dark=#EDEAF6}"/>
 
-        <Entry x:Name="EmailEntry" Placeholder="Email" Keyboard="Email" />
-        <Entry x:Name="PasswordEntry" Placeholder="Password" IsPassword="True" />
+        <Entry x:Name="EmailEntry"
+               Placeholder="Email"
+               Keyboard="Email"
+               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
+               PlaceholderColor="{AppThemeBinding Light=#A9A4B8, Dark=#7B7688}"/>
+
+        <Entry x:Name="PasswordEntry"
+               Placeholder="Password"
+               IsPassword="True"
+               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
+               PlaceholderColor="{AppThemeBinding Light=#A9A4B8, Dark=#7B7688}"/>
 
         <Button Text="Log In" Clicked="OnLoginClicked" />
         <Button Text="Continue as Guest" Clicked="OnGuestClicked" />
-
         <Button Text="Sign Up" Clicked="OnSignUpClicked" />
     </VerticalStackLayout>
 </ContentPage>
