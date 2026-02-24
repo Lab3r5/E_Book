@@ -23,17 +23,17 @@ namespace E_Book.Pages
 
         private async void OnEditProfileClicked(object sender, EventArgs e)
         {
-            await Navigation.PushModalAsync(new NavigationPage(new EditProfilePage()));
+            await Shell.Current.GoToAsync("edit-profile");
         }
 
         private async void OnAppearanceClicked(object sender, EventArgs e)
         {
-            await Navigation.PushModalAsync(new NavigationPage(new AppearancePage()));
+            await Shell.Current.GoToAsync("appearance");
         }
 
         private async void OnHelpClicked(object sender, EventArgs e)
         {
-            await Navigation.PushModalAsync(new NavigationPage(new HelpSupportPage()));
+            await Shell.Current.GoToAsync("help");
         }
 
         private async void OnLogoutClicked(object sender, EventArgs e)
