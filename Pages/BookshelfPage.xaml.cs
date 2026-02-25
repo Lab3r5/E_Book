@@ -116,14 +116,8 @@ namespace E_Book.Pages
                 Format = GetFormatTag(f)
             }).ToList();
 
-            bool same = Books.Count == list.Count &&
-                        !Books.Where((t, i) => t.FileName != list[i].FileName).Any();
-
-            if (!same)
-            {
-                Books.Clear();
-                foreach (var b in list) Books.Add(b);
-            }
+            Books.Clear();
+            foreach (var b in list) Books.Add(b);
         }
 
         private static string GetFormatTag(string path)

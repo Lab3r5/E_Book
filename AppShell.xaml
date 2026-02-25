@@ -3,7 +3,12 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:E_Book.Pages"
-    x:Class="E_Book.AppShell">
+    x:Class="E_Book.AppShell"
+    Shell.FlyoutBehavior="Disabled"
+
+    Shell.TabBarBackgroundColor="#FFFFFF"
+    Shell.TabBarTitleColor="#2B2452"
+    Shell.TabBarUnselectedColor="#B7B3C6">
 
     <!-- LOGIN -->
     <ShellContent
@@ -15,7 +20,7 @@
     <TabBar Route="tabs">
 
         <ShellContent
-            Title="Bookshelf"
+            Title="My Library"
             Route="bookshelf"
             Icon="tab_bookshelf.png"
             ContentTemplate="{DataTemplate pages:BookshelfPage}" />

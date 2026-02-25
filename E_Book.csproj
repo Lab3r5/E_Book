@@ -51,6 +51,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AndroidResource Remove="Platforms\Android\Resources\drawable\tab_item_bg.xml" />
+    <AndroidResource Remove="Platforms\Android\Resources\drawable\tab_item_ripple.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Mammoth" Version="1.11.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
