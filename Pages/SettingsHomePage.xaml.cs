@@ -13,46 +13,31 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            // Update profile summary
             NameLabel.Text = UserSession.DisplayName;
-
-            // Guest does not show account info
             EmailLabel.Text = UserSession.IsGuest ? "" : UserSession.UserId;
             EmailLabel.IsVisible = !UserSession.IsGuest;
         }
 
         private async void OnEditProfileClicked(object sender, EventArgs e)
         {
-            // Open as MODAL so TabBar will NOT appear on the sub page
-            await Navigation.PushModalAsync(new NavigationPage(new EditProfilePage()));
+            await Shell.Current.GoToAsync("edit-profile");
         }
 
         private async void OnAppearanceClicked(object sender, EventArgs e)
         {
-            // Open as MODAL so TabBar will NOT appear on the sub page
-            await Navigation.PushModalAsync(new NavigationPage(new AppearancePage()));
+            await Shell.Current.GoToAsync("appearance");
         }
 
         private async void OnHelpClicked(object sender, EventArgs e)
         {
-            // Open as MODAL so TabBar will NOT appear on the sub page
-            await Navigation.PushModalAsync(new NavigationPage(new HelpSupportPage()));
+            await Shell.Current.GoToAsync("help");
         }
 
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             UserSession.Logout();
 
-            // If any modal pages are open, close them first (safety net)
-            if (Application.Current?.MainPage is Page mainPage)
-            {
-                while (mainPage.Navigation.ModalStack.Count > 0)
-                {
-                    await mainPage.Navigation.PopModalAsync(false);
-                }
-            }
-
-            // Go to login (Shell absolute route)
+            // 回到 login（绝对路由）
             await Shell.Current.GoToAsync("//login");
         }
     }

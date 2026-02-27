@@ -35,5 +35,10 @@ namespace E_Book.Services
             Preferences.Remove(KeyIsGuest);
             Preferences.Remove(KeyDisplayName);
         }
+
+        public static void UpdateDisplayName(string displayName)
+        {
+            Preferences.Set(KeyDisplayName, displayName);
+        }
     }
 }

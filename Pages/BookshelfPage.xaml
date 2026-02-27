@@ -95,7 +95,7 @@
 
                                     <!-- Delete -->
                                     <Button Grid.Column="2"
-                                            Text="X"
+                                            Text="DEL"
                                             FontSize="14"
                                             Padding="18,10"
                                             CornerRadius="12"

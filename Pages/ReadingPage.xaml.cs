@@ -999,6 +999,12 @@ namespace E_Book.Pages
         // -----------------------------
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
+            try
+            {
+                await SaveReadingProgress();
+                await SaveCurrentReadingSettings();
+            }
+            catch { }
             // ✅ Shell modal back
             try
             {
@@ -1024,6 +1030,17 @@ namespace E_Book.Pages
             {
                 try { await v.ScaleTo(0.96, 80, Easing.CubicOut); } catch { }
             }
+        }
+
+        protected override async void OnDisappearing()
+        {
+            base.OnDisappearing();
+            try
+            {
+                await SaveReadingProgress();
+                await SaveCurrentReadingSettings();
+            }
+            catch { }
         }
 
         private async void OnButtonReleased(object sender, EventArgs e)
@@ -1209,7 +1226,7 @@ namespace E_Book.Pages
             if (string.IsNullOrWhiteSpace(stored)) return "Light";
             stored = stored.Trim();
 
-            if (stored.Equals("Light", StringComparison.OrdinalIgnoreCase)) return "Light";
+            if (stored.StartsWith("#")) return "Light";
             if (stored.Equals("Dark", StringComparison.OrdinalIgnoreCase)) return "Dark";
             return "Light";
         }

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
+using E_Book.Services;
+using E_Book.Models;
 
 namespace E_Book.Pages
 {
@@ -13,18 +14,10 @@ namespace E_Book.Pages
     {
         public ObservableCollection<BookItem> Books { get; set; } = new();
 
-        private readonly string LibraryPath;
-
-        private static readonly string[] SupportedExtensions =
-        {
-            ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf"
-        };
-
         public BookshelfPage()
         {
             InitializeComponent();
 
-            LibraryPath = Path.Combine(FileSystem.AppDataDirectory, "Library");
             EnsureLibraryExists();
 
             BindingContext = this;
@@ -33,11 +26,12 @@ namespace E_Book.Pages
 
         private void EnsureLibraryExists()
         {
-            if (!Directory.Exists(LibraryPath))
-                Directory.CreateDirectory(LibraryPath);
+            // ✅ 统一走 LibraryService
+            LibraryService.EnsureLibraryExists();
 
-            // Create a default usage guide (first time run only)
-            string guidePath = Path.Combine(LibraryPath, "Usage Guidelines.txt");
+            // ✅ Usage Guidelines 放到同一个 Library 目录
+            string guidePath = Path.Combine(LibraryService.LibraryPath, "Usage Guidelines.txt");
+
             if (!File.Exists(guidePath))
             {
                 string guideContent = """
@@ -95,43 +89,19 @@ namespace E_Book.Pages
                 Thank you for using E_Book!
                 Enjoy a simple, flexible, and focused reading experience.
                 """;
+
                 File.WriteAllText(guidePath, guideContent);
             }
         }
 
+        // ✅ 按你的要求：完全用 LibraryService.LoadBooks()
         private void LoadSavedFiles()
         {
-            if (!Directory.Exists(LibraryPath))
-                Directory.CreateDirectory(LibraryPath);
-
-            var files = Directory.GetFiles(LibraryPath)
-                                 .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                                 .OrderBy(f => Path.GetFileName(f))
-                                 .ToList();
-
-            var list = files.Select(f => new BookItem
-            {
-                FileName = Path.GetFileName(f),
-                FullPath = f,
-                Format = GetFormatTag(f)
-            }).ToList();
+            var list = LibraryService.LoadBooks();
 
             Books.Clear();
-            foreach (var b in list) Books.Add(b);
-        }
-
-        private static string GetFormatTag(string path)
-        {
-            return Path.GetExtension(path).ToLowerInvariant() switch
-            {
-                ".txt" => "TXT",
-                ".epub" => "EPUB",
-                ".pdf" => "PDF",
-                ".html" or ".htm" => "HTML",
-                ".docx" => "DOCX",
-                ".rtf" => "RTF",
-                _ => "FILE"
-            };
+            foreach (var b in list)
+                Books.Add(b);
         }
 
         private static FilePickerFileType BuildPickerTypes()
@@ -177,13 +147,14 @@ namespace E_Book.Pages
             if (result == null) return;
 
             var ext = Path.GetExtension(result.FileName)?.ToLowerInvariant() ?? "";
-            if (!SupportedExtensions.Contains(ext))
+            if (!LibraryService.SupportedExtensions.Contains(ext))
             {
                 await DisplayAlert("Not supported", $"Unsupported file type: {ext}", "OK");
                 return;
             }
 
-            string targetPath = Path.Combine(LibraryPath, result.FileName);
+            // ✅ 按你的要求：用 LibraryService.LibraryPath
+            string targetPath = Path.Combine(LibraryService.LibraryPath, result.FileName);
 
             if (File.Exists(targetPath))
             {
@@ -193,6 +164,7 @@ namespace E_Book.Pages
 
             await SaveFileToLibrary(result, targetPath);
 
+            // ✅ 重新加载（确保顺序/格式一致）
             LoadSavedFiles();
         }
 
@@ -203,13 +175,6 @@ namespace E_Book.Pages
                 using var stream = await file.OpenReadAsync();
                 using var newFileStream = File.Create(targetPath);
                 await stream.CopyToAsync(newFileStream);
-
-                Books.Add(new BookItem
-                {
-                    FileName = Path.GetFileName(targetPath),
-                    FullPath = targetPath,
-                    Format = GetFormatTag(targetPath)
-                });
             }
             catch (Exception ex)
             {
@@ -217,7 +182,7 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ FIX: Open ReadingPage via Shell route (ModalAnimated), NOT NavigationPage
+        // ✅ Open ReadingPage via Shell route
         private async void OnFileClicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is BookItem book)
@@ -246,7 +211,8 @@ namespace E_Book.Pages
                     if (File.Exists(book.FullPath))
                         File.Delete(book.FullPath);
 
-                    Books.Remove(book);
+                    // ✅ 删除后重新加载（避免残留/排序问题）
+                    LoadSavedFiles();
                 }
                 catch (Exception ex)
                 {
@@ -259,12 +225,5 @@ namespace E_Book.Pages
         {
             await Shell.Current.GoToAsync("//settings");
         }
-    }
-
-    public class BookItem
-    {
-        public string FileName { get; set; } = "";
-        public string FullPath { get; set; } = "";
-        public string Format { get; set; } = "";
     }
 }

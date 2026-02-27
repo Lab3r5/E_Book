@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using E_Book.Services;
+using E_Book.Models;
 
 namespace E_Book.Pages
 {
@@ -47,7 +48,7 @@ namespace E_Book.Pages
                 };
                 textBtn.Clicked += (_, __) =>
                 {
-                    SearchBar.Text = keyword;
+                    SearchBarBox.Text = keyword;
                     DoSearch(keyword);
                 };
 
@@ -77,19 +78,19 @@ namespace E_Book.Pages
         {
             if (sender is Button b)
             {
-                SearchBar.Text = b.Text;
+                SearchBarBox.Text = b.Text;
                 DoSearch(b.Text);
             }
         }
 
         private void OnSearchPressed(object sender, EventArgs e)
         {
-            DoSearch(SearchBar.Text ?? "");
+            DoSearch(SearchBarBox.Text ?? "");
         }
 
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
-            // 你规则：输入不记录历史，所以这里不写历史
+            // 规则：输入不记录历史
         }
 
         private void DoSearch(string keyword)
@@ -103,7 +104,6 @@ namespace E_Book.Pages
                 return;
             }
 
-            // ✅ 演示用：先模拟“有结果/无结果”
             if (keyword.Length < 3)
             {
                 StatusLabel.Text = "No search results. Try a different keyword.";
@@ -116,18 +116,13 @@ namespace E_Book.Pages
             Results.Add(new SearchResultItem { Title = $"{keyword} (Illustrated)", Author = "Unknown Author" });
         }
 
-        /// <summary>
-        /// 关键：只有点击Read，才写入历史（符合你规则）
-        /// </summary>
         private async void OnReadClicked(object sender, EventArgs e)
         {
             if (sender is Button btn && btn.CommandParameter is SearchResultItem item)
             {
-                // 写入历史（最多7条、去重、最新在前）
-                SearchHistoryStore.AddOnRead(UserSession.UserId, SearchBar.Text ?? item.Title);
+                SearchHistoryStore.AddOnRead(UserSession.UserId, SearchBarBox.Text ?? item.Title);
                 RenderHistory();
 
-                // TODO：这里后面换成真正打开书籍/阅读页
                 await DisplayAlert("Read", $"Open: {item.Title}", "OK");
             }
         }

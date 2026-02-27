@@ -16,18 +16,15 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            // Load saved name (per user)
             var savedName = Preferences.Get(ProfileKey, UserSession.DisplayName);
 
             NameEntry.Text = savedName;
             EmailEntry.Text = UserSession.IsGuest ? "" : UserSession.UserId;
 
-            // Guest: hide account-related UI
             EmailEntry.IsVisible = !UserSession.IsGuest;
             ChangePasswordButton.IsVisible = !UserSession.IsGuest;
             SaveButton.IsVisible = !UserSession.IsGuest;
 
-            // Guest: lock editing
             if (UserSession.IsGuest)
             {
                 NameEntry.IsEnabled = false;
@@ -35,20 +32,24 @@ namespace E_Book.Pages
             }
         }
 
-        // Close this modal page
         private async void OnBackClicked(object sender, EventArgs e)
         {
+            // ✅ Prefer Shell back
+            try { await Shell.Current.GoToAsync(".."); return; } catch { }
             await Navigation.PopModalAsync();
         }
 
         private async void OnChangePasswordClicked(object sender, EventArgs e)
         {
-            // Push into the modal NavigationPage stack
-            await Navigation.PushAsync(new PasswordPage());
+            // ✅ Use Shell route (PasswordPage is a ShellContent route)
+            await Shell.Current.GoToAsync("password");
         }
 
         private async void OnSaveClicked(object sender, EventArgs e)
         {
+            if (UserSession.IsGuest)
+                return;
+
             var name = NameEntry.Text?.Trim() ?? "";
             if (name.Length == 0)
             {
@@ -58,12 +59,12 @@ namespace E_Book.Pages
 
             Preferences.Set(ProfileKey, name);
 
-            // Sync display name in session
-            UserSession.SetUser(UserSession.UserId, name);
+            // ✅ Only update display name, don't flip guest flag
+            UserSession.UpdateDisplayName(name);
 
             await DisplayAlert("Saved", "Profile updated.", "OK");
 
-            // Close this modal page
+            try { await Shell.Current.GoToAsync(".."); return; } catch { }
             await Navigation.PopModalAsync();
         }
     }

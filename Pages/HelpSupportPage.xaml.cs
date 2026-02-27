@@ -7,9 +7,9 @@ namespace E_Book.Pages
             InitializeComponent();
         }
 
-        // Close this modal page
         private async void OnBackClicked(object sender, EventArgs e)
         {
+            try { await Shell.Current.GoToAsync(".."); return; } catch { }
             await Navigation.PopModalAsync();
         }
 

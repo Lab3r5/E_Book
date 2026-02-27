@@ -195,7 +195,7 @@ namespace E_Book.Data
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
         public int FontSize { get; set; } = 18;
-        public string BackgroundColor { get; set; } = "#FFF8E8";
+        public string BackgroundColor { get; set; } = "Light";
     }
 
     public class ReadingProgress
