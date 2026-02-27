@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using E_Book.Services;
-using E_Book.Models;
 
 namespace E_Book.Pages
 {
@@ -27,36 +26,18 @@ namespace E_Book.Pages
             HistoryContainer.Children.Clear();
             HistorySection.IsVisible = list.Count > 0;
 
-            if (list.Count == 0) return;
-
             foreach (var keyword in list)
             {
-                var chip = new Grid
-                {
-                    ColumnDefinitions = new ColumnDefinitionCollection
-                    {
-                        new ColumnDefinition{ Width = GridLength.Auto },
-                        new ColumnDefinition{ Width = GridLength.Auto }
-                    },
-                    Padding = new Thickness(10, 6),
-                };
+                var chip = new HorizontalStackLayout { Spacing = 6 };
 
-                var textBtn = new Button
-                {
-                    Text = keyword,
-                    Padding = new Thickness(10, 6),
-                };
+                var textBtn = new Button { Text = keyword, Padding = new Thickness(10, 6) };
                 textBtn.Clicked += (_, __) =>
                 {
                     SearchBarBox.Text = keyword;
                     DoSearch(keyword);
                 };
 
-                var delBtn = new Button
-                {
-                    Text = "✕",
-                    Padding = new Thickness(10, 6),
-                };
+                var delBtn = new Button { Text = "✕", Padding = new Thickness(10, 6) };
                 delBtn.Clicked += async (_, __) =>
                 {
                     bool ok = await DisplayAlert("Delete", $"Delete history \"{keyword}\"?", "Yes", "No");
@@ -66,9 +47,8 @@ namespace E_Book.Pages
                     RenderHistory();
                 };
 
-                chip.Add(textBtn);
-                chip.Add(delBtn);
-                Grid.SetColumn(delBtn, 1);
+                chip.Children.Add(textBtn);
+                chip.Children.Add(delBtn);
 
                 HistoryContainer.Children.Add(chip);
             }
@@ -104,6 +84,7 @@ namespace E_Book.Pages
                 return;
             }
 
+            // 演示用：小于3个字符当作无结果
             if (keyword.Length < 3)
             {
                 StatusLabel.Text = "No search results. Try a different keyword.";

@@ -14,15 +14,11 @@
                    TextChanged="OnSearchTextChanged" />
 
         <!-- History（无记录时隐藏） -->
-        <VerticalStackLayout x:Name="HistorySection"
-                             IsVisible="False"
-                             Spacing="8">
+        <VerticalStackLayout x:Name="HistorySection" IsVisible="False" Spacing="8">
             <Label Text="History" FontAttributes="Bold" />
 
-            <!-- 可滑动，不撑页面 -->
             <ScrollView Orientation="Horizontal">
-                <HorizontalStackLayout x:Name="HistoryContainer"
-                                       Spacing="8" />
+                <HorizontalStackLayout x:Name="HistoryContainer" Spacing="8" />
             </ScrollView>
         </VerticalStackLayout>
 
@@ -36,14 +32,14 @@
 
         <Label x:Name="StatusLabel" Text="" Opacity="0.7" />
 
-        <!-- 搜索结果列表（演示/书库搜索都可用） -->
+        <!-- 搜索结果列表（演示版） -->
         <CollectionView x:Name="ResultList" SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border StrokeThickness="1" Padding="12" Margin="0,6">
                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                            <Label Text="{Binding FileName}" FontAttributes="Bold" />
-                            <Label Grid.Row="1" Text="{Binding Format}" Opacity="0.7"/>
+                            <Label Text="{Binding Title}" FontAttributes="Bold" />
+                            <Label Grid.Row="1" Text="{Binding Author}" Opacity="0.7"/>
 
                             <Button Grid.Column="1" Grid.RowSpan="2"
                                     Text="Read"
