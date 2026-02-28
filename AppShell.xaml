@@ -4,11 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:E_Book.Pages"
     x:Class="E_Book.AppShell"
-    Shell.FlyoutBehavior="Disabled"
-
-    Shell.TabBarBackgroundColor="#FFFFFF"
-    Shell.TabBarTitleColor="#2B2452"
-    Shell.TabBarUnselectedColor="#B7B3C6">
+    Shell.FlyoutBehavior="Disabled">
 
     <!-- LOGIN -->
     <ShellContent
@@ -18,7 +14,6 @@
 
     <!-- MAIN TABS -->
     <TabBar Route="tabs">
-
         <ShellContent
             Title="My Library"
             Route="bookshelf"
@@ -39,34 +34,10 @@
     </TabBar>
 
     <!-- SUB PAGES (MODAL) -->
-    <ShellContent
-        Route="signup"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:SignUpPage}" />
-
-    <ShellContent
-        Route="edit-profile"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:EditProfilePage}" />
-
-    <ShellContent
-        Route="appearance"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:AppearancePage}" />
-
-    <ShellContent
-        Route="help"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:HelpSupportPage}" />
-
-    <ShellContent
-        Route="password"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:PasswordPage}" />
-
-    <ShellContent
-        Route="reading"
-        Shell.PresentationMode="ModalAnimated"
-        ContentTemplate="{DataTemplate pages:ReadingPage}" />
-
+    <ShellContent Route="signup"        Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:SignUpPage}" />
+    <ShellContent Route="edit-profile"  Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:EditProfilePage}" />
+    <ShellContent Route="appearance"    Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:AppearancePage}" />
+    <ShellContent Route="help"          Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:HelpSupportPage}" />
+    <ShellContent Route="password"      Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:PasswordPage}" />
+    <ShellContent Route="reading"       Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:ReadingPage}" />
 </Shell>

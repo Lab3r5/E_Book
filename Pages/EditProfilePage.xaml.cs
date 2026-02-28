@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using E_Book.Services;
 using Microsoft.Maui.Storage;
 
@@ -21,34 +22,53 @@ namespace E_Book.Pages
             NameEntry.Text = savedName;
             EmailEntry.Text = UserSession.IsGuest ? "" : UserSession.UserId;
 
-            EmailEntry.IsVisible = !UserSession.IsGuest;
-            ChangePasswordButton.IsVisible = !UserSession.IsGuest;
-            SaveButton.IsVisible = !UserSession.IsGuest;
-
+            // Guest 不允许编辑
             if (UserSession.IsGuest)
             {
                 NameEntry.IsEnabled = false;
                 NameEntry.Text = "Guest";
+
+                SaveLabel.IsVisible = false;
+                GuestTip.IsVisible = true;
+
+                EmailEntry.IsVisible = false;
+                PasswordDots.IsVisible = false;
+            }
+            else
+            {
+                SaveLabel.IsVisible = true;
+                GuestTip.IsVisible = false;
+
+                EmailEntry.IsVisible = true;
+                PasswordDots.IsVisible = true;
             }
         }
 
-        private async void OnBackClicked(object sender, EventArgs e)
+        private async Task PressAnim(VisualElement view)
         {
-            // ✅ Prefer Shell back
+            if (view == null) return;
+            await view.ScaleTo(0.96, 80, Easing.CubicOut);
+            await view.ScaleTo(1.0, 120, Easing.CubicOut);
+        }
+
+        private async Task GoBackAsync()
+        {
+            // ✅ 优先 Shell 返回（Modal route）
             try { await Shell.Current.GoToAsync(".."); return; } catch { }
             await Navigation.PopModalAsync();
         }
 
-        private async void OnChangePasswordClicked(object sender, EventArgs e)
+        private async void OnCancelTapped(object sender, TappedEventArgs e)
         {
-            // ✅ Use Shell route (PasswordPage is a ShellContent route)
-            await Shell.Current.GoToAsync("password");
+            if (sender is VisualElement v) await PressAnim(v);
+            await GoBackAsync();
         }
 
-        private async void OnSaveClicked(object sender, EventArgs e)
+        private async void OnSaveTapped(object sender, TappedEventArgs e)
         {
-            if (UserSession.IsGuest)
-                return;
+            if (sender is VisualElement v) await PressAnim(v);
+
+            if (UserSession.IsGuest) return;
 
             var name = NameEntry.Text?.Trim() ?? "";
             if (name.Length == 0)
@@ -58,14 +78,28 @@ namespace E_Book.Pages
             }
 
             Preferences.Set(ProfileKey, name);
-
-            // ✅ Only update display name, don't flip guest flag
             UserSession.UpdateDisplayName(name);
 
             await DisplayAlert("Saved", "Profile updated.", "OK");
+            await GoBackAsync();
+        }
 
-            try { await Shell.Current.GoToAsync(".."); return; } catch { }
-            await Navigation.PopModalAsync();
+        private async void OnChangePasswordTapped(object sender, TappedEventArgs e)
+        {
+            if (sender is VisualElement v) await PressAnim(v);
+
+            if (UserSession.IsGuest) return;
+
+            // ✅ 仍然用 Shell route
+            await Shell.Current.GoToAsync("password");
+        }
+
+        private async void OnLogoutTapped(object sender, TappedEventArgs e)
+        {
+            if (sender is VisualElement v) await PressAnim(v);
+
+            // 你按自己的 logout 逻辑替换这段
+            await DisplayAlert("Log Out", "Coming soon.", "OK");
         }
     }
 }

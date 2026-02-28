@@ -2,62 +2,162 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
     x:Class="E_Book.Pages.EditProfilePage"
+    shell:Shell.TabBarIsVisible="False"
+    shell:Shell.NavBarIsVisible="False"
     NavigationPage.HasNavigationBar="False"
     Padding="0"
     BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
-    <Grid RowDefinitions="56,*">
+    <!-- Row0: brand strip | Row1: header | Row2: content -->
+    <Grid RowDefinitions="10,56,*">
 
-        <!-- Top Bar -->
-        <Grid Grid.Row="0"
-              ColumnDefinitions="Auto,*"
-              Padding="16,10">
+        <!-- Brand gradient strip -->
+        <Grid Grid.Row="0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#7A63FF" Offset="0" />
+                    <GradientStop Color="#221551" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+        </Grid>
 
-            <Button Text="‹ Back"
-                    FontSize="16"
-                    BackgroundColor="Transparent"
-                    Padding="0"
-                    Clicked="OnBackClicked"
-                    VerticalOptions="Center" />
+        <!-- Header: Cancel / Title / Save -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="80,*,80"
+              Padding="18,10">
 
+            <!-- Cancel -->
+            <Label x:Name="CancelLabel"
+                   Grid.Column="0"
+                   Text="Cancel"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light=#7A63FF, Dark=#B7B3C6}"
+                   VerticalTextAlignment="Center">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCancelTapped"/>
+                </Label.GestureRecognizers>
+            </Label>
+
+            <!-- Title (perfect center) -->
             <Label Grid.Column="1"
                    Text="Edit Profile"
-                   FontSize="22"
+                   FontSize="18"
                    FontAttributes="Bold"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+                   HorizontalTextAlignment="Center"
+                   VerticalTextAlignment="Center"
+                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+            <!-- Save -->
+            <Label x:Name="SaveLabel"
+                   Grid.Column="2"
+                   Text="Save"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#7A63FF, Dark=White}"
+                   VerticalTextAlignment="Center"
+                   HorizontalTextAlignment="End">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSaveTapped"/>
+                </Label.GestureRecognizers>
+            </Label>
         </Grid>
 
         <!-- Content -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="16" Spacing="14">
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="18" Spacing="14">
 
-                <!-- Name -->
-                <Label Text="Name"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
-                <Entry x:Name="NameEntry"
-                       Placeholder="Enter your name" />
+                <!-- Info Card -->
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}">
 
-                <!-- Email -->
-                <Label Text="Email"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
-                <Entry x:Name="EmailEntry"
-                       Placeholder="Email"
-                       Keyboard="Email"
-                       IsEnabled="False" />
+                    <Grid RowDefinitions="Auto,Auto,Auto"
+                          ColumnDefinitions="*,*"
+                          RowSpacing="14"
+                          ColumnSpacing="14">
 
-                <!-- Change Password -->
-                <Button x:Name="ChangePasswordButton"
-                        Text="Change Password"
-                        Clicked="OnChangePasswordClicked" />
+                        <!-- Full Name -->
+                        <Label Text="Full Name"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                               VerticalTextAlignment="Center"/>
+                        <Entry x:Name="NameEntry"
+                               Grid.Column="1"
+                               Placeholder="Enter your name"
+                               HorizontalTextAlignment="End" />
 
-                <!-- Save -->
-                <Button x:Name="SaveButton"
-                        Text="Save"
-                        Clicked="OnSaveClicked" />
+                        <!-- Email -->
+                        <Label Grid.Row="1"
+                               Text="Email"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                               VerticalTextAlignment="Center"/>
+                        <Entry x:Name="EmailEntry"
+                               Grid.Row="1"
+                               Grid.Column="1"
+                               Placeholder="Email"
+                               Keyboard="Email"
+                               IsEnabled="False"
+                               HorizontalTextAlignment="End" />
+
+                        <!-- Password -->
+                        <Label Grid.Row="2"
+                               Text="Password"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                               VerticalTextAlignment="Center"/>
+
+                        <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label x:Name="PasswordDots"
+                                   Text="••••••••"
+                                   HorizontalTextAlignment="End"
+                                   VerticalTextAlignment="Center"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                   Opacity="0.7"/>
+
+                            <Border Grid.Column="1"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                                    Padding="12,8"
+                                    VerticalOptions="Center">
+                                <Label Text="Change"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnChangePasswordTapped"/>
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Border>
+                        </Grid>
+
+                    </Grid>
+                </Border>
+
+                <!-- Log Out (optional, looks like your mock) -->
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        Padding="16"
+                        Margin="0,6,0,0">
+                    <Label Text="Log Out"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#221551, Dark=White}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnLogoutTapped"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Border>
+
+                <Label x:Name="GuestTip"
+                       IsVisible="False"
+                       Text="Guest account cannot edit profile."
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
 
             </VerticalStackLayout>
         </ScrollView>

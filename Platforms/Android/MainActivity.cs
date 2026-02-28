@@ -153,22 +153,38 @@ namespace E_Book
 
         private void ApplyBaseColors(NavigationBarView bar)
         {
-            bar.SetBackgroundColor(Android.Graphics.Color.White);
+            // 🔥 判断当前是否是 Dark 模式
+            bool isNight =
+                (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
+                == Android.Content.Res.UiMode.NightYes;
+
+            // ✅ 根据模式设置底部栏背景
+            var bgColor = isNight
+                ? Android.Graphics.Color.Rgb(0x19, 0x13, 0x30)  // Gray950
+                : Android.Graphics.Color.White;
+
+            bar.SetBackgroundColor(bgColor);
             bar.Elevation = 0;
             bar.SetClipChildren(false);
             bar.SetClipToPadding(false);
 
-            // 选中白 / 未选中灰
+            // 选中 / 未选中颜色
             var states = new int[][]
             {
-                new int[] { Android.Resource.Attribute.StateChecked },
-                new int[] { -Android.Resource.Attribute.StateChecked }
+        new int[] { Android.Resource.Attribute.StateChecked },
+        new int[] { -Android.Resource.Attribute.StateChecked }
             };
+
+            var selectedColor = Android.Graphics.Color.White;
+
+            var unselectedColor = isNight
+                ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)  // Gray500
+                : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6); // #B7B3C6
 
             var colors = new int[]
             {
-                Android.Graphics.Color.White,
-                Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6) // #B7B3C6
+        selectedColor,
+        unselectedColor
             };
 
             var csl = new Android.Content.Res.ColorStateList(states, colors);

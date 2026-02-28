@@ -2,67 +2,145 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:controls="clr-namespace:E_Book.Controls"
     x:Class="E_Book.Pages.AppearancePage"
+    shell:Shell.TabBarIsVisible="False"
+    shell:Shell.NavBarIsVisible="False"
     NavigationPage.HasNavigationBar="False"
     Padding="0"
     BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
-    <Grid RowDefinitions="56,*">
+    <Grid RowDefinitions="Auto,*">
 
-        <!-- Top Bar -->
-        <Grid Grid.Row="0"
-              ColumnDefinitions="Auto,*"
-              Padding="16,10">
-
-            <Button Text="‹ Back"
-                    FontSize="16"
-                    BackgroundColor="Transparent"
-                    Padding="0"
-                    Clicked="OnBackClicked"
-                    VerticalOptions="Center" />
-
-            <Label Grid.Column="1"
-                   Text="Appearance"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
-        </Grid>
+        <!-- Unified Header -->
+        <controls:AppHeader Title="Appearance"
+                            BackCommand="{Binding BackCommand}" />
 
         <!-- Content -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="16" Spacing="18">
+            <VerticalStackLayout Padding="18" Spacing="16">
 
-                <!-- Theme section -->
                 <Label Text="Theme"
                        FontAttributes="Bold"
                        FontSize="16"
-                       TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}" />
+                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                <HorizontalStackLayout Spacing="12">
-                    <Button Text="Light"
-                            CornerRadius="24"
-                            HeightRequest="56"
-                            Clicked="OnLightClicked" />
+                <!-- Segmented Control (Animated, fixed layout) -->
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 28"
+                        Padding="4"
+                        BackgroundColor="{AppThemeBinding Light=#E4DCF9, Dark=#2A214F}">
 
-                    <Button Text="Dark"
-                            CornerRadius="24"
-                            HeightRequest="56"
-                            Clicked="OnDarkClicked" />
-                </HorizontalStackLayout>
+                    <AbsoluteLayout x:Name="SegmentHost"
+                                    HeightRequest="52">
 
-                <!-- Keep screen on section -->
-                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                    <Label Text="Keep Screen On"
-                           FontSize="16"
-                           TextColor="{AppThemeBinding Light=#201A2B, Dark=#EDEDED}"
-                           VerticalOptions="Center" />
+                        <Border x:Name="SegmentHighlight"
+                                AbsoluteLayout.LayoutBounds="0,0,0.3333,1"
+                                AbsoluteLayout.LayoutFlags="All"
+                                BackgroundColor="#7A63FF"
+                                StrokeShape="RoundRectangle 24" />
 
-                    <Switch x:Name="KeepScreenOnSwitch"
-                            Grid.Column="1"
-                            Toggled="OnKeepScreenOnToggled"
-                            VerticalOptions="Center" />
-                </Grid>
+                        <Grid x:Name="SegmentGrid"
+                              AbsoluteLayout.LayoutBounds="0,0,1,1"
+                              AbsoluteLayout.LayoutFlags="All"
+                              ColumnDefinitions="*,*,*"
+                              ColumnSpacing="0">
+
+                            <Label x:Name="AutoLabel"
+                                   Text="Auto"
+                                   Grid.Column="0"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAutoTapped"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                            <Label x:Name="LightLabel"
+                                   Text="Light"
+                                   Grid.Column="1"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLightTapped"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                            <Label x:Name="DarkLabel"
+                                   Text="Dark"
+                                   Grid.Column="2"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDarkTapped"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                        </Grid>
+                    </AbsoluteLayout>
+                </Border>
+
+                <!-- Auto time settings -->
+                <VerticalStackLayout x:Name="AutoThemeSettings"
+                                     IsVisible="False"
+                                     Spacing="10">
+
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22"
+                            Padding="14"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Light Start"
+                                   FontSize="15"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                   VerticalOptions="Center" />
+                            <TimePicker x:Name="LightStartPicker"
+                                        Grid.Column="1"
+                                        TimeSelected="OnAutoThemeTimeChanged"/>
+                        </Grid>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22"
+                            Padding="14"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Dark Start"
+                                   FontSize="15"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                   VerticalOptions="Center" />
+                            <TimePicker x:Name="DarkStartPicker"
+                                        Grid.Column="1"
+                                        TimeSelected="OnAutoThemeTimeChanged"/>
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Auto mode will follow your time settings."
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                </VerticalStackLayout>
+
+                <!-- Keep screen on -->
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="14"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}">
+                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                        <Label Text="Keep Screen On"
+                               FontSize="15"
+                               TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                               VerticalOptions="Center" />
+
+                        <Switch x:Name="KeepScreenOnSwitch"
+                                Grid.Column="1"
+                                Toggled="OnKeepScreenOnToggled"
+                                VerticalOptions="Center" />
+                    </Grid>
+                </Border>
 
             </VerticalStackLayout>
         </ScrollView>

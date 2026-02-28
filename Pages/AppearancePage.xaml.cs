@@ -1,5 +1,6 @@
-using Microsoft.Maui.Storage;
+using System.Windows.Input;
 using E_Book.Data;
+using E_Book.Services;
 
 namespace E_Book.Pages
 {
@@ -7,60 +8,162 @@ namespace E_Book.Pages
     {
         private readonly Database db = new();
 
+        public ICommand BackCommand { get; }
+
+        private int _currentIndex = -1;
+        private bool _layoutReady = false;
+
         public AppearancePage()
         {
             InitializeComponent();
+
+            BackCommand = new Command(async () =>
+            {
+                try { await Shell.Current.GoToAsync(".."); return; } catch { }
+                await Navigation.PopModalAsync();
+            });
+
+            BindingContext = this;
+
+            SizeChanged += (_, __) =>
+            {
+                if (_layoutReady) return;
+                if (SegmentHost.Width <= 0) return;
+
+                _layoutReady = true;
+                _ = SyncFromStoredMode(animated: false);
+            };
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
 
-            // 1) Keep Screen On：从DB读
             var user = await db.GetUserSettingsAsync();
             DeviceDisplay.KeepScreenOn = user.KeepScreenOn;
             KeepScreenOnSwitch.IsToggled = user.KeepScreenOn;
 
-            // 2) Theme：从DB读（ReadingSettings.BackgroundColor 存 Light/Dark）
-            var reading = await db.GetReadingSettingsAsync();
-            var theme = NormalizeTheme(reading.BackgroundColor);
+            LightStartPicker.Time = ThemeScheduler.LightStart;
+            DarkStartPicker.Time = ThemeScheduler.DarkStart;
 
-            Application.Current!.UserAppTheme = theme == "Dark" ? AppTheme.Dark : AppTheme.Light;
+            ThemeScheduler.StartTimer();
+            ThemeScheduler.ApplyNow();
+
+            _ = SyncFromStoredMode(animated: false);
         }
 
-        private static string NormalizeTheme(string stored)
+        private Color GetUnselectedTextColor()
         {
-            if (string.IsNullOrWhiteSpace(stored)) return "Light";
-            stored = stored.Trim();
-
-            // 兼容旧值：如果是颜色值（#xxxxxx）就当 Light
-            if (stored.StartsWith("#")) return "Light";
-
-            if (stored.Equals("Dark", StringComparison.OrdinalIgnoreCase)) return "Dark";
-            return "Light";
+            return (Application.Current?.UserAppTheme == AppTheme.Dark)
+                ? Colors.White
+                : Color.FromArgb("#221551");
         }
 
-        private async void OnBackClicked(object sender, EventArgs e)
+        private void UpdateSegmentTextColors(int index)
         {
-            // 兼容 Shell Modal / Navigation Modal
-            try { await Shell.Current.GoToAsync(".."); return; } catch { }
-            await Navigation.PopModalAsync();
+            var unselected = GetUnselectedTextColor();
+
+            AutoLabel.TextColor = index == 0 ? Colors.White : unselected;
+            LightLabel.TextColor = index == 1 ? Colors.White : unselected;
+            DarkLabel.TextColor = index == 2 ? Colors.White : unselected;
         }
 
-        private async void OnLightClicked(object sender, EventArgs e)
+        private int ModeToIndex(ThemeScheduler.ThemeMode mode) => mode switch
         {
-            Application.Current!.UserAppTheme = AppTheme.Light;
+            ThemeScheduler.ThemeMode.Auto => 0,
+            ThemeScheduler.ThemeMode.Light => 1,
+            ThemeScheduler.ThemeMode.Dark => 2,
+            _ => 0
+        };
 
+        private async Task MoveSegmentAsync(int index, bool animated = true)
+        {
+            if (SegmentHost.Width <= 0) return;
+
+            double cellWidth = SegmentHost.Width / 3.0;
+            double targetX = cellWidth * index;
+
+            if (!animated)
+            {
+                SegmentHighlight.TranslationX = targetX;
+                _currentIndex = index;
+                UpdateSegmentTextColors(index);
+                return;
+            }
+
+            if (_currentIndex == index) return;
+
+            await Task.WhenAll(
+                SegmentHighlight.TranslateTo(targetX, 0, 240, Easing.CubicOut),
+                SegmentHighlight.FadeTo(0.92, 120, Easing.CubicOut)
+            );
+            await SegmentHighlight.FadeTo(1.0, 120, Easing.CubicOut);
+
+            _currentIndex = index;
+            UpdateSegmentTextColors(index);
+        }
+
+        private async Task SyncFromStoredMode(bool animated)
+        {
+            if (SegmentHost.Width <= 0) return;
+
+            int idx = ModeToIndex(ThemeScheduler.Mode);
+
+            AutoThemeSettings.IsVisible = ThemeScheduler.Mode == ThemeScheduler.ThemeMode.Auto;
+
+            await MoveSegmentAsync(idx, animated);
+            UpdateSegmentTextColors(idx);
+        }
+
+        private async void OnAutoTapped(object sender, TappedEventArgs e)
+        {
+            ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Auto;
+            AutoThemeSettings.IsVisible = true;
+
+            await MoveSegmentAsync(0, animated: true);
+            ThemeScheduler.StartTimer();
+            ThemeScheduler.ApplyNow();
+
+            UpdateSegmentTextColors(0);
+        }
+
+        private async void OnLightTapped(object sender, TappedEventArgs e)
+        {
+            ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Light;
+            AutoThemeSettings.IsVisible = false;
+
+            await MoveSegmentAsync(1, animated: true);
+            ThemeScheduler.ApplyNow();
+
+            UpdateSegmentTextColors(1);
+
+            // 兼容旧 DB（可删）
             var r = await db.GetReadingSettingsAsync();
             await db.SaveReadingSettingsAsync(r.FontSize, "Light");
         }
 
-        private async void OnDarkClicked(object sender, EventArgs e)
+        private async void OnDarkTapped(object sender, TappedEventArgs e)
         {
-            Application.Current!.UserAppTheme = AppTheme.Dark;
+            ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Dark;
+            AutoThemeSettings.IsVisible = false;
 
+            await MoveSegmentAsync(2, animated: true);
+            ThemeScheduler.ApplyNow();
+
+            UpdateSegmentTextColors(2);
+
+            // 兼容旧 DB（可删）
             var r = await db.GetReadingSettingsAsync();
             await db.SaveReadingSettingsAsync(r.FontSize, "Dark");
+        }
+
+        private void OnAutoThemeTimeChanged(object sender, TimeChangedEventArgs e)
+        {
+            ThemeScheduler.LightStart = LightStartPicker.Time;
+            ThemeScheduler.DarkStart = DarkStartPicker.Time;
+
+            if (ThemeScheduler.Mode == ThemeScheduler.ThemeMode.Auto)
+                ThemeScheduler.ApplyNow();
         }
 
         private async void OnKeepScreenOnToggled(object sender, ToggledEventArgs e)
