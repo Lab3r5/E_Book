@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:controls="clr-namespace:E_Book.Controls"
+    x:Class="E_Book.Pages.HelpSupportPage"
+    shell:Shell.TabBarIsVisible="False"
+    shell:Shell.NavBarIsVisible="False"
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Unified Header -->
+        <controls:AppHeader Title="Help &amp; Support"
+                            BackCommand="{Binding BackCommand}" />
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="18" Spacing="14">
+
+                <!-- Card: FAQs -->
+                <Border x:Name="FaqCard"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+
+                        <Border WidthRequest="44"
+                                HeightRequest="44"
+                                BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 22"
+                                VerticalOptions="Center">
+                            <Label Text="?"
+                                   FontSize="22"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="FAQs"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Common questions and answers"
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2"
+                               Text="›"
+                               FontSize="22"
+                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                               VerticalTextAlignment="Center" />
+                    </Grid>
+
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnFaqTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <!-- Card: Privacy Policy -->
+                <Border x:Name="PrivacyCard"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+
+                        <Border WidthRequest="44"
+                                HeightRequest="44"
+                                BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 22"
+                                VerticalOptions="Center">
+                            <Label Text="🔒"
+                                   FontSize="20"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Privacy Policy"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="How we handle your data"
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2"
+                               Text="›"
+                               FontSize="22"
+                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                               VerticalTextAlignment="Center" />
+                    </Grid>
+
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPrivacyTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
+
+                <!-- Tip -->
+                <Border StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16"
+                        Margin="0,10,0,0">
+                    <Label Text="Tip: Email support and in-app guides can be added in a future update."
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

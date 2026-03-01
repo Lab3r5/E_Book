@@ -1,110 +1,262 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="EZ_Read.Pages.ReadingPage"
-             BackgroundColor="White">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
+    x:Class="E_Book.Pages.ReadingPage"
+    shell:Shell.NavBarIsVisible="False"
+    shell:Shell.TabBarIsVisible="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
 
-    <Grid>
-        <!-- File content display area -->
-        <Label x:Name="fileContentLabel"
-               Text="Loading..."
-               Padding="20"
-               FontSize="18"
-               LineBreakMode="WordWrap"
-               VerticalOptions="FillAndExpand"
-               HorizontalOptions="FillAndExpand"
-               TextColor="Black"
-               ZIndex="1"/>
+    <Grid RowDefinitions="Auto,*,34">
 
-        <!-- Respond to clicks in three areas -->
-        <Grid ColumnDefinitions="Auto,*,Auto" InputTransparent="False" ZIndex="2">
+        <!-- Top Bar (Auto height, will get status bar padding from code-behind) -->
+        <Grid x:Name="TopBar"
+              Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              Padding="16,10"
+              Opacity="1"
+              TranslationY="0"
+              BackgroundColor="Transparent">
 
-            <!-- Left: Previous page -->
-            <BoxView Grid.Column="0" BackgroundColor="Transparent" WidthRequest="100">
-                <BoxView.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnLeftTapped"/>
-                </BoxView.GestureRecognizers>
-            </BoxView>
+            <Button x:Name="BackButton"
+                    Text="‹ Back"
+                    FontSize="16"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackButtonClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    VerticalOptions="Center"
+                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
 
-            <!-- Middle: Show/Hide button -->
-            <BoxView Grid.Column="1" BackgroundColor="Transparent">
-                <BoxView.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnCenterTapped"/>
-                </BoxView.GestureRecognizers>
-            </BoxView>
+            <Label x:Name="TitleLabel"
+                   Grid.Column="1"
+                   Text="Document"
+                   FontSize="16"
+                   HorizontalTextAlignment="Center"
+                   VerticalOptions="Center"
+                   LineBreakMode="TailTruncation"
+                   TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
 
-            <!-- Right: Next page -->
-            <BoxView Grid.Column="2" BackgroundColor="Transparent" WidthRequest="100">
-                <BoxView.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnRightTapped"/>
-                </BoxView.GestureRecognizers>
-            </BoxView>
+            <Button x:Name="MenuButton"
+                    Grid.Column="2"
+                    Text="☰"
+                    FontSize="20"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnMenuClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    VerticalOptions="Center"
+                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
         </Grid>
 
-        <!-- Back button -->
-        <Button x:Name="BackButton"
-                Text="❮"
-                FontSize="24"
-                IsVisible="False"
-                BackgroundColor="Transparent"
-                TextColor="Black"
-                HorizontalOptions="Start"
-                VerticalOptions="Start"
-                Padding="10"
-                Margin="0"
-                Clicked="OnBackButtonClicked"
-                ZIndex="10"/>
+        <!-- Content + overlay + popup -->
+        <AbsoluteLayout Grid.Row="1"
+                        x:Name="ReadingArea"
+                        Padding="18,12"
+                        BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
 
-        <!-- Aa button -->
-        <Button x:Name="AaButton"
-                Text="Aa"
-                IsVisible="False"
-                FontSize="16"
-                BackgroundColor="LightGray"
-                CornerRadius="20"
-                WidthRequest="60"
-                HeightRequest="60"
+            <AbsoluteLayout.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnReadingAreaTapped"/>
+            </AbsoluteLayout.GestureRecognizers>
+
+            <!-- TXT reading text (paged) -->
+            <Label x:Name="fileContentLabel"
+                   IsVisible="True"
+                   Text="Loading..."
+                   FontSize="22"
+                   LineBreakMode="WordWrap"
+                   VerticalOptions="FillAndExpand"
+                   HorizontalOptions="FillAndExpand"
+                   BackgroundColor="Transparent"
+                   TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
+                   AbsoluteLayout.LayoutBounds="0,0,1,1"
+                   AbsoluteLayout.LayoutFlags="All"/>
+
+            <!-- HTML/EPUB/DOCX/RTF reading (WebView) -->
+            <WebView x:Name="ContentWebView"
+                     IsVisible="False"
+                     BackgroundColor="Transparent"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All"/>
+
+            <!-- Overlay -->
+            <BoxView x:Name="Overlay"
+                     IsVisible="False"
+                     Opacity="0"
+                     BackgroundColor="#55000000"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDismissTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- Bottom floating menu -->
+            <Border x:Name="MenuPopup"
+                    IsVisible="False"
+                    Opacity="0"
+                    Scale="0.98"
+                    WidthRequest="340"
+                    HeightRequest="360"
+                    Padding="16"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E5E1F2, Dark=#2A2A32}"
+                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#17171C}"
+                    AbsoluteLayout.LayoutBounds="0.5,1,340,360"
+                    AbsoluteLayout.LayoutFlags="PositionProportional"
+                    TranslationY="-68">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22"/>
+                </Border.StrokeShape>
+
+                <ScrollView>
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label Text="Font Size"
+                               FontSize="16"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"/>
+
+                        <Label x:Name="FontSizeLabel"
+                               Text="Medium"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                            <Button x:Name="SmallBtn"
+                                    Text="Small"
+                                    Clicked="OnFontPresetClicked"
+                                    CommandParameter="0"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+
+                            <Button x:Name="MediumBtn"
+                                    Grid.Column="1"
+                                    Text="Medium"
+                                    Clicked="OnFontPresetClicked"
+                                    CommandParameter="1"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+
+                            <Button x:Name="LargeBtn"
+                                    Grid.Column="2"
+                                    Text="Large"
+                                    Clicked="OnFontPresetClicked"
+                                    CommandParameter="2"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+                        </Grid>
+
+                        <Slider x:Name="FontSlider"
+                                Minimum="0"
+                                Maximum="2"
+                                ValueChanged="OnFontSliderChanged"/>
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Label Text="Small"
+                                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                            <Label Grid.Column="1"
+                                   Text="Large"
+                                   HorizontalOptions="End"
+                                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                        </Grid>
+
+                        <Label Text="Theme"
+                               FontSize="14"
+                               HorizontalTextAlignment="Center"
+                               Margin="0,6,0,0"
+                               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"/>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button x:Name="LightBtn"
+                                    Text="☀ Light"
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Light"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+
+                            <Button x:Name="DarkBtn"
+                                    Grid.Column="1"
+                                    Text="☾ Dark"
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Dark"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Border>
+
+        </AbsoluteLayout>
+
+        <!-- Bottom progress -->
+        <Grid x:Name="BottomBar"
+              Grid.Row="2"
+              Padding="18,0"
+              ColumnDefinitions="*,Auto"
+              VerticalOptions="Center"
+              BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+
+            <ProgressBar x:Name="ReadingProgressBar"
+                         Progress="0"
+                         HeightRequest="2"
+                         VerticalOptions="Center"/>
+
+            <Label x:Name="ProgressText"
+                   Grid.Column="1"
+                   Text="1 of 1"
+                   FontSize="12"
+                   VerticalOptions="Center"
+                   Margin="12,0,0,0"
+                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+        </Grid>
+
+        <!-- Floating TOC button -->
+        <Border x:Name="TocButtonContainer"
+                Grid.Row="1"
+                Grid.RowSpan="2"
                 HorizontalOptions="End"
                 VerticalOptions="End"
-                Margin="20"
-                Clicked="OnAaButtonClicked"
-                ZIndex="10" />
+                WidthRequest="52"
+                HeightRequest="52"
+                Margin="0,0,18,52"
+                StrokeThickness="0"
+                ZIndex="999"
+                BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#20202A}">
 
-        <!-- Aa menu -->
-        <Frame x:Name="AaMenu"
-               IsVisible="False"
-               BackgroundColor="White"
-               BorderColor="Gray"
-               CornerRadius="10"
-               Padding="15"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
-               ZIndex="20">
+            <Border.Shadow>
+                <Shadow Brush="#66000000"
+                        Offset="0,6"
+                        Radius="14"
+                        Opacity="0.35"/>
+            </Border.Shadow>
 
-            <VerticalStackLayout Spacing="20">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="26"/>
+            </Border.StrokeShape>
 
-                <!-- Font size adjustment -->
-                <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                    <Button Text="A-" Clicked="OnFontDecreaseClicked"/>
-                    <Label x:Name="FontSizeLabel" Text="18" VerticalOptions="Center"/>
-                    <Button Text="A+" Clicked="OnFontIncreaseClicked"/>
-                </HorizontalStackLayout>
+            <Button x:Name="TocButton"
+                    Text="≡"
+                    FontSize="18"
+                    Padding="0"
+                    BackgroundColor="Transparent"
+                    Clicked="OnTocClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
+        </Border>
 
-                <!-- Background color selection -->
-                <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                    <Button BackgroundColor="#FFF8E8" WidthRequest="30" HeightRequest="30" CornerRadius="15"
-                            Clicked="OnColorButtonClicked" CommandParameter="#FFF8E8"/>
-                    <Button BackgroundColor="#E6E6E6" WidthRequest="30" HeightRequest="30" CornerRadius="15"
-                            Clicked="OnColorButtonClicked" CommandParameter="#E6E6E6"/>
-                    <Button BackgroundColor="#D8E3E3" WidthRequest="30" HeightRequest="30" CornerRadius="15"
-                            Clicked="OnColorButtonClicked" CommandParameter="#D8E3E3"/>
-                    <Button BackgroundColor="#D5E8D4" WidthRequest="30" HeightRequest="30" CornerRadius="15"
-                            Clicked="OnColorButtonClicked" CommandParameter="#D5E8D4"/>
-                    <Button BackgroundColor="#EDF7CD" WidthRequest="30" HeightRequest="30" CornerRadius="15"
-                            Clicked="OnColorButtonClicked" CommandParameter="#EDF7CD"/>
-                </HorizontalStackLayout>
-
-            </VerticalStackLayout>
-        </Frame>
     </Grid>
 </ContentPage>

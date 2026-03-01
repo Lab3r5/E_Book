@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace EZ_Read
+namespace E_Book
 {
     public static class MauiProgram
     {
