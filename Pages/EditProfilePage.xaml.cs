@@ -98,8 +98,11 @@ namespace E_Book.Pages
         {
             if (sender is VisualElement v) await PressAnim(v);
 
-            // 你按自己的 logout 逻辑替换这段
-            await DisplayAlert("Log Out", "Coming soon.", "OK");
+            bool ok = await DisplayAlert("Log Out", "Are you sure you want to log out?", "Log Out", "Cancel");
+            if (!ok) return;
+
+            UserSession.Logout();
+            await Shell.Current.GoToAsync("//login");
         }
     }
 }

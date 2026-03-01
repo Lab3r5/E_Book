@@ -2,25 +2,259 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
     x:Class="E_Book.Pages.SettingsHomePage"
-    Title="Setting"
-    Padding="16">
+    shell:Shell.NavBarIsVisible="False"
+    Padding="20,16"
+    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
 
-    <VerticalStackLayout Spacing="14">
+    <Grid RowDefinitions="Auto,18,Auto,16,Auto,*">
+
+        <!-- Title -->
+        <Label x:Name="TitleLabel"
+               Grid.Row="0"
+               Text="Setting"
+               FontSize="22"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center"
+               TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+               Margin="0,10,0,0"
+               Opacity="0"
+               TranslationY="10"/>
 
         <!-- Profile Card -->
-        <Border StrokeThickness="1" Padding="14">
-            <VerticalStackLayout Spacing="6">
-                <Label x:Name="NameLabel" Text="Guest" FontSize="18" FontAttributes="Bold"/>
-                <Label x:Name="EmailLabel" Text="" Opacity="0.7"/>
+        <Border x:Name="ProfileCard"
+                Grid.Row="2"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 28"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                Padding="18"
+                Opacity="0"
+                TranslationY="18">
 
-                <Button Text="Edit Profile" Clicked="OnEditProfileClicked"/>
+            <Border.Shadow>
+                <Shadow Opacity="0.12" Radius="18" Offset="0,8"/>
+            </Border.Shadow>
+
+            <Grid ColumnDefinitions="44,*,Auto"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="14"
+                  RowSpacing="4">
+
+                <!-- Profile Icon Bubble -->
+                <Border x:Name="ProfileBubble"
+                        Grid.RowSpan="2"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{AppThemeBinding Light=#EFEAFF, Dark=#2A214F}"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        VerticalOptions="Center">
+
+                    <Image x:Name="ProfileIcon"
+                           WidthRequest="22"
+                           HeightRequest="22"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Image.Source>
+                            <FontImageSource FontFamily="MaterialIcons"
+                                             Glyph="&#xE7FD;"
+                                             Size="22"
+                                             Color="{AppThemeBinding Light=#7A63FF, Dark=White}" />
+                        </Image.Source>
+                    </Image>
+                </Border>
+
+                <Label x:Name="NameLabel"
+                       Grid.Column="1"
+                       Text="Guest"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                <Button x:Name="EditProfileButton"
+                        Grid.Column="2"
+                        Text="Edit Profile"
+                        Clicked="OnEditProfileClicked"
+                        Padding="18,10"
+                        CornerRadius="20"
+                        BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                        TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                        FontAttributes="Bold"
+                        FontSize="14" />
+
+                <Label x:Name="EmailLabel"
+                       Grid.Row="1"
+                       Grid.Column="1"
+                       Grid.ColumnSpan="2"
+                       Text=""
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+            </Grid>
+        </Border>
+
+        <!-- Menu Card -->
+        <Border x:Name="MenuCard"
+                Grid.Row="4"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 28"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                Padding="0"
+                Opacity="0"
+                TranslationY="18">
+
+            <Border.Shadow>
+                <Shadow Opacity="0.10" Radius="18" Offset="0,8"/>
+            </Border.Shadow>
+
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Appearance Row (with ripple overlay) -->
+                <Grid x:Name="AppearanceRow"
+                      Padding="0"
+                      ColumnDefinitions="*"
+                      BackgroundColor="Transparent"
+                      Opacity="0"
+                      TranslationY="14">
+
+                    <!-- Ripple overlay -->
+                    <Border x:Name="AppearanceRipple"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 24"
+                            BackgroundColor="{AppThemeBinding Light=#EEE9FF, Dark=#2F255F}"
+                            Opacity="0"
+                            Margin="6"
+                            Scale="0.85"/>
+
+                    <!-- Real content -->
+                    <Grid Padding="18,16"
+                          ColumnDefinitions="44,*,Auto"
+                          BackgroundColor="Transparent">
+
+                        <Border x:Name="AppearanceBubble"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=#EFEAFF, Dark=#2A214F}"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                VerticalOptions="Center">
+
+                            <Image x:Name="AppearanceIcon"
+                                   WidthRequest="22"
+                                   HeightRequest="22"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center">
+                                <Image.Source>
+                                    <FontImageSource FontFamily="MaterialIcons"
+                                                     Glyph="&#xE40A;"
+                                                     Size="22"
+                                                     Color="{AppThemeBinding Light=#7A63FF, Dark=White}" />
+                                </Image.Source>
+                            </Image>
+                        </Border>
+
+                        <Label Grid.Column="1"
+                               Text="Appearance"
+                               FontSize="16"
+                               VerticalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                        <Image x:Name="AppearanceChevron"
+                               Grid.Column="2"
+                               WidthRequest="18"
+                               HeightRequest="18"
+                               VerticalOptions="Center"
+                               Opacity="0.7">
+                            <Image.Source>
+                                <FontImageSource FontFamily="MaterialIcons"
+                                                 Glyph="&#xE5CC;"
+                                                 Size="18"
+                                                 Color="{AppThemeBinding Light=#C7C3D6, Dark=#8A869E}" />
+                            </Image.Source>
+                        </Image>
+                    </Grid>
+
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAppearanceTapped"/>
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+                <BoxView HeightRequest="1"
+                         Opacity="0.10"
+                         BackgroundColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                <!-- Help Row (with ripple overlay) -->
+                <Grid x:Name="HelpRow"
+                      Padding="0"
+                      ColumnDefinitions="*"
+                      BackgroundColor="Transparent"
+                      Opacity="0"
+                      TranslationY="14">
+
+                    <Border x:Name="HelpRipple"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 24"
+                            BackgroundColor="{AppThemeBinding Light=#EEE9FF, Dark=#2F255F}"
+                            Opacity="0"
+                            Margin="6"
+                            Scale="0.85"/>
+
+                    <Grid Padding="18,16"
+                          ColumnDefinitions="44,*,Auto"
+                          BackgroundColor="Transparent">
+
+                        <Border x:Name="HelpBubble"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=#EFEAFF, Dark=#2A214F}"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                VerticalOptions="Center">
+
+                            <Image x:Name="HelpIcon"
+                                   WidthRequest="22"
+                                   HeightRequest="22"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center">
+                                <Image.Source>
+                                    <FontImageSource FontFamily="MaterialIcons"
+                                                     Glyph="&#xE8FD;"
+                                                     Size="22"
+                                                     Color="{AppThemeBinding Light=#7A63FF, Dark=White}" />
+                                </Image.Source>
+                            </Image>
+                        </Border>
+
+                        <Label Grid.Column="1"
+                               Text="Help &amp; Support"
+                               FontSize="16"
+                               VerticalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                        <Image x:Name="HelpChevron"
+                               Grid.Column="2"
+                               WidthRequest="18"
+                               HeightRequest="18"
+                               VerticalOptions="Center"
+                               Opacity="0.7">
+                            <Image.Source>
+                                <FontImageSource FontFamily="MaterialIcons"
+                                                 Glyph="&#xE5CC;"
+                                                 Size="18"
+                                                 Color="{AppThemeBinding Light=#C7C3D6, Dark=#8A869E}" />
+                            </Image.Source>
+                        </Image>
+                    </Grid>
+
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHelpTapped"/>
+                    </Grid.GestureRecognizers>
+                </Grid>
+
             </VerticalStackLayout>
         </Border>
 
-        <Button Text="Appearance" Clicked="OnAppearanceClicked"/>
-        <Button Text="Help &amp; Support" Clicked="OnHelpClicked"/>
-
-        <Button Text="Log Out" Clicked="OnLogoutClicked"/>
-    </VerticalStackLayout>
+        <Grid Grid.Row="5"/>
+    </Grid>
 </ContentPage>

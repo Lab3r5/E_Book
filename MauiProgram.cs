@@ -13,6 +13,7 @@ namespace E_Book
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                 });
 
 #if DEBUG
@@ -21,5 +22,6 @@ namespace E_Book
 
             return builder.Build();
         }
+
     }
 }

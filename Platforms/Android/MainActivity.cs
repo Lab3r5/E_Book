@@ -3,6 +3,8 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Android.Graphics.Drawables;
+using Android.Animation;
+using Android.Views.Animations;
 
 using Google.Android.Material.BottomNavigation;
 using Google.Android.Material.Navigation;
@@ -27,100 +29,445 @@ namespace E_Book
                                ConfigChanges.Density)]
     public class MainActivity : MauiAppCompatActivity
     {
-        private NavigationBarView? _bar;
-        private readonly List<AView> _items = new();
-        private AView? _pill;
+        public static MainActivity? Instance { get; private set; }
 
+        private NavigationBarView? _bar;
+        private readonly List<AView> _itemViews = new();
+
+        private AView? _pill;
+        private int _lastIndex = -1;
+
+        private bool _pumpStarted = false;
+        private bool _ensureLoopRunning = false;
+        private int _ensureTries = 0;
+
+        // 胶囊松紧（中间效果保持不变）
         private const int PillPadH = 18;
         private const int PillPadV = 8;
+
+        // 左右边缘额外扩展：用来“挤掉”边缘白色
         private const int EdgeExtra = 14;
+
+        private const string PillTag = "__EBOOK_PILL__";
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            Window.DecorView?.Post(InitTabBar);
+            Instance = this;
+            StartEnsureLoop();
         }
 
         protected override void OnResume()
         {
             base.OnResume();
-            Window.DecorView?.Post(InitTabBar);
+            StartEnsureLoop();
         }
 
-        private void InitTabBar()
+        public void RebindBottomTabBar()
+        {
+            ResetAllState();
+            StartEnsureLoop();
+        }
+
+        // =========================
+        // Disposed guards
+        // =========================
+        private static bool IsDisposed(Java.Lang.Object? obj)
+        {
+            if (obj == null) return true;
+            try { return obj.Handle == IntPtr.Zero; }
+            catch { return true; }
+        }
+
+        private bool IsBarAlive()
+        {
+            if (_bar == null) return false;
+            if (IsDisposed(_bar)) return false;
+
+            try { return _bar.IsAttachedToWindow; }
+            catch { return false; }
+        }
+
+        // =========================
+        // Ensure loop
+        // =========================
+        private void StartEnsureLoop()
+        {
+            if (_ensureLoopRunning) return;
+
+            _ensureLoopRunning = true;
+            _ensureTries = 0;
+
+            Window.DecorView?.Post(EnsureOnce);
+        }
+
+        private void EnsureOnce()
+        {
+            _ensureTries++;
+
+            bool ok = false;
+            try { ok = TryFindBarAndAttach(); }
+            catch { ok = false; }
+
+            if (ok)
+            {
+                _ensureLoopRunning = false;
+                return;
+            }
+
+            if (_ensureTries < 30)
+                Window.DecorView?.PostDelayed(EnsureOnce, 150);
+            else
+                _ensureLoopRunning = false;
+        }
+
+        private bool TryFindBarAndAttach()
         {
             var decor = Window.DecorView;
-            if (decor == null) return;
+            if (decor == null) return false;
+
+            // bar 被重建/释放时，清状态
+            if (!IsBarAlive())
+            {
+                RemovePillIfExists();
+                _bar = null;
+                _itemViews.Clear();
+                _lastIndex = -1;
+                _pumpStarted = false;
+            }
 
             var bars = new List<AView>();
             CollectBars(decor, bars);
+            if (bars.Count == 0) return false;
 
-            if (bars.Count == 0) return;
+            NavigationBarView? best = null;
+            float bestY = -1;
 
             foreach (var v in bars)
             {
-                if (v is NavigationBarView nb && nb.Menu?.Size() > 0)
+                var nb = v as NavigationBarView;     // ✅ BottomNavigationView 也会被当成 NavigationBarView
+                if (nb == null) continue;
+                if (IsDisposed(nb)) continue;
+
+                int menuSize = 0;
+                try { menuSize = nb.Menu?.Size() ?? 0; } catch { menuSize = 0; }
+                if (menuSize <= 0) continue;
+
+                float y = -1;
+                try { y = v.GetY(); } catch { y = -1; }
+
+                if (y > bestY)
                 {
-                    _bar = nb;
-                    break;
+                    bestY = y;
+                    best = nb;
                 }
             }
 
-            if (_bar == null) return;
+            if (best == null) return false;
 
-            SetupBarStyle(_bar);
-            CollectItemViews(_bar, _items);
+            // bar 变化：重建
+            if (_bar == null || !ReferenceEquals(_bar, best))
+            {
+                RemovePillIfExists();
 
-            EnsurePill();
-            SnapTo(GetCheckedIndex());
+                _bar = best;
+                _itemViews.Clear();
+                _lastIndex = -1;
+                _pumpStarted = false;
 
-            _bar.SetOnItemSelectedListener(new ItemSelectedListener(this));
+                // ✅ 每次抓到新 bar 都强制应用样式（禁用系统胶囊）
+                ApplyBaseColors(_bar);
+
+                // ✅ 清理历史残留 pill
+                RemoveOtherPillsFromBar(_bar, keep: null);
+            }
+            else
+            {
+                // ✅ 即使 bar 没变，也要再 apply 一次，防止切换后 Material 重置样式
+                ApplyBaseColors(_bar);
+            }
+
+            if (!IsBarAlive()) return false;
+
+            // ✅ 优先用 MenuView 子项抓 item（顺序最稳定）
+            _itemViews.Clear();
+            CollectMenuChildrenAsItems(_bar, _itemViews);
+
+            int expected = 0;
+            try { expected = _bar.Menu?.Size() ?? 0; } catch { expected = 0; }
+
+            // fallback
+            if (_itemViews.Count < expected)
+            {
+                _itemViews.Clear();
+                CollectItemViews(_bar, _itemViews);
+            }
+
+            if (expected <= 0) return false;
+            if (_itemViews.Count < expected) return false;
+
+            EnsurePillOnBar(_bar);
+            EnsureCheckedFallback(_bar);
+
+            int idx = GetCheckedIndex(_bar);
+            if (idx < 0 || idx >= _itemViews.Count) idx = 0;
+
+            _lastIndex = idx;
+            SnapTo(idx);
+
+            StartPump();
+            return true;
         }
 
-        // ===============================
-        // Styling
-        // ===============================
-        private void SetupBarStyle(NavigationBarView bar)
+        private void ResetAllState()
         {
+            RemovePillIfExists();
+
+            if (_bar != null && !IsDisposed(_bar))
+                RemoveOtherPillsFromBar(_bar, keep: null);
+
+            _bar = null;
+            _itemViews.Clear();
+            _lastIndex = -1;
+            _pumpStarted = false;
+            _ensureLoopRunning = false;
+            _ensureTries = 0;
+        }
+
+        // =========================
+        // Pump loop (不会影响 Shell 点击)
+        // =========================
+        private void StartPump()
+        {
+            if (_bar == null || _pumpStarted) return;
+            _pumpStarted = true;
+            PumpOnce();
+        }
+
+        private void PumpOnce()
+        {
+            if (!IsBarAlive())
+            {
+                _pumpStarted = false;
+                ResetAllState();
+                StartEnsureLoop();
+                return;
+            }
+
+            try
+            {
+                if (_bar == null) { _pumpStarted = false; return; }
+
+                // ✅ 关键：每轮都强制禁用系统 ActiveIndicator（切换后它会自己回来）
+                ApplyBaseColors(_bar);
+
+                if (_itemViews.Count == 0)
+                {
+                    CollectMenuChildrenAsItems(_bar, _itemViews);
+                    int expected = 0; try { expected = _bar.Menu?.Size() ?? 0; } catch { expected = 0; }
+
+                    if (_itemViews.Count < expected)
+                    {
+                        _itemViews.Clear();
+                        CollectItemViews(_bar, _itemViews);
+                    }
+                }
+
+                EnsureCheckedFallback(_bar);
+                EnsurePillOnBar(_bar);
+
+                int idx = GetCheckedIndex(_bar);
+                if (idx >= 0 && idx < _itemViews.Count && _pill != null)
+                {
+                    if (_lastIndex == -1)
+                    {
+                        _lastIndex = idx;
+                        SnapTo(idx);
+                    }
+                    else if (idx != _lastIndex)
+                    {
+                        _lastIndex = idx;
+                        AnimateTo(idx);
+                    }
+                    else
+                    {
+                        if (_pill.Width == 0 || _pill.Height == 0)
+                            SnapTo(idx);
+                    }
+                }
+
+                if (IsBarAlive())
+                    _bar.PostDelayed(PumpOnce, 120);
+            }
+            catch
+            {
+                _pumpStarted = false;
+                ResetAllState();
+                StartEnsureLoop();
+            }
+        }
+
+        // =========================
+        // Styling (✅ 禁用系统胶囊就在这里)
+        // =========================
+        private void ApplyBaseColors(NavigationBarView bar)
+        {
+            bool isNight =
+                (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
+                == Android.Content.Res.UiMode.NightYes;
+
+            var bgColor = isNight
+                ? Android.Graphics.Color.Rgb(0x19, 0x13, 0x30)
+                : Android.Graphics.Color.White;
+
+            bar.Background = new ColorDrawable(bgColor);
             bar.Elevation = 0;
             bar.SetClipChildren(false);
             bar.SetClipToPadding(false);
 
-            var bg = new ColorDrawable(Android.Graphics.Color.White);
-            bar.Background = bg;
+            // ✅ 关键：关闭 Material3 的 Active Indicator（系统自带胶囊）
+            try { bar.ItemActiveIndicatorEnabled = false; } catch { }
+            try { bar.ItemActiveIndicatorColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
+
+            // 可选：关闭涟漪，避免视觉盖住 pill
+            try { bar.ItemRippleColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
+
+            // icon/text tint
+            var states = new int[][]
+            {
+                new int[] { Android.Resource.Attribute.StateChecked },
+                new int[] { -Android.Resource.Attribute.StateChecked }
+            };
+
+            var selectedColor = Android.Graphics.Color.White;
+
+            var unselectedColor = isNight
+                ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
+                : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
+
+            var colors = new int[] { selectedColor, unselectedColor };
+            var csl = new Android.Content.Res.ColorStateList(states, colors);
+
+            bar.ItemIconTintList = csl;
+            bar.ItemTextColor = csl;
         }
 
-        // ===============================
-        // Pill
-        // ===============================
-        private void EnsurePill()
+        // =========================
+        // Pill helpers
+        // =========================
+        private void RemovePillIfExists()
         {
-            if (_bar == null) return;
-            if (_pill != null && _pill.Parent == _bar) return;
+            try
+            {
+                if (_pill != null && _pill.Parent is AViewGroup vg)
+                    vg.RemoveView(_pill);
+            }
+            catch { }
+            finally { _pill = null; }
+        }
 
-            if (_bar is not AViewGroup vg) return;
+        private void RemoveOtherPillsFromBar(NavigationBarView bar, AView? keep)
+        {
+            if (bar is not AViewGroup vg) return;
+
+            for (int i = vg.ChildCount - 1; i >= 0; i--)
+            {
+                var child = vg.GetChildAt(i);
+                if (child == null) continue;
+
+                if (child.Tag?.ToString() == PillTag && !ReferenceEquals(child, keep))
+                    vg.RemoveView(child);
+            }
+        }
+
+        private void EnsurePillOnBar(NavigationBarView bar)
+        {
+            if (_pill != null && _pill.Parent == null)
+                _pill = null;
+
+            if (_pill != null && _pill.Parent != bar)
+                RemovePillIfExists();
+
+            if (_pill != null)
+            {
+                RemoveOtherPillsFromBar(bar, keep: _pill);
+                return;
+            }
+
+            RemoveOtherPillsFromBar(bar, keep: null);
 
             var pill = new AView(this);
+
             var bg = new GradientDrawable();
             bg.SetColor(Android.Graphics.Color.Rgb(0x7A, 0x63, 0xFF));
             bg.SetCornerRadius(999f);
             pill.Background = bg;
 
-            vg.AddView(pill, 0);
+            pill.Clickable = false;
+            pill.Focusable = false;
+            pill.Tag = PillTag;
+
+            if (bar is AViewGroup vg)
+                vg.AddView(pill, 0);
+
             _pill = pill;
         }
 
+        // =========================
+        // Checked fallback
+        // =========================
+        private void EnsureCheckedFallback(NavigationBarView bar)
+        {
+            try
+            {
+                var menu = bar.Menu;
+                if (menu == null) return;
+
+                for (int i = 0; i < menu.Size(); i++)
+                    if (menu.GetItem(i).IsChecked) return;
+
+                if (menu.Size() > 0)
+                    menu.GetItem(0).SetChecked(true);
+            }
+            catch { }
+        }
+
+        private int GetCheckedIndex(NavigationBarView bar)
+        {
+            try
+            {
+                var menu = bar.Menu;
+                if (menu == null) return -1;
+
+                for (int i = 0; i < menu.Size(); i++)
+                    if (menu.GetItem(i).IsChecked) return i;
+            }
+            catch { }
+
+            return -1;
+        }
+
+        // =========================
+        // Positioning + animation
+        // =========================
         private void SnapTo(int index)
         {
             if (_bar == null || _pill == null) return;
-            if (index < 0 || index >= _items.Count) return;
+            if (!IsBarAlive()) return;
+            if (index < 0 || index >= _itemViews.Count) return;
 
-            var item = _items[index];
-            if (item.Width == 0) return;
+            var item = _itemViews[index];
 
-            var t = Calc(item, index);
+            if (item.Width == 0 || item.Height == 0)
+            {
+                _bar.PostDelayed(() => SnapTo(index), 60);
+                return;
+            }
 
-            var lp = _pill.LayoutParameters ?? new AViewGroup.LayoutParams(t.w, t.h);
+            var t = CalcTargetOnBar(item, index, _itemViews.Count);
+
+            var lp = _pill.LayoutParameters;
+            if (lp == null) lp = new AViewGroup.LayoutParams(t.w, t.h);
             lp.Width = t.w;
             lp.Height = t.h;
             _pill.LayoutParameters = lp;
@@ -129,11 +476,73 @@ namespace E_Book
             _pill.TranslationY = t.y;
         }
 
-        private (float x, float y, int w, int h) Calc(AView item, int index)
+        private void AnimateTo(int index)
         {
+            if (_bar == null || _pill == null) return;
+            if (!IsBarAlive()) return;
+            if (index < 0 || index >= _itemViews.Count) return;
+
+            var item = _itemViews[index];
+
+            if (item.Width == 0 || item.Height == 0)
+            {
+                _bar.PostDelayed(() => AnimateTo(index), 60);
+                return;
+            }
+
+            var t = CalcTargetOnBar(item, index, _itemViews.Count);
+
+            const long MoveDur = 280;
+            const long SizeDur = 240;
+            const float Overshoot = 0.9f;
+
+            var moveX = ObjectAnimator.OfFloat(_pill, "translationX", _pill.TranslationX, t.x);
+            var moveY = ObjectAnimator.OfFloat(_pill, "translationY", _pill.TranslationY, t.y);
+            moveX.SetDuration(MoveDur);
+            moveY.SetDuration(MoveDur);
+            moveX.SetInterpolator(new OvershootInterpolator(Overshoot));
+            moveY.SetInterpolator(new OvershootInterpolator(Overshoot));
+
+            int targetW = t.w;
+            int targetH = t.h;
+
+            int curW = _pill.Width <= 0 ? targetW : _pill.Width;
+            int curH = _pill.Height <= 0 ? targetH : _pill.Height;
+
+            var widthAnim = ValueAnimator.OfInt(curW, targetW);
+            widthAnim.SetDuration(SizeDur);
+            widthAnim.SetInterpolator(new OvershootInterpolator(Overshoot));
+            widthAnim.Update += (s, e) =>
+            {
+                var lp = _pill.LayoutParameters;
+                if (lp == null) return;
+                lp.Width = (int)widthAnim.AnimatedValue;
+                _pill.LayoutParameters = lp;
+            };
+
+            var heightAnim = ValueAnimator.OfInt(curH, targetH);
+            heightAnim.SetDuration(SizeDur);
+            heightAnim.SetInterpolator(new OvershootInterpolator(Overshoot));
+            heightAnim.Update += (s, e) =>
+            {
+                var lp = _pill.LayoutParameters;
+                if (lp == null) return;
+                lp.Height = (int)heightAnim.AnimatedValue;
+                _pill.LayoutParameters = lp;
+            };
+
+            var set = new AnimatorSet();
+            set.PlayTogether(moveX, moveY, widthAnim, heightAnim);
+            set.Start();
+        }
+
+        private (float x, float y, int w, int h) CalcTargetOnBar(AView item, int index, int total)
+        {
+            if (_bar == null) return (0, 0, 0, 0);
+
             int[] barLoc = new int[2];
             int[] itemLoc = new int[2];
-            _bar!.GetLocationOnScreen(barLoc);
+            _bar.GetLocationOnScreen(barLoc);
             item.GetLocationOnScreen(itemLoc);
 
             float relX = itemLoc[0] - barLoc[0];
@@ -141,61 +550,35 @@ namespace E_Book
 
             int w = item.Width + PillPadH * 2;
             int h = item.Height - PillPadV * 2;
+            if (h < 1) h = item.Height;
 
             float x = relX - PillPadH;
             float y = relY + PillPadV;
 
             if (index == 0)
             {
+                float right = x + w;
                 x = -EdgeExtra;
-                w += EdgeExtra;
+                w = (int)(right - x);
             }
-            else if (index == _items.Count - 1)
+            else if (index == total - 1)
             {
-                w += EdgeExtra;
+                float left = x;
+                float barRight = _bar.Width + EdgeExtra;
+                w = (int)(barRight - left);
+                x = left;
             }
 
             return (x, y, w, h);
         }
 
-        private int GetCheckedIndex()
-        {
-            if (_bar?.Menu == null) return 0;
-
-            for (int i = 0; i < _bar.Menu.Size(); i++)
-                if (_bar.Menu.GetItem(i).IsChecked)
-                    return i;
-
-            return 0;
-        }
-
-        // ===============================
-        // Listener
-        // ===============================
-        private class ItemSelectedListener : Java.Lang.Object, NavigationBarView.IOnItemSelectedListener
-        {
-            private readonly MainActivity _activity;
-
-            public ItemSelectedListener(MainActivity activity)
-            {
-                _activity = activity;
-            }
-
-            public bool OnNavigationItemSelected(IMenuItem item)
-            {
-                int index = _activity.GetCheckedIndex();
-                _activity.SnapTo(index);
-                return false; // 让 Shell 自己处理切换
-            }
-        }
-
-        // ===============================
-        // Utils
-        // ===============================
+        // =========================
+        // Find bar & items
+        // =========================
         private void CollectBars(AView root, List<AView> list)
         {
-            if (root is NavigationBarView || root is BottomNavigationView)
-                list.Add(root);
+            if (root is NavigationBarView) list.Add(root);
+            if (root is BottomNavigationView bnv) list.Add(bnv);
 
             if (root is AViewGroup vg)
             {
@@ -210,7 +593,8 @@ namespace E_Book
 
             string name = root.Class?.SimpleName ?? "";
 
-            if (name.Contains("ItemView"))
+            if (name.Contains("ItemView") &&
+                (name.Contains("NavigationBar") || name.Contains("BottomNavigation")))
             {
                 list.Add(root);
                 return;
@@ -220,6 +604,30 @@ namespace E_Book
             {
                 for (int i = 0; i < vg.ChildCount; i++)
                     CollectItemViews(vg.GetChildAt(i), list);
+            }
+        }
+
+        private void CollectMenuChildrenAsItems(AView root, List<AView> list)
+        {
+            if (root == null) return;
+
+            string name = root.Class?.SimpleName ?? "";
+
+            if (name.Contains("MenuView") &&
+                (name.Contains("BottomNavigation") || name.Contains("NavigationBar")))
+            {
+                if (root is AViewGroup vg)
+                {
+                    for (int i = 0; i < vg.ChildCount; i++)
+                        list.Add(vg.GetChildAt(i));
+                }
+                return;
+            }
+
+            if (root is AViewGroup vg2)
+            {
+                for (int i = 0; i < vg2.ChildCount; i++)
+                    CollectMenuChildrenAsItems(vg2.GetChildAt(i), list);
             }
         }
     }
