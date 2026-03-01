@@ -3,37 +3,63 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
+using Microsoft.Maui.ApplicationModel;
 using E_Book.Services;
 using E_Book.Models;
 
 namespace E_Book.Pages
 {
-    public partial class BookshelfPage : ContentPage
+    public partial class BookshelfPage : ContentPage, INotifyPropertyChanged
     {
         public ObservableCollection<BookItem> Books { get; set; } = new();
+
+        private bool _isMultiSelectMode;
+        public bool IsMultiSelectMode
+        {
+            get => _isMultiSelectMode;
+            set
+            {
+                if (_isMultiSelectMode == value) return;
+                _isMultiSelectMode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand LongPressCommand { get; }
+
+        private List<BookItem> _pendingDeleteItems = new();
+        private readonly List<BookItem> _subscribedItems = new();
 
         public BookshelfPage()
         {
             InitializeComponent();
 
+            LongPressCommand = new Command<BookItem>(OnItemLongPressed);
+
             EnsureLibraryExists();
 
             BindingContext = this;
             LoadSavedFiles();
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
         }
 
         private void EnsureLibraryExists()
         {
-            // ✅ 统一走 LibraryService
             LibraryService.EnsureLibraryExists();
 
-            // ✅ Usage Guidelines 放到同一个 Library 目录
             string guidePath = Path.Combine(LibraryService.LibraryPath, "Usage Guidelines.txt");
 
             if (!File.Exists(guidePath))
             {
+                // ✅ 你原来的 Usage Guidelines 内容（保留）
                 string guideContent = """
                 Welcome to E_Book 📘
 
@@ -94,14 +120,51 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ 按你的要求：完全用 LibraryService.LoadBooks()
         private void LoadSavedFiles()
         {
+            UnsubscribeAll();
+
             var list = LibraryService.LoadBooks();
 
             Books.Clear();
             foreach (var b in list)
+            {
+                b.IsSelected = false;
                 Books.Add(b);
+                SubscribeItem(b);
+            }
+
+            if (Books.Count == 0 && IsMultiSelectMode)
+                ExitMultiSelectMode();
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
+        }
+
+        private void SubscribeItem(BookItem item)
+        {
+            if (item == null) return;
+            item.PropertyChanged += OnBookItemPropertyChanged;
+            _subscribedItems.Add(item);
+        }
+
+        private void UnsubscribeAll()
+        {
+            foreach (var it in _subscribedItems)
+                it.PropertyChanged -= OnBookItemPropertyChanged;
+            _subscribedItems.Clear();
+        }
+
+        private void OnBookItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(BookItem.IsSelected))
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    UpdateSelectAllText();
+                    UpdateConfirmState();
+                });
+            }
         }
 
         private static FilePickerFileType BuildPickerTypes()
@@ -153,7 +216,6 @@ namespace E_Book.Pages
                 return;
             }
 
-            // ✅ 按你的要求：用 LibraryService.LibraryPath
             string targetPath = Path.Combine(LibraryService.LibraryPath, result.FileName);
 
             if (File.Exists(targetPath))
@@ -163,9 +225,8 @@ namespace E_Book.Pages
             }
 
             await SaveFileToLibrary(result, targetPath);
-
-            // ✅ 重新加载（确保顺序/格式一致）
             LoadSavedFiles();
+            await ShowToast("Imported successfully");
         }
 
         private async Task SaveFileToLibrary(FileResult file, string targetPath)
@@ -182,9 +243,11 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ Open ReadingPage via Shell route
+        // ✅ Read（正常模式可用）
         private async void OnFileClicked(object sender, EventArgs e)
         {
+            if (IsMultiSelectMode) return;
+
             if (sender is Button button && button.CommandParameter is BookItem book)
             {
                 if (!File.Exists(book.FullPath))
@@ -199,31 +262,261 @@ namespace E_Book.Pages
             }
         }
 
-        private async void OnDeleteFileClicked(object sender, EventArgs e)
+        // ✅ 点击左侧内容区域：多选模式下切换选中
+        private void OnItemTapped(object sender, TappedEventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is BookItem book)
+            if (!IsMultiSelectMode) return;
+
+            if (e.Parameter is BookItem book)
             {
-                bool confirm = await DisplayAlert("Delete", $"Delete \"{book.FileName}\"?", "Yes", "No");
-                if (!confirm) return;
-
-                try
-                {
-                    if (File.Exists(book.FullPath))
-                        File.Delete(book.FullPath);
-
-                    // ✅ 删除后重新加载（避免残留/排序问题）
-                    LoadSavedFiles();
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlert("Error", $"Failed to delete file: {ex.Message}", "OK");
-                }
+                book.IsSelected = !book.IsSelected;
+                UpdateConfirmState();
             }
         }
 
-        private async void OnSettingClicked(object sender, EventArgs e)
+        // ✅ 长按：进入多选并选中当前项
+        private void OnItemLongPressed(BookItem? book)
         {
-            await Shell.Current.GoToAsync("//settings");
+            if (book == null) return;
+
+            if (!IsMultiSelectMode)
+                EnterMultiSelectMode();
+
+            book.IsSelected = true;
+            UpdateConfirmState();
         }
+
+        // ✅ 顶部垃圾桶
+        private async void OnTrashTapped(object sender, EventArgs e)
+        {
+            await AnimatePress(TrashButton);
+
+            if (Books.Count == 0)
+            {
+                await ShowToast("No books to delete");
+                return;
+            }
+
+            // 单本：直接弹窗
+            if (Books.Count == 1)
+            {
+                OpenDeleteDialog(new List<BookItem> { Books[0] }, single: true);
+                return;
+            }
+
+            // 多本：进入多选模式
+            EnterMultiSelectMode();
+        }
+
+        // ✅ Swipe Delete（单本）
+        private void OnSwipeDelete(object sender, EventArgs e)
+        {
+            if (sender is SwipeItem swipe && swipe.CommandParameter is BookItem book)
+            {
+                OpenDeleteDialog(new List<BookItem> { book }, single: true);
+            }
+        }
+
+        private void EnterMultiSelectMode()
+        {
+            IsMultiSelectMode = true;
+
+            foreach (var b in Books)
+                b.IsSelected = false;
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
+        }
+
+        private void ExitMultiSelectMode()
+        {
+            IsMultiSelectMode = false;
+
+            foreach (var b in Books)
+                b.IsSelected = false;
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
+        }
+
+        private void OnSelectAllClicked(object sender, EventArgs e)
+        {
+            if (!IsMultiSelectMode || Books.Count == 0) return;
+
+            bool allSelected = Books.All(b => b.IsSelected);
+            foreach (var b in Books)
+                b.IsSelected = !allSelected;
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
+        }
+
+        private void UpdateSelectAllText()
+        {
+            if (SelectAllButton == null) return;
+
+            if (!IsMultiSelectMode)
+            {
+                SelectAllButton.Text = "Select All";
+                return;
+            }
+
+            bool allSelected = Books.Count > 0 && Books.All(b => b.IsSelected);
+            SelectAllButton.Text = allSelected ? "Unselect All" : "Select All";
+        }
+
+        private void OnCancelMultiSelectClicked(object sender, EventArgs e)
+        {
+            ExitMultiSelectMode();
+        }
+
+        // ✅ Confirm（多选删除）
+        private async void OnConfirmTapped(object sender, EventArgs e)
+        {
+            if (!IsMultiSelectMode) return;
+
+            var selected = Books.Where(b => b.IsSelected).ToList();
+            if (selected.Count == 0) return;
+
+            await AnimatePress(ConfirmButton);
+
+            OpenDeleteDialog(selected, single: false);
+        }
+
+        private void UpdateConfirmState()
+        {
+            if (ConfirmButton == null) return;
+
+            if (!IsMultiSelectMode)
+            {
+                ConfirmButton.Opacity = 1;
+                ConfirmButton.InputTransparent = false;
+                return;
+            }
+
+            bool hasSelected = Books.Any(b => b.IsSelected);
+            ConfirmButton.Opacity = hasSelected ? 1.0 : 0.45;
+            ConfirmButton.InputTransparent = !hasSelected;
+        }
+
+        // ===== Delete Dialog =====
+
+        private async void OpenDeleteDialog(List<BookItem> items, bool single)
+        {
+            _pendingDeleteItems = items;
+
+            if (single)
+            {
+                var name = items[0].FileName;
+                DeleteTitle.Text = "Delete this book?";
+                DeleteMessage.Text = $"Delete \"{name}\"?\nThis action cannot be undone.";
+            }
+            else
+            {
+                DeleteTitle.Text = "Delete selected books?";
+                DeleteMessage.Text = $"You are about to delete {items.Count} file(s).\nThis action cannot be undone.";
+            }
+
+            await ShowDeleteDialog();
+        }
+
+        private async Task ShowDeleteDialog()
+        {
+            DeleteOverlay.IsVisible = true;
+
+            await Task.WhenAll(
+                DeleteDialog.FadeTo(1, 220, Easing.CubicOut),
+                DeleteDialog.ScaleTo(1, 220, Easing.SpringOut)
+            );
+        }
+
+        private async Task HideDeleteDialog()
+        {
+            await Task.WhenAll(
+                DeleteDialog.FadeTo(0, 160, Easing.CubicIn),
+                DeleteDialog.ScaleTo(0.85, 160, Easing.CubicIn)
+            );
+
+            DeleteOverlay.IsVisible = false;
+        }
+
+        private async void OnCancelDeleteDialog(object sender, EventArgs e)
+        {
+            await HideDeleteDialog();
+        }
+
+        private async void OnConfirmDeleteDialog(object sender, EventArgs e)
+        {
+            var toDelete = _pendingDeleteItems?.ToList() ?? new List<BookItem>();
+            _pendingDeleteItems = new List<BookItem>();
+
+            foreach (var book in toDelete)
+                await DeleteBookFileAsync(book, reloadAfter: false);
+
+            await HideDeleteDialog();
+
+            if (IsMultiSelectMode)
+                ExitMultiSelectMode();
+
+            LoadSavedFiles();
+            await ShowToast("Deleted successfully");
+        }
+
+        private async Task DeleteBookFileAsync(BookItem book, bool reloadAfter)
+        {
+            try
+            {
+                var inList = Books.FirstOrDefault(x => x.FullPath == book.FullPath);
+                if (inList != null)
+                    Books.Remove(inList);
+
+                if (File.Exists(book.FullPath))
+                    File.Delete(book.FullPath);
+
+                if (reloadAfter)
+                    LoadSavedFiles();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to delete file: {ex.Message}", "OK");
+            }
+        }
+
+        // ===== Animations & Toast =====
+
+        private async Task AnimatePress(VisualElement view)
+        {
+            if (view == null) return;
+            await view.ScaleTo(0.88, 80, Easing.CubicIn);
+            await view.ScaleTo(1.00, 90, Easing.CubicOut);
+        }
+
+        private async Task ShowToast(string message)
+        {
+            if (ToastFrame == null || ToastLabel == null) return;
+
+            ToastLabel.Text = message;
+            ToastFrame.IsVisible = true;
+            ToastFrame.Opacity = 0;
+            ToastFrame.TranslationY = 10;
+
+            await Task.WhenAll(
+                ToastFrame.FadeTo(1, 160, Easing.CubicOut),
+                ToastFrame.TranslateTo(0, 0, 160, Easing.CubicOut)
+            );
+
+            await Task.Delay(1100);
+
+            await Task.WhenAll(
+                ToastFrame.FadeTo(0, 220, Easing.CubicIn),
+                ToastFrame.TranslateTo(0, 10, 220, Easing.CubicIn)
+            );
+
+            ToastFrame.IsVisible = false;
+        }
+
+        public new event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
