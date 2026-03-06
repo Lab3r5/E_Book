@@ -314,7 +314,7 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center"
                    TranslationY="18"
-                   TranslationX="0"
+                   TranslationX="12"
                    InputTransparent="False">
 
                 <VerticalStackLayout Spacing="18">

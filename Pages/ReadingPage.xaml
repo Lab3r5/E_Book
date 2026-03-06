@@ -4,84 +4,111 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     x:Class="E_Book.Pages.ReadingPage"
+    x:Name="ReadingPageRoot"
     shell:Shell.NavBarIsVisible="False"
     shell:Shell.TabBarIsVisible="False"
     Padding="0"
-    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+    BackgroundColor="#F7F6FB">
 
-    <Grid RowDefinitions="Auto,*,34">
+    <Grid x:Name="RootGrid"
+          RowDefinitions="Auto,*,Auto">
 
-        <!-- Top Bar (Auto height, will get status bar padding from code-behind) -->
+        <!-- Top Bar -->
         <Grid x:Name="TopBar"
               Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
               Padding="16,10"
               Opacity="1"
               TranslationY="0"
-              BackgroundColor="Transparent">
+              BackgroundColor="#CCF7F6FB"
+              ZIndex="10">
 
             <Button x:Name="BackButton"
-                    Text="‹ Back"
-                    FontSize="16"
+                    Text="←"
+                    FontSize="22"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     BackgroundColor="Transparent"
                     Padding="0"
                     Clicked="OnBackButtonClicked"
                     Pressed="OnButtonPressed"
                     Released="OnButtonReleased"
                     VerticalOptions="Center"
-                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
+                    HorizontalOptions="Start"
+                    TextColor="#4A4361"/>
 
             <Label x:Name="TitleLabel"
                    Grid.Column="1"
                    Text="Document"
                    FontSize="16"
+                   FontAttributes="Bold"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="Center"
                    LineBreakMode="TailTruncation"
-                   TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
+                   TextColor="#4A4361"/>
 
             <Button x:Name="MenuButton"
                     Grid.Column="2"
-                    Text="☰"
-                    FontSize="20"
+                    Text="⋯"
+                    FontSize="24"
+                    WidthRequest="44"
+                    HeightRequest="44"
                     BackgroundColor="Transparent"
                     Padding="0"
                     Clicked="OnMenuClicked"
                     Pressed="OnButtonPressed"
                     Released="OnButtonReleased"
                     VerticalOptions="Center"
-                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
+                    HorizontalOptions="End"
+                    TextColor="#4A4361"/>
         </Grid>
 
-        <!-- Content + overlay + popup -->
+        <!-- Top separator -->
+        <Border Grid.Row="0"
+                HeightRequest="0.5"
+                VerticalOptions="End"
+                BackgroundColor="#DDD9EB"
+                ZIndex="11"/>
+
+        <!-- Reading Area -->
         <AbsoluteLayout Grid.Row="1"
                         x:Name="ReadingArea"
-                        Padding="18,12"
-                        BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+                        Padding="26,14"
+                        BackgroundColor="#F7F6FB">
 
-            <AbsoluteLayout.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnReadingAreaTapped"/>
-            </AbsoluteLayout.GestureRecognizers>
+            <!-- Reader content host -->
+            <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
+                  AbsoluteLayout.LayoutFlags="All">
 
-            <!-- TXT reading text (paged) -->
-            <Label x:Name="fileContentLabel"
-                   IsVisible="True"
-                   Text="Loading..."
-                   FontSize="22"
-                   LineBreakMode="WordWrap"
-                   VerticalOptions="FillAndExpand"
-                   HorizontalOptions="FillAndExpand"
-                   BackgroundColor="Transparent"
-                   TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
-                   AbsoluteLayout.LayoutBounds="0,0,1,1"
-                   AbsoluteLayout.LayoutFlags="All"/>
+                <!-- TXT fallback -->
+                <Label x:Name="fileContentLabel"
+                       IsVisible="False"
+                       Text="Loading..."
+                       FontSize="22"
+                       LineBreakMode="WordWrap"
+                       VerticalOptions="FillAndExpand"
+                       HorizontalOptions="FillAndExpand"
+                       BackgroundColor="Transparent"
+                       TextColor="#3E3A4A"/>
 
-            <!-- HTML/EPUB/DOCX/RTF reading (WebView) -->
-            <WebView x:Name="ContentWebView"
-                     IsVisible="False"
-                     BackgroundColor="Transparent"
-                     AbsoluteLayout.LayoutBounds="0,0,1,1"
-                     AbsoluteLayout.LayoutFlags="All"/>
+                <!-- Main reader view -->
+                <WebView x:Name="ContentWebView"
+                         IsVisible="True"
+                         InputTransparent="True"
+                         BackgroundColor="Transparent"
+                         HeightRequest="-1"/>
+
+                <!-- Transparent gesture layer -->
+                <Grid x:Name="GestureLayer"
+                      BackgroundColor="Transparent">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnReadingAreaTapped"/>
+                        <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeLeft"/>
+                        <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipeRight"/>
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+            </Grid>
 
             <!-- Overlay -->
             <BoxView x:Name="Overlay"
@@ -101,12 +128,12 @@
                     Opacity="0"
                     Scale="0.98"
                     WidthRequest="340"
-                    HeightRequest="360"
+                    HeightRequest="430"
                     Padding="16"
                     StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light=#E5E1F2, Dark=#2A2A32}"
-                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#17171C}"
-                    AbsoluteLayout.LayoutBounds="0.5,1,340,360"
+                    Stroke="#E5E1F2"
+                    BackgroundColor="#FFFFFF"
+                    AbsoluteLayout.LayoutBounds="0.5,1,340,430"
                     AbsoluteLayout.LayoutFlags="PositionProportional"
                     TranslationY="-68">
 
@@ -115,18 +142,25 @@
                 </Border.StrokeShape>
 
                 <ScrollView>
-                    <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="14">
 
-                        <Label Text="Font Size"
-                               FontSize="16"
+                        <Label Text="Reading Settings"
+                               FontSize="17"
+                               FontAttributes="Bold"
                                HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"/>
+                               TextColor="#3E3A4A"/>
+
+                        <!-- Font Size -->
+                        <Label Text="Font Size"
+                               FontSize="15"
+                               HorizontalTextAlignment="Center"
+                               TextColor="#3E3A4A"/>
 
                         <Label x:Name="FontSizeLabel"
                                Text="Medium"
                                FontSize="12"
                                HorizontalTextAlignment="Center"
-                               TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                               TextColor="#6A6577"/>
 
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
                             <Button x:Name="SmallBtn"
@@ -163,18 +197,60 @@
 
                         <Grid ColumnDefinitions="Auto,*">
                             <Label Text="Small"
-                                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                                   TextColor="#6A6577"/>
                             <Label Grid.Column="1"
                                    Text="Large"
                                    HorizontalOptions="End"
-                                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                                   TextColor="#6A6577"/>
                         </Grid>
 
-                        <Label Text="Theme"
-                               FontSize="14"
+                        <!-- Line Spacing -->
+                        <Label Text="Line Spacing"
+                               FontSize="15"
                                HorizontalTextAlignment="Center"
-                               Margin="0,6,0,0"
-                               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"/>
+                               Margin="0,8,0,0"
+                               TextColor="#3E3A4A"/>
+
+                        <Label x:Name="LineSpacingLabel"
+                               Text="Normal"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center"
+                               TextColor="#6A6577"/>
+
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                            <Button x:Name="CompactBtn"
+                                    Text="Compact"
+                                    Clicked="OnLineSpacingClicked"
+                                    CommandParameter="0"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+
+                            <Button x:Name="NormalBtn"
+                                    Grid.Column="1"
+                                    Text="Normal"
+                                    Clicked="OnLineSpacingClicked"
+                                    CommandParameter="1"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+
+                            <Button x:Name="RelaxedBtn"
+                                    Grid.Column="2"
+                                    Text="Relaxed"
+                                    Clicked="OnLineSpacingClicked"
+                                    CommandParameter="2"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="14"/>
+                        </Grid>
+
+                        <!-- Theme -->
+                        <Label Text="Theme"
+                               FontSize="15"
+                               HorizontalTextAlignment="Center"
+                               Margin="0,8,0,0"
+                               TextColor="#3E3A4A"/>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                             <Button x:Name="LightBtn"
@@ -199,19 +275,34 @@
                 </ScrollView>
             </Border>
 
+            <!-- Bottom gradient fade -->
+            <BoxView HeightRequest="30"
+                     VerticalOptions="End"
+                     AbsoluteLayout.LayoutBounds="0,1,1,30"
+                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                     InputTransparent="True">
+                <BoxView.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#00F7F6FB" Offset="0"/>
+                        <GradientStop Color="#F7F6FB" Offset="1"/>
+                    </LinearGradientBrush>
+                </BoxView.Background>
+            </BoxView>
+
         </AbsoluteLayout>
 
         <!-- Bottom progress -->
         <Grid x:Name="BottomBar"
               Grid.Row="2"
-              Padding="18,0"
+              Padding="18,8,18,10"
               ColumnDefinitions="*,Auto"
               VerticalOptions="Center"
-              BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+              BackgroundColor="#CCF7F6FB"
+              ZIndex="10">
 
             <ProgressBar x:Name="ReadingProgressBar"
                          Progress="0"
-                         HeightRequest="2"
+                         HeightRequest="3"
                          VerticalOptions="Center"/>
 
             <Label x:Name="ProgressText"
@@ -220,7 +311,7 @@
                    FontSize="12"
                    VerticalOptions="Center"
                    Margin="12,0,0,0"
-                   TextColor="{AppThemeBinding Light=#6A6577, Dark=#BDB8C8}"/>
+                   TextColor="#6A6577"/>
         </Grid>
 
         <!-- Floating TOC button -->
@@ -229,33 +320,34 @@
                 Grid.RowSpan="2"
                 HorizontalOptions="End"
                 VerticalOptions="End"
-                WidthRequest="52"
-                HeightRequest="52"
-                Margin="0,0,18,52"
-                StrokeThickness="0"
+                WidthRequest="54"
+                HeightRequest="54"
+                Margin="0,0,18,54"
+                Stroke="#E5E1F2"
+                StrokeThickness="1"
                 ZIndex="999"
-                BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#20202A}">
+                BackgroundColor="#FFFFFF">
 
             <Border.Shadow>
-                <Shadow Brush="#66000000"
-                        Offset="0,6"
-                        Radius="14"
-                        Opacity="0.35"/>
+                <Shadow Brush="#33000000"
+                        Offset="0,8"
+                        Radius="16"
+                        Opacity="0.4"/>
             </Border.Shadow>
 
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="26"/>
+                <RoundRectangle CornerRadius="27"/>
             </Border.StrokeShape>
 
             <Button x:Name="TocButton"
-                    Text="≡"
+                    Text="≣"
                     FontSize="18"
                     Padding="0"
                     BackgroundColor="Transparent"
                     Clicked="OnTocClicked"
                     Pressed="OnButtonPressed"
                     Released="OnButtonReleased"
-                    TextColor="{AppThemeBinding Light=#4A4361, Dark=#E7E5F0}"/>
+                    TextColor="#4A4361"/>
         </Border>
 
     </Grid>
