@@ -20,8 +20,7 @@
               Padding="16,10"
               Opacity="1"
               TranslationY="0"
-              BackgroundColor="#CCF7F6FB"
-              ZIndex="10">
+              BackgroundColor="Transparent">
 
             <Button x:Name="BackButton"
                     Text="←"
@@ -63,17 +62,10 @@
                     TextColor="#4A4361"/>
         </Grid>
 
-        <!-- Top separator -->
-        <Border Grid.Row="0"
-                HeightRequest="0.5"
-                VerticalOptions="End"
-                BackgroundColor="#DDD9EB"
-                ZIndex="11"/>
-
         <!-- Reading Area -->
         <AbsoluteLayout Grid.Row="1"
                         x:Name="ReadingArea"
-                        Padding="26,14"
+                        Padding="22,12"
                         BackgroundColor="#F7F6FB">
 
             <!-- Reader content host -->
@@ -95,8 +87,7 @@
                 <WebView x:Name="ContentWebView"
                          IsVisible="True"
                          InputTransparent="True"
-                         BackgroundColor="Transparent"
-                         HeightRequest="-1"/>
+                         BackgroundColor="Transparent"/>
 
                 <!-- Transparent gesture layer -->
                 <Grid x:Name="GestureLayer"
@@ -275,20 +266,6 @@
                 </ScrollView>
             </Border>
 
-            <!-- Bottom gradient fade -->
-            <BoxView HeightRequest="30"
-                     VerticalOptions="End"
-                     AbsoluteLayout.LayoutBounds="0,1,1,30"
-                     AbsoluteLayout.LayoutFlags="WidthProportional"
-                     InputTransparent="True">
-                <BoxView.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#00F7F6FB" Offset="0"/>
-                        <GradientStop Color="#F7F6FB" Offset="1"/>
-                    </LinearGradientBrush>
-                </BoxView.Background>
-            </BoxView>
-
         </AbsoluteLayout>
 
         <!-- Bottom progress -->
@@ -297,8 +274,7 @@
               Padding="18,8,18,10"
               ColumnDefinitions="*,Auto"
               VerticalOptions="Center"
-              BackgroundColor="#CCF7F6FB"
-              ZIndex="10">
+              BackgroundColor="#F7F6FB">
 
             <ProgressBar x:Name="ReadingProgressBar"
                          Progress="0"
@@ -323,16 +299,15 @@
                 WidthRequest="54"
                 HeightRequest="54"
                 Margin="0,0,18,54"
-                Stroke="#E5E1F2"
-                StrokeThickness="1"
+                StrokeThickness="0"
                 ZIndex="999"
-                BackgroundColor="#FFFFFF">
+                BackgroundColor="#F1EEFF">
 
             <Border.Shadow>
-                <Shadow Brush="#33000000"
-                        Offset="0,8"
-                        Radius="16"
-                        Opacity="0.4"/>
+                <Shadow Brush="#66000000"
+                        Offset="0,6"
+                        Radius="14"
+                        Opacity="0.35"/>
             </Border.Shadow>
 
             <Border.StrokeShape>
