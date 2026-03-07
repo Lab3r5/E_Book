@@ -115,14 +115,16 @@ namespace E_Book.Data
         }
 
         // ================= Reading Settings =================
-        public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor)
+        public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor, double lineSpacing)
         {
             await EnsureInitializedAsync();
             var existingReading = await database.Table<ReadingSettings>().FirstOrDefaultAsync();
+
             if (existingReading != null)
             {
                 existingReading.FontSize = fontSize;
                 existingReading.BackgroundColor = backgroundColor;
+                existingReading.LineSpacing = lineSpacing;
                 await database.UpdateAsync(existingReading);
             }
             else
@@ -130,9 +132,16 @@ namespace E_Book.Data
                 await database.InsertAsync(new ReadingSettings
                 {
                     FontSize = fontSize,
-                    BackgroundColor = backgroundColor
+                    BackgroundColor = backgroundColor,
+                    LineSpacing = lineSpacing
                 });
             }
+        }
+
+        // 兼容旧代码的重载
+        public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor)
+        {
+            await SaveReadingSettingsAsync(fontSize, backgroundColor, 1.65);
         }
 
         public async Task<ReadingSettings> GetReadingSettingsAsync()
@@ -194,8 +203,12 @@ namespace E_Book.Data
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
+
         public int FontSize { get; set; } = 18;
+
         public string BackgroundColor { get; set; } = "Light";
+
+        public double LineSpacing { get; set; } = 1.65;
     }
 
     public class ReadingProgress
