@@ -23,28 +23,21 @@ namespace E_Book.Pages
     [QueryProperty(nameof(FilePath), "filePath")]
     public partial class ReadingPage : ContentPage
     {
-        // -----------------------------
-        // Paging state
-        // -----------------------------
         private int currentPage = 0;
 
-        // TXT
         private string[] lines = Array.Empty<string>();
-        private readonly List<string> wrappedTxtLines = new();
-        private int linesPerPage = 12;
+        private readonly List<string> txtParagraphs = new();
+        private readonly List<string> txtPages = new();
+        private readonly List<int> txtParagraphStartPageIndices = new();
 
-        // HTML paged result
         private readonly List<string> htmlPages = new();
 
-        // Raw chapter-based source
         private readonly List<string> _rawHtmlChapters = new();
         private readonly List<string> _rawHtmlChapterKeys = new();
         private readonly List<int> _chapterStartPageIndices = new();
 
-        // Render cache
         private readonly Dictionary<int, string> _renderedPageCache = new();
 
-        // QueryProperty target
         private string _filePath = string.Empty;
         public string FilePath
         {
@@ -54,20 +47,16 @@ namespace E_Book.Pages
 
         private readonly Database dbHelper = new();
 
-        // Font presets
         private readonly int[] fontSizes = new[] { 18, 22, 26 };
         private int fontIndex = 1;
         private int currentFontSize = 22;
 
-        // Line spacing presets
         private readonly double[] lineSpacings = new[] { 1.4, 1.65, 1.9 };
         private int lineSpacingIndex = 1;
         private double currentLineSpacing = 1.65;
 
-        // Reader local theme only
-        private string themeMode = "Light";
+        private string themeMode = "White";
 
-        // Reader colors
         private Color PageBgColor = Color.FromArgb("#F7F6FB");
         private Color TextColorReader = Color.FromArgb("#3E3A4A");
         private Color SubtleTextColor = Color.FromArgb("#6A6577");
@@ -76,38 +65,34 @@ namespace E_Book.Pages
         private Color SoftSurfaceColor = Color.FromArgb("#F1EEFF");
         private Color BorderColor = Color.FromArgb("#E5E1F2");
 
-        // Animation flags
         private bool isAnimating = false;
         private bool chromeVisible = true;
         private bool _enterAnimationPlayed = false;
 
-        // Animation timings
         private const uint PageAnimMs = 120;
         private const double SlideDistance = 28;
 
-        private const uint MenuAnimMs = 140;
-        private const double MenuRestY = -68;
-        private const double MenuHiddenY = -30;
+        private const uint MenuAnimMs = 180;
+        private const double MenuRestY = 0;
+        private const double MenuHiddenY = 20;
 
         private const uint ChromeAnimMs = 140;
 
         private enum ReaderMode { TxtPaged, HtmlPaged, PdfExternal, Unknown }
         private ReaderMode mode = ReaderMode.Unknown;
 
-        // Prevent duplicate loading
         private string _loadedFilePath = string.Empty;
         private double _lastReaderWidth = -1;
         private double _lastReaderHeight = -1;
 
-        // Debounce repagination
         private CancellationTokenSource? _repaginateCts;
 
-        // TOC
         private sealed class TocItem
         {
             public string Title { get; set; } = "";
             public int PageIndex { get; set; }
         }
+
         private readonly List<TocItem> tocItems = new();
 
         public ReadingPage()
@@ -119,12 +104,8 @@ namespace E_Book.Pages
 
         private void SetupGestures()
         {
-            // GestureLayer in XAML handles tap + swipe.
         }
 
-        // -----------------------------
-        // Lifecycle
-        // -----------------------------
         protected override async void OnAppearing()
         {
             base.OnAppearing();
@@ -194,13 +175,10 @@ namespace E_Book.Pages
                 int idx = Array.IndexOf(fontSizes, readingSettings.FontSize);
                 fontIndex = idx >= 0 ? idx : 1;
                 currentFontSize = fontSizes[fontIndex];
-                FontSlider.Value = fontIndex;
-                UpdateFontSizeLabel();
 
                 themeMode = NormalizeTheme(readingSettings.BackgroundColor);
                 ApplyTheme(themeMode);
 
-                // 数据库如果没有 LineSpacing 字段，就保持默认值
                 try
                 {
                     var lineSpacingProperty = readingSettings.GetType().GetProperty("LineSpacing");
@@ -219,8 +197,6 @@ namespace E_Book.Pages
                 {
                     currentLineSpacing = lineSpacings[lineSpacingIndex];
                 }
-
-                UpdateLineSpacingLabel();
 
                 await LoadByTypeAsync(FilePath);
 
@@ -243,9 +219,6 @@ namespace E_Book.Pages
             }
         }
 
-        // -----------------------------
-        // Loading / transitions
-        // -----------------------------
         private void ShowLoadingPage()
         {
             ShowWebView();
@@ -278,17 +251,11 @@ namespace E_Book.Pages
             );
         }
 
-        // -----------------------------
-        // Reading key
-        // -----------------------------
         private string GetReadingKey()
         {
             return Path.GetFileName(FilePath ?? string.Empty).Trim().ToLowerInvariant();
         }
 
-        // -----------------------------
-        // Repagination debounce
-        // -----------------------------
         private void RequestRepaginate()
         {
             _repaginateCts?.Cancel();
@@ -306,8 +273,7 @@ namespace E_Book.Pages
 
                     if (mode == ReaderMode.TxtPaged)
                     {
-                        UpdateLinesPerPage();
-                        RebuildWrappedTxtLines();
+                        RebuildTxtPagination();
                         BuildTxtToc();
                     }
                     else if (mode == ReaderMode.HtmlPaged)
@@ -332,9 +298,6 @@ namespace E_Book.Pages
             _renderedPageCache.Clear();
         }
 
-        // -----------------------------
-        // Immersive toggle
-        // -----------------------------
         private async void OnReadingAreaTapped(object sender, TappedEventArgs e)
         {
             if (Overlay.IsVisible || MenuPopup.IsVisible)
@@ -403,9 +366,6 @@ namespace E_Book.Pages
             }
         }
 
-        // -----------------------------
-        // Swipe handlers
-        // -----------------------------
         private async void OnSwipeLeft(object sender, SwipedEventArgs e)
         {
             if (isAnimating || Overlay.IsVisible || MenuPopup.IsVisible)
@@ -422,13 +382,12 @@ namespace E_Book.Pages
             await PrevPageAsync();
         }
 
-        // -----------------------------
-        // Router
-        // -----------------------------
         private async Task LoadByTypeAsync(string filePath)
         {
             lines = Array.Empty<string>();
-            wrappedTxtLines.Clear();
+            txtParagraphs.Clear();
+            txtPages.Clear();
+            txtParagraphStartPageIndices.Clear();
 
             htmlPages.Clear();
             _rawHtmlChapters.Clear();
@@ -448,8 +407,7 @@ namespace E_Book.Pages
                     case ".txt":
                         mode = ReaderMode.TxtPaged;
                         await LoadTxtAsync(filePath);
-                        UpdateLinesPerPage();
-                        RebuildWrappedTxtLines();
+                        RebuildTxtPagination();
                         BuildTxtToc();
                         ShowWebView();
                         break;
@@ -524,165 +482,344 @@ namespace E_Book.Pages
             fileContentLabel.IsVisible = false;
         }
 
-        // -----------------------------
-        // TXT
-        // -----------------------------
         private async Task LoadTxtAsync(string filePath)
         {
             string fileContent = await File.ReadAllTextAsync(filePath);
             lines = Regex.Split(fileContent, @"\r\n|\n|\r");
-        }
 
-        private void UpdateLinesPerPage()
-        {
-            double areaHeight = ReadingArea.Height;
+            txtParagraphs.Clear();
 
-            if (areaHeight <= 0)
-            {
-                linesPerPage = 10;
-                return;
-            }
-
-            double topBottomSafety = chromeVisible ? 118 : 92;
-            double availableHeight = Math.Max(120, areaHeight - topBottomSafety);
-
-            double estimatedLineHeight = currentFontSize * currentLineSpacing * 1.34;
-            int calculated = (int)Math.Floor(availableHeight / Math.Max(24, estimatedLineHeight));
-
-            linesPerPage = Math.Max(4, calculated - 1);
-        }
-
-        private void RebuildWrappedTxtLines()
-        {
-            wrappedTxtLines.Clear();
-
-            if (lines == null || lines.Length == 0)
+            if (lines.Length == 0)
                 return;
 
-            double areaWidth = ReadingArea.Width;
-            if (areaWidth <= 0)
-                areaWidth = Width > 0 ? Width : 400;
-
-            double usableWidth = Math.Max(100, areaWidth - 58);
-
-            bool mostlyChinese = IsMostlyChineseText(lines);
-
-            double avgCharWidth = mostlyChinese
-                ? currentFontSize * 0.92
-                : currentFontSize * 0.62;
-
-            int charsPerVisualLine = Math.Max(8, (int)(usableWidth / avgCharWidth));
+            var buffer = new StringBuilder();
+            bool previousLineLooksEnglish = false;
 
             foreach (var raw in lines)
             {
                 string line = raw ?? "";
+                string trimmed = line.Trim();
 
-                if (string.IsNullOrWhiteSpace(line))
+                if (string.IsNullOrWhiteSpace(trimmed))
                 {
-                    wrappedTxtLines.Add(string.Empty);
+                    if (buffer.Length > 0)
+                    {
+                        txtParagraphs.Add(buffer.ToString().Trim());
+                        buffer.Clear();
+                    }
+
+                    txtParagraphs.Add(string.Empty);
+                    previousLineLooksEnglish = false;
                     continue;
                 }
-
-                string trimmed = line.Trim();
 
                 if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
                 {
-                    wrappedTxtLines.Add(trimmed);
+                    if (buffer.Length > 0)
+                    {
+                        txtParagraphs.Add(buffer.ToString().Trim());
+                        buffer.Clear();
+                    }
+
+                    txtParagraphs.Add(trimmed);
+                    previousLineLooksEnglish = false;
                     continue;
                 }
 
-                bool hasIndent = line.StartsWith("　　") || line.StartsWith("  ");
-                string content = line;
-
-                if (hasIndent)
+                if (Regex.IsMatch(trimmed, @"^\s*#{1,6}\s+"))
                 {
-                    string indent = line.StartsWith("　　") ? "　　" : "  ";
-                    content = line.Substring(indent.Length);
+                    if (buffer.Length > 0)
+                    {
+                        txtParagraphs.Add(buffer.ToString().Trim());
+                        buffer.Clear();
+                    }
 
-                    int firstLineChars = Math.Max(6, charsPerVisualLine - 2);
-                    AppendWrappedSegments(indent + content, firstLineChars, charsPerVisualLine, wrappedTxtLines, mostlyChinese);
+                    txtParagraphs.Add(trimmed);
+                    previousLineLooksEnglish = false;
+                    continue;
                 }
-                else
+
+                bool currentLineLooksEnglish = LooksLikeEnglishText(trimmed);
+
+                if (buffer.Length > 0)
                 {
-                    AppendWrappedSegments(content, charsPerVisualLine, charsPerVisualLine, wrappedTxtLines, mostlyChinese);
+                    if (previousLineLooksEnglish && currentLineLooksEnglish)
+                        buffer.Append(' ');
                 }
+
+                buffer.Append(line.Trim());
+                previousLineLooksEnglish = currentLineLooksEnglish;
             }
+
+            if (buffer.Length > 0)
+                txtParagraphs.Add(buffer.ToString().Trim());
         }
 
-        private void AppendWrappedSegments(
-            string text,
-            int firstLineChars,
-            int normalLineChars,
-            List<string> target,
+        private bool LooksLikeEnglishText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            int latin = 0;
+            int cjk = 0;
+
+            foreach (char c in text)
+            {
+                if (char.IsWhiteSpace(c))
+                    continue;
+
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+                    latin++;
+                else if (c >= 0x4E00 && c <= 0x9FFF)
+                    cjk++;
+            }
+
+            return latin > cjk;
+        }
+
+        private void RebuildTxtPagination()
+        {
+            txtPages.Clear();
+            txtParagraphStartPageIndices.Clear();
+
+            if (txtParagraphs.Count == 0)
+                return;
+
+            double areaWidth = ReadingArea.Width;
+            double areaHeight = ReadingArea.Height;
+
+            if (areaWidth <= 0) areaWidth = Width > 0 ? Width : 430;
+            if (areaHeight <= 0) areaHeight = Height > 0 ? Height : 760;
+
+            double usableWidth = Math.Max(180, areaWidth - 36);
+            double usableHeight = Math.Max(180, areaHeight - 44);
+
+            bool mostlyChinese = ContainsMostlyChinese(string.Join("", txtParagraphs.Take(80)));
+
+            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing;
+            double paragraphSpacingPx = 12;
+            double blankParagraphPx = 14;
+
+            double currentHeight = 0;
+            var currentPageParagraphs = new List<string>();
+            int currentPageStartParagraphIndex = 0;
+
+            for (int i = 0; i < txtParagraphs.Count; i++)
+            {
+                string paragraph = txtParagraphs[i] ?? "";
+
+                double estimatedHeight = EstimateParagraphHeightPx(
+                    paragraph,
+                    usableWidth,
+                    lineHeightPx,
+                    paragraphSpacingPx,
+                    blankParagraphPx,
+                    mostlyChinese);
+
+                if (estimatedHeight > usableHeight)
+                {
+                    if (currentPageParagraphs.Count > 0)
+                    {
+                        txtPages.Add(BuildTxtPageHtmlFromParagraphs(currentPageParagraphs));
+                        currentPageParagraphs.Clear();
+                        currentHeight = 0;
+                    }
+
+                    var splitParagraphs = SplitLongParagraphForPaging(
+                        paragraph,
+                        usableWidth,
+                        usableHeight,
+                        lineHeightPx,
+                        paragraphSpacingPx,
+                        blankParagraphPx,
+                        mostlyChinese);
+
+                    txtParagraphStartPageIndices.Add(txtPages.Count);
+
+                    foreach (var part in splitParagraphs)
+                        txtPages.Add(BuildTxtPageHtmlFromParagraphs(new List<string> { part }));
+
+                    currentPageStartParagraphIndex = i + 1;
+                    continue;
+                }
+
+                if (currentPageParagraphs.Count > 0 && currentHeight + estimatedHeight > usableHeight)
+                {
+                    txtPages.Add(BuildTxtPageHtmlFromParagraphs(currentPageParagraphs));
+                    currentPageParagraphs.Clear();
+                    currentHeight = 0;
+                    currentPageStartParagraphIndex = i;
+                }
+
+                if (currentPageParagraphs.Count == 0)
+                {
+                    while (txtParagraphStartPageIndices.Count <= currentPageStartParagraphIndex)
+                        txtParagraphStartPageIndices.Add(txtPages.Count);
+                }
+
+                currentPageParagraphs.Add(paragraph);
+                currentHeight += estimatedHeight;
+            }
+
+            if (currentPageParagraphs.Count > 0)
+                txtPages.Add(BuildTxtPageHtmlFromParagraphs(currentPageParagraphs));
+
+            while (txtParagraphStartPageIndices.Count < txtParagraphs.Count)
+                txtParagraphStartPageIndices.Add(Math.Max(0, txtPages.Count - 1));
+
+            ClampCurrentPage();
+        }
+
+        private List<string> SplitLongParagraphForPaging(
+            string paragraph,
+            double usableWidth,
+            double usableHeight,
+            double lineHeightPx,
+            double paragraphSpacingPx,
+            double blankParagraphPx,
             bool mostlyChinese)
         {
-            if (string.IsNullOrEmpty(text))
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(paragraph))
             {
-                target.Add(string.Empty);
-                return;
+                result.Add(paragraph);
+                return result;
+            }
+
+            string trimmed = paragraph.Trim();
+
+            if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
+            {
+                result.Add(trimmed);
+                return result;
+            }
+
+            var mdHeading = Regex.Match(trimmed, @"^\s*#{1,6}\s+(.*)$");
+            if (mdHeading.Success)
+            {
+                result.Add(trimmed);
+                return result;
+            }
+
+            bool isEnglish = LooksLikeEnglishText(paragraph);
+
+            double avgCharWidth = mostlyChinese
+                ? GetReaderCssFontSize() * 0.95
+                : GetReaderCssFontSize() * 0.56;
+
+            double firstLineIndentWidth = isEnglish ? 0 : GetReaderCssFontSize() * 2.0;
+            int charsFirstLine = Math.Max(6, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
+            int charsOtherLines = Math.Max(8, (int)(usableWidth / avgCharWidth));
+
+            int maxLinesPerPage = Math.Max(3, (int)Math.Floor((usableHeight - paragraphSpacingPx) / lineHeightPx));
+            int maxCharsFirstPage = charsFirstLine + Math.Max(0, maxLinesPerPage - 1) * charsOtherLines;
+            int maxCharsNormalPage = Math.Max(charsOtherLines * maxLinesPerPage, charsOtherLines * 3);
+
+            if (paragraph.Length <= maxCharsFirstPage)
+            {
+                result.Add(paragraph);
+                return result;
             }
 
             int start = 0;
-            bool first = true;
+            bool firstChunk = true;
 
-            while (start < text.Length)
+            while (start < paragraph.Length)
             {
-                int limit = first ? firstLineChars : normalLineChars;
-                int remaining = text.Length - start;
-                int take = Math.Min(limit, remaining);
+                int maxChars = firstChunk ? maxCharsFirstPage : maxCharsNormalPage;
+                int remaining = paragraph.Length - start;
+                int take = Math.Min(maxChars, remaining);
 
-                if (!mostlyChinese && start + take < text.Length)
+                if (isEnglish && start + take < paragraph.Length)
                 {
-                    int lastSpace = text.LastIndexOf(' ', start + take - 1, take);
-                    if (lastSpace > start)
+                    int lastSpace = paragraph.LastIndexOf(' ', start + take - 1, take);
+                    if (lastSpace > start + Math.Min(20, take / 3))
                         take = lastSpace - start + 1;
                 }
 
-                string segment = text.Substring(start, take).TrimEnd();
-                target.Add(segment);
+                string chunk = paragraph.Substring(start, take).Trim();
+                if (!string.IsNullOrWhiteSpace(chunk))
+                    result.Add(chunk);
 
                 start += take;
 
-                while (start < text.Length && text[start] == ' ')
+                while (start < paragraph.Length && paragraph[start] == ' ')
                     start++;
 
-                first = false;
+                firstChunk = false;
             }
+
+            return result.Count > 0 ? result : new List<string> { paragraph };
         }
 
-        private static bool IsMostlyChineseText(IEnumerable<string> sourceLines)
+        private double EstimateParagraphHeightPx(
+            string paragraph,
+            double usableWidth,
+            double lineHeightPx,
+            double paragraphSpacingPx,
+            double blankParagraphPx,
+            bool mostlyChinese)
         {
-            int total = 0;
-            int chinese = 0;
+            if (string.IsNullOrWhiteSpace(paragraph))
+                return blankParagraphPx;
 
-            foreach (var line in sourceLines.Take(80))
+            string trimmed = paragraph.Trim();
+
+            if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
+                return lineHeightPx + 18;
+
+            var mdHeading = Regex.Match(trimmed, @"^\s*#{1,6}\s+(.*)$");
+            if (mdHeading.Success)
             {
-                foreach (char c in line ?? string.Empty)
-                {
-                    if (char.IsWhiteSpace(c))
-                        continue;
-
-                    total++;
-
-                    if (c >= 0x4E00 && c <= 0x9FFF)
-                        chinese++;
-                }
+                string headingText = mdHeading.Groups[1].Value.Trim();
+                int headingCharsPerLine = Math.Max(6, (int)(usableWidth / (GetReaderCssFontSize() * 1.0)));
+                int headingLinesNeeded = Math.Max(1, (int)Math.Ceiling(headingText.Length / (double)headingCharsPerLine));
+                return headingLinesNeeded * (lineHeightPx * 1.15) + 16;
             }
 
-            if (total == 0) return false;
-            return chinese / (double)total >= 0.35;
+            bool isEnglish = LooksLikeEnglishText(paragraph);
+
+            double avgCharWidth = mostlyChinese
+                ? GetReaderCssFontSize() * 0.95
+                : GetReaderCssFontSize() * 0.56;
+
+            double firstLineIndentWidth = isEnglish ? 0 : GetReaderCssFontSize() * 2.0;
+            int charsFirstLine = Math.Max(6, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
+            int charsOtherLines = Math.Max(8, (int)(usableWidth / avgCharWidth));
+
+            int textLength = paragraph.Length;
+
+            int paragraphLinesNeeded;
+            if (textLength <= charsFirstLine)
+            {
+                paragraphLinesNeeded = 1;
+            }
+            else
+            {
+                int remaining = textLength - charsFirstLine;
+                paragraphLinesNeeded = 1 + (int)Math.Ceiling(remaining / (double)charsOtherLines);
+            }
+
+            return paragraphLinesNeeded * lineHeightPx + paragraphSpacingPx;
         }
 
-        private string ConvertTxtPageToHtml(IEnumerable<string> pageLines)
+        private string BuildTxtPageHtmlFromParagraphs(List<string> paragraphs)
         {
             var sb = new StringBuilder();
 
-            foreach (var raw in pageLines)
+            foreach (var raw in paragraphs)
             {
                 string original = raw ?? "";
                 string trimmed = original.Trim();
 
-                if (Regex.IsMatch(trimmed, @"^[_\-─—=]{5,}$"))
+                if (string.IsNullOrWhiteSpace(original))
+                {
+                    sb.Append("<div class='sp'></div>");
+                    continue;
+                }
+
+                if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
                 {
                     sb.Append("<hr />");
                     continue;
@@ -696,22 +833,32 @@ namespace E_Book.Pages
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(original))
-                {
-                    sb.Append("<div class='sp'></div>");
-                    continue;
-                }
+                bool isEnglish = LooksLikeEnglishText(original);
+                string encoded = WebUtility.HtmlEncode(original);
 
-                string encoded = WebUtility.HtmlEncode(original).Replace(" ", "&nbsp;");
-                sb.Append($"<p>{encoded}</p>");
+                if (original.StartsWith("　　"))
+                    encoded = "&emsp;&emsp;" + WebUtility.HtmlEncode(original.Substring(2));
+                else if (original.StartsWith("　"))
+                    encoded = "&emsp;" + WebUtility.HtmlEncode(original.Substring(1));
+
+                sb.Append(isEnglish
+                    ? $"<p class='txt txt-en'>{encoded}</p>"
+                    : $"<p class='txt txt-cn'>{encoded}</p>");
             }
 
             return sb.ToString();
         }
 
-        // -----------------------------
-        // HTML / EPUB / DOCX / RTF raw loading
-        // -----------------------------
+        private int GetReaderCssFontSize()
+        {
+            return currentFontSize switch
+            {
+                18 => 16,
+                22 => 18,
+                _ => 20
+            };
+        }
+
         private async Task LoadHtmlFileAsync(string filePath)
         {
             var html = await File.ReadAllTextAsync(filePath);
@@ -810,9 +957,6 @@ namespace E_Book.Pages
             catch { }
         }
 
-        // -----------------------------
-        // HTML pagination
-        // -----------------------------
         private List<string> PaginateHtmlContent(string html)
         {
             var pages = new List<string>();
@@ -930,16 +1074,12 @@ namespace E_Book.Pages
             ClampCurrentPage();
         }
 
-        // -----------------------------
-        // Paging / rendering
-        // -----------------------------
         private int GetTotalPages()
         {
             return mode switch
             {
-                ReaderMode.TxtPaged => (wrappedTxtLines == null || wrappedTxtLines.Count == 0) ? 0
-                    : (int)Math.Ceiling(wrappedTxtLines.Count / (double)Math.Max(1, linesPerPage)),
-                ReaderMode.HtmlPaged => (htmlPages == null || htmlPages.Count == 0) ? 0 : htmlPages.Count,
+                ReaderMode.TxtPaged => txtPages.Count == 0 ? 0 : txtPages.Count,
+                ReaderMode.HtmlPaged => htmlPages.Count == 0 ? 0 : htmlPages.Count,
                 _ => 0
             };
         }
@@ -977,17 +1117,11 @@ namespace E_Book.Pages
             string pageHtml;
 
             if (mode == ReaderMode.TxtPaged)
-            {
                 pageHtml = BuildTxtPageHtml();
-            }
             else if (mode == ReaderMode.HtmlPaged)
-            {
                 pageHtml = BuildHtmlPageHtml();
-            }
             else
-            {
                 return;
-            }
 
             string wrapped = WrapHtml(pageHtml);
             _renderedPageCache[currentPage] = wrapped;
@@ -998,29 +1132,15 @@ namespace E_Book.Pages
 
         private string BuildTxtPageHtml()
         {
-            if (wrappedTxtLines == null || wrappedTxtLines.Count == 0)
+            if (txtPages.Count == 0)
                 return "<p></p>";
 
-            int safeLinesPerPage = Math.Max(1, linesPerPage);
-
-            int start = Math.Max(0, currentPage * safeLinesPerPage);
-            int end = Math.Min(start + safeLinesPerPage, wrappedTxtLines.Count);
-
-            if (start >= wrappedTxtLines.Count)
-            {
-                int total = (int)Math.Ceiling(wrappedTxtLines.Count / (double)safeLinesPerPage);
-                currentPage = Math.Max(0, total - 1);
-                start = currentPage * safeLinesPerPage;
-                end = Math.Min(start + safeLinesPerPage, wrappedTxtLines.Count);
-            }
-
-            var pageLines = wrappedTxtLines.Skip(start).Take(Math.Max(0, end - start));
-            return ConvertTxtPageToHtml(pageLines);
+            return txtPages[Math.Clamp(currentPage, 0, txtPages.Count - 1)];
         }
 
         private string BuildHtmlPageHtml()
         {
-            if (htmlPages == null || htmlPages.Count == 0)
+            if (htmlPages.Count == 0)
                 return "<p>(Empty)</p>";
 
             return htmlPages[Math.Clamp(currentPage, 0, htmlPages.Count - 1)];
@@ -1056,13 +1176,7 @@ namespace E_Book.Pages
             string border = ToCssColor(BorderColor);
             string accent = ToCssColor(Color.FromArgb("#7B6CFF"));
 
-            int px = currentFontSize switch
-            {
-                18 => 16,
-                22 => 18,
-                _ => 20
-            };
-
+            int px = GetReaderCssFontSize();
             string lineHeightCss = currentLineSpacing.ToString(CultureInfo.InvariantCulture);
 
             return $@"
@@ -1070,7 +1184,7 @@ namespace E_Book.Pages
 <html>
 <head>
 <meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
 <style>
     html, body {{
         margin: 0;
@@ -1080,9 +1194,10 @@ namespace E_Book.Pages
         font-size: {px}px;
         line-height: {lineHeightCss};
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-        word-wrap: break-word;
-        overflow-wrap: anywhere;
-        word-break: break-word;
+        overflow-wrap: break-word;
+        word-break: normal;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
     }}
 
     body {{
@@ -1100,6 +1215,27 @@ namespace E_Book.Pages
     p {{
         margin: 0 0 12px 0;
         color: {fg};
+    }}
+
+    p.txt {{
+        margin: 0 0 12px 0;
+        white-space: normal;
+    }}
+
+    p.txt-cn {{
+        text-indent: 2em;
+        text-align: justify;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-break: auto;
+    }}
+
+    p.txt-en {{
+        text-indent: 0;
+        text-align: left;
+        word-break: normal;
+        overflow-wrap: break-word;
+        line-break: auto;
     }}
 
     h1, h2, h3, h4, h5, h6 {{
@@ -1184,9 +1320,6 @@ namespace E_Book.Pages
             ReadingProgressBar.Progress = total <= 1 ? 1 : (current / (double)total);
         }
 
-        // -----------------------------
-        // TOC
-        // -----------------------------
         private async void OnTocClicked(object sender, EventArgs e)
         {
             int total = GetTotalPages();
@@ -1199,9 +1332,7 @@ namespace E_Book.Pages
             if (tocItems.Count == 0)
             {
                 if (mode == ReaderMode.TxtPaged)
-                {
                     BuildTxtToc();
-                }
                 else if (mode == ReaderMode.HtmlPaged)
                 {
                     if (Path.GetExtension(FilePath)?.Equals(".epub", StringComparison.OrdinalIgnoreCase) == true)
@@ -1231,7 +1362,7 @@ namespace E_Book.Pages
                 options.Add(opt);
             }
 
-            options.Add("Go to page…");
+            options.Add("Go to page...");
 
             string choice = await DisplayActionSheet(
                 $"TOC (Current: p.{currentPage + 1}/{total})",
@@ -1244,7 +1375,7 @@ namespace E_Book.Pages
 
             int target = -1;
 
-            if (choice == "Go to page…")
+            if (choice == "Go to page...")
             {
                 string? input = await DisplayPromptAsync(
                     title: "Go to",
@@ -1278,14 +1409,11 @@ namespace E_Book.Pages
             await SaveReadingProgress();
         }
 
-        // -----------------------------
-        // TOC builders
-        // -----------------------------
         private void BuildTxtToc()
         {
             tocItems.Clear();
 
-            if (lines == null || lines.Length == 0)
+            if (txtParagraphs.Count == 0)
                 return;
 
             var rxMd = new Regex(@"^\s*#{1,6}\s+(?<t>.+?)\s*$", RegexOptions.Compiled);
@@ -1293,21 +1421,21 @@ namespace E_Book.Pages
                 @"^\s*(chapter|ch)\s+(\d+|[ivxlcdm]+)\b[:.\- ]*\s*(?<t>.*)$",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            for (int i = 0; i < lines.Length; i++)
+            for (int i = 0; i < txtParagraphs.Count; i++)
             {
-                string line = (lines[i] ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(line))
+                string paragraph = (txtParagraphs[i] ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(paragraph))
                     continue;
 
                 string? title = null;
 
-                var m1 = rxMd.Match(line);
+                var m1 = rxMd.Match(paragraph);
                 if (m1.Success)
                     title = m1.Groups["t"].Value.Trim();
 
                 if (title == null)
                 {
-                    var m2 = rxEn.Match(line);
+                    var m2 = rxEn.Match(paragraph);
                     if (m2.Success)
                     {
                         var tail = m2.Groups["t"].Value.Trim();
@@ -1320,13 +1448,10 @@ namespace E_Book.Pages
                 if (title == null)
                     continue;
 
-                title = title.Trim();
                 if (title.Length > 60)
                     title = title.Substring(0, 60).Trim() + "…";
 
-                int visualIndex = EstimateWrappedVisualStartIndexForRawLine(i);
-                int safeLinesPerPage = Math.Max(1, linesPerPage);
-                int pageIndex = Math.Max(0, visualIndex / safeLinesPerPage);
+                int pageIndex = FindParagraphStartPageIndex(i);
 
                 if (tocItems.Any(x => x.PageIndex == pageIndex))
                     continue;
@@ -1352,53 +1477,13 @@ namespace E_Book.Pages
             }
         }
 
-        private int EstimateWrappedVisualStartIndexForRawLine(int rawLineIndex)
+        private int FindParagraphStartPageIndex(int paragraphIndex)
         {
-            if (rawLineIndex <= 0 || lines == null || lines.Length == 0)
+            if (txtParagraphStartPageIndices.Count == 0)
                 return 0;
 
-            double areaWidth = ReadingArea.Width;
-            if (areaWidth <= 0)
-                areaWidth = Width > 0 ? Width : 400;
-
-            double usableWidth = Math.Max(100, areaWidth - 58);
-
-            bool mostlyChinese = IsMostlyChineseText(lines);
-
-            double avgCharWidth = mostlyChinese
-                ? currentFontSize * 0.92
-                : currentFontSize * 0.62;
-
-            int charsPerVisualLine = Math.Max(8, (int)(usableWidth / avgCharWidth));
-
-            int visualCount = 0;
-
-            for (int i = 0; i < rawLineIndex; i++)
-            {
-                string line = lines[i] ?? "";
-
-                if (string.IsNullOrWhiteSpace(line))
-                {
-                    visualCount += 1;
-                    continue;
-                }
-
-                string trimmed = line.Trim();
-
-                if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
-                {
-                    visualCount += 1;
-                    continue;
-                }
-
-                bool hasIndent = line.StartsWith("　　") || line.StartsWith("  ");
-                int extraIndentCost = hasIndent ? 1 : 0;
-
-                int estimated = Math.Max(1, (int)Math.Ceiling(line.Length / (double)charsPerVisualLine)) + extraIndentCost;
-                visualCount += estimated;
-            }
-
-            return visualCount;
+            int safeIndex = Math.Clamp(paragraphIndex, 0, txtParagraphStartPageIndices.Count - 1);
+            return Math.Clamp(txtParagraphStartPageIndices[safeIndex], 0, Math.Max(0, txtPages.Count - 1));
         }
 
         private void BuildHtmlTocFromRawHtmlTitles()
@@ -1641,9 +1726,6 @@ namespace E_Book.Pages
                 .Replace("&apos;", "'");
         }
 
-        // -----------------------------
-        // Persistence
-        // -----------------------------
         private async Task SaveReadingProgress()
         {
             if (string.IsNullOrEmpty(FilePath))
@@ -1664,9 +1746,6 @@ namespace E_Book.Pages
             }
         }
 
-        // -----------------------------
-        // Page change animations
-        // -----------------------------
         private async Task AnimatePageChangeAsync(int direction)
         {
             if (isAnimating) return;
@@ -1717,9 +1796,6 @@ namespace E_Book.Pages
             await SaveReadingProgress();
         }
 
-        // -----------------------------
-        // Back / button press effect
-        // -----------------------------
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
             try
@@ -1768,9 +1844,6 @@ namespace E_Book.Pages
             }
         }
 
-        // -----------------------------
-        // Menu popup
-        // -----------------------------
         private async void OnMenuClicked(object sender, EventArgs e)
         {
             if (isAnimating) return;
@@ -1794,23 +1867,21 @@ namespace E_Book.Pages
 
             try
             {
-                FontSlider.Value = fontIndex;
-                UpdateFontSizeLabel();
-                UpdateLineSpacingLabel();
                 UpdateAllButtonStyles();
 
                 Overlay.IsVisible = true;
                 Overlay.Opacity = 0;
 
+                TocButtonContainer.IsVisible = false;
+
                 MenuPopup.IsVisible = true;
                 MenuPopup.Opacity = 0;
-                MenuPopup.Scale = 0.985;
+                MenuPopup.Scale = 1.0;
                 MenuPopup.TranslationY = MenuHiddenY;
 
                 await Task.WhenAll(
                     Overlay.FadeTo(1, 120, Easing.CubicOut),
                     MenuPopup.FadeTo(1, MenuAnimMs, Easing.CubicOut),
-                    MenuPopup.ScaleTo(1.0, MenuAnimMs, Easing.CubicOut),
                     MenuPopup.TranslateTo(0, MenuRestY, MenuAnimMs, Easing.CubicOut)
                 );
             }
@@ -1826,6 +1897,10 @@ namespace E_Book.Pages
             {
                 Overlay.IsVisible = false;
                 Overlay.Opacity = 0;
+
+                if (chromeVisible)
+                    TocButtonContainer.IsVisible = true;
+
                 return;
             }
 
@@ -1837,26 +1912,24 @@ namespace E_Book.Pages
                 await Task.WhenAll(
                     Overlay.FadeTo(0, 100, Easing.CubicIn),
                     MenuPopup.FadeTo(0, 100, Easing.CubicIn),
-                    MenuPopup.ScaleTo(0.985, 100, Easing.CubicIn),
                     MenuPopup.TranslateTo(0, MenuHiddenY, 100, Easing.CubicIn)
                 );
 
                 MenuPopup.IsVisible = false;
                 Overlay.IsVisible = false;
+
+                if (chromeVisible)
+                    TocButtonContainer.IsVisible = true;
             }
             finally
             {
                 Overlay.Opacity = 0;
                 MenuPopup.Opacity = 0;
-                MenuPopup.Scale = 0.985;
                 MenuPopup.TranslationY = MenuRestY;
                 isAnimating = false;
             }
         }
 
-        // -----------------------------
-        // Font / line spacing controls
-        // -----------------------------
         private async void OnFontPresetClicked(object sender, EventArgs e)
         {
             if (sender is Button btn && int.TryParse(btn.CommandParameter?.ToString(), out var idx))
@@ -1865,19 +1938,8 @@ namespace E_Book.Pages
                 if (idx == fontIndex) return;
 
                 fontIndex = idx;
-                FontSlider.Value = fontIndex;
                 await ApplyTypographyAsync();
             }
-        }
-
-        private async void OnFontSliderChanged(object sender, ValueChangedEventArgs e)
-        {
-            int idx = (int)Math.Round(e.NewValue);
-            idx = Math.Clamp(idx, 0, fontSizes.Length - 1);
-            if (idx == fontIndex) return;
-
-            fontIndex = idx;
-            await ApplyTypographyAsync();
         }
 
         private async void OnLineSpacingClicked(object sender, EventArgs e)
@@ -1901,8 +1963,6 @@ namespace E_Book.Pages
             fileContentLabel.FontSize = currentFontSize;
             fileContentLabel.LineHeight = currentLineSpacing;
 
-            UpdateFontSizeLabel();
-            UpdateLineSpacingLabel();
             UpdateAllButtonStyles();
 
             ClearRenderedPageCache();
@@ -1911,63 +1971,87 @@ namespace E_Book.Pages
             await SaveCurrentReadingSettings();
         }
 
-        private void UpdateFontSizeLabel()
-        {
-            FontSizeLabel.Text = fontIndex switch
-            {
-                0 => "Small",
-                1 => "Medium",
-                _ => "Large"
-            };
-        }
-
-        private void UpdateLineSpacingLabel()
-        {
-            LineSpacingLabel.Text = lineSpacingIndex switch
-            {
-                0 => "Compact",
-                1 => "Normal",
-                _ => "Relaxed"
-            };
-        }
-
-        // -----------------------------
-        // Theme
-        // -----------------------------
         private static string NormalizeTheme(string stored)
         {
-            if (string.IsNullOrWhiteSpace(stored)) return "Light";
+            if (string.IsNullOrWhiteSpace(stored))
+                return "White";
+
             stored = stored.Trim();
 
-            if (stored.Equals("Dark", StringComparison.OrdinalIgnoreCase))
-                return "Dark";
-
-            return "Light";
+            return stored switch
+            {
+                "White" => "White",
+                "Beige" => "Beige",
+                "Green" => "Green",
+                "Blue" => "Blue",
+                "Dark" => "Dark",
+                "Light" => "White",
+                _ => "White"
+            };
         }
 
-        private void ApplyTheme(string mode)
+        private void ApplyTheme(string modeValue)
         {
-            themeMode = mode == "Dark" ? "Dark" : "Light";
+            themeMode = modeValue switch
+            {
+                "Beige" => "Beige",
+                "Green" => "Green",
+                "Blue" => "Blue",
+                "Dark" => "Dark",
+                _ => "White"
+            };
 
-            if (themeMode == "Dark")
+            switch (themeMode)
             {
-                PageBgColor = Color.FromArgb("#0F0F12");
-                TextColorReader = Color.FromArgb("#EDEAF6");
-                SubtleTextColor = Color.FromArgb("#BDB8C8");
-                PrimaryAccent = Color.FromArgb("#EDEAF6");
-                SurfaceColor = Color.FromArgb("#17171C");
-                SoftSurfaceColor = Color.FromArgb("#20202A");
-                BorderColor = Color.FromArgb("#2A2A32");
-            }
-            else
-            {
-                PageBgColor = Color.FromArgb("#F7F6FB");
-                TextColorReader = Color.FromArgb("#3E3A4A");
-                SubtleTextColor = Color.FromArgb("#6A6577");
-                PrimaryAccent = Color.FromArgb("#24145A");
-                SurfaceColor = Color.FromArgb("#FFFFFF");
-                SoftSurfaceColor = Color.FromArgb("#F1EEFF");
-                BorderColor = Color.FromArgb("#E5E1F2");
+                case "Beige":
+                    PageBgColor = Color.FromArgb("#D8D2BE");
+                    TextColorReader = Color.FromArgb("#3F372B");
+                    SubtleTextColor = Color.FromArgb("#6E6659");
+                    PrimaryAccent = Color.FromArgb("#3F372B");
+                    SurfaceColor = Color.FromArgb("#F5F1E6");
+                    SoftSurfaceColor = Color.FromArgb("#E7E0CF");
+                    BorderColor = Color.FromArgb("#C8BEA7");
+                    break;
+
+                case "Green":
+                    PageBgColor = Color.FromArgb("#C9D5B9");
+                    TextColorReader = Color.FromArgb("#33402C");
+                    SubtleTextColor = Color.FromArgb("#61705B");
+                    PrimaryAccent = Color.FromArgb("#33402C");
+                    SurfaceColor = Color.FromArgb("#EEF4E6");
+                    SoftSurfaceColor = Color.FromArgb("#DDE7D0");
+                    BorderColor = Color.FromArgb("#B6C5A2");
+                    break;
+
+                case "Blue":
+                    PageBgColor = Color.FromArgb("#C4D2E2");
+                    TextColorReader = Color.FromArgb("#31404F");
+                    SubtleTextColor = Color.FromArgb("#617284");
+                    PrimaryAccent = Color.FromArgb("#31404F");
+                    SurfaceColor = Color.FromArgb("#EEF4FA");
+                    SoftSurfaceColor = Color.FromArgb("#D8E3EF");
+                    BorderColor = Color.FromArgb("#AFC2D8");
+                    break;
+
+                case "Dark":
+                    PageBgColor = Color.FromArgb("#101014");
+                    TextColorReader = Color.FromArgb("#EDEAF6");
+                    SubtleTextColor = Color.FromArgb("#BDB8C8");
+                    PrimaryAccent = Color.FromArgb("#EDEAF6");
+                    SurfaceColor = Color.FromArgb("#17171C");
+                    SoftSurfaceColor = Color.FromArgb("#20202A");
+                    BorderColor = Color.FromArgb("#2A2A32");
+                    break;
+
+                default:
+                    PageBgColor = Color.FromArgb("#F7F6FB");
+                    TextColorReader = Color.FromArgb("#3E3A4A");
+                    SubtleTextColor = Color.FromArgb("#6A6577");
+                    PrimaryAccent = Color.FromArgb("#24145A");
+                    SurfaceColor = Color.FromArgb("#FFFFFF");
+                    SoftSurfaceColor = Color.FromArgb("#F1EEFF");
+                    BorderColor = Color.FromArgb("#E5E1F2");
+                    break;
             }
 
             ApplyThemeToVisuals();
@@ -1999,8 +2083,21 @@ namespace E_Book.Pages
             MenuPopup.Stroke = BorderColor;
 
             fileContentLabel.TextColor = TextColorReader;
+            HandleBar.BackgroundColor = BorderColor;
 
             UpdatePopupTextColors();
+            UpdateSegmentBackgrounds();
+        }
+
+        private void UpdateSegmentBackgrounds()
+        {
+            Color segmentColor =
+                themeMode == "Dark"
+                    ? Color.FromArgb("#24242C")
+                    : Color.FromArgb("#F1F1F3");
+
+            FontSegmentContainer.BackgroundColor = segmentColor;
+            SpacingSegmentContainer.BackgroundColor = segmentColor;
         }
 
         private void UpdatePopupTextColors()
@@ -2008,12 +2105,10 @@ namespace E_Book.Pages
             foreach (var child in GetDescendants(MenuPopup))
             {
                 if (child is Label lbl)
-                {
-                    lbl.TextColor =
-                        lbl == FontSizeLabel || lbl == LineSpacingLabel
-                        ? SubtleTextColor
-                        : TextColorReader;
-                }
+                    lbl.TextColor = TextColorReader;
+
+                if (child is Button btn && btn == ThemeDarkBtn)
+                    btn.TextColor = Color.FromArgb("#A5A7AE");
             }
         }
 
@@ -2030,16 +2125,13 @@ namespace E_Book.Pages
 
         private async void OnThemeClicked(object sender, EventArgs e)
         {
-            if (sender is Button btn && btn.CommandParameter is string mode)
+            if (sender is Button btn && btn.CommandParameter is string modeValue)
             {
-                ApplyTheme(mode);
+                ApplyTheme(modeValue);
                 await SaveCurrentReadingSettings();
             }
         }
 
-        // -----------------------------
-        // Button styling
-        // -----------------------------
         private void UpdateAllButtonStyles()
         {
             UpdateFontButtonStyles();
@@ -2063,24 +2155,61 @@ namespace E_Book.Pages
 
         private void UpdateThemeButtonStyles()
         {
-            StyleSegmentButton(LightBtn, themeMode == "Light");
-            StyleSegmentButton(DarkBtn, themeMode == "Dark");
+            StyleThemeChip(ThemeWhiteBtn, themeMode == "White", "#F7F6FB", false);
+            StyleThemeChip(ThemeBeigeBtn, themeMode == "Beige", "#D8D2BE", false);
+            StyleThemeChip(ThemeGreenBtn, themeMode == "Green", "#C9D5B9", false);
+            StyleThemeChip(ThemeBlueBtn, themeMode == "Blue", "#C4D2E2", false);
+            StyleThemeChip(ThemeDarkBtn, themeMode == "Dark", "#101014", true);
         }
 
         private void StyleSegmentButton(Button button, bool selected)
         {
-            button.BorderWidth = 1;
-            button.BorderColor = BorderColor;
+            button.Shadow = null;
+            button.BorderWidth = 0;
 
             if (selected)
             {
-                button.BackgroundColor = PrimaryAccent;
-                button.TextColor = SurfaceColor;
+                button.BackgroundColor =
+                    themeMode == "Dark"
+                        ? Color.FromArgb("#2F2F39")
+                        : Color.FromArgb("#FFFFFF");
+
+                button.TextColor =
+                    themeMode == "Dark"
+                        ? Colors.White
+                        : Color.FromArgb("#111111");
             }
             else
             {
-                button.BackgroundColor = SurfaceColor;
-                button.TextColor = PrimaryAccent;
+                button.BackgroundColor = Colors.Transparent;
+                button.TextColor =
+                    themeMode == "Dark"
+                        ? Color.FromArgb("#E2E2E8")
+                        : Color.FromArgb("#111111");
+            }
+        }
+
+        private void StyleThemeChip(Button button, bool selected, string bgHex, bool isDarkChip)
+        {
+            button.Shadow = null;
+            button.BackgroundColor = Color.FromArgb(bgHex);
+            button.BorderWidth = selected ? 2 : 0;
+            button.BorderColor =
+                selected
+                    ? (themeMode == "Dark"
+                        ? Color.FromArgb("#FFFFFF")
+                        : Color.FromArgb("#3A3A3A"))
+                    : Colors.Transparent;
+
+            if (isDarkChip)
+            {
+                button.Text = "☾";
+                button.TextColor = Color.FromArgb("#A5A7AE");
+            }
+            else
+            {
+                button.Text = "";
+                button.TextColor = Colors.Transparent;
             }
         }
     }

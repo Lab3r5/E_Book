@@ -20,7 +20,8 @@
               Padding="16,10"
               Opacity="1"
               TranslationY="0"
-              BackgroundColor="Transparent">
+              BackgroundColor="Transparent"
+              ZIndex="10">
 
             <Button x:Name="BackButton"
                     Text="←"
@@ -68,11 +69,9 @@
                         Padding="22,12"
                         BackgroundColor="#F7F6FB">
 
-            <!-- Reader content host -->
             <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
                   AbsoluteLayout.LayoutFlags="All">
 
-                <!-- TXT fallback -->
                 <Label x:Name="fileContentLabel"
                        IsVisible="False"
                        Text="Loading..."
@@ -83,13 +82,11 @@
                        BackgroundColor="Transparent"
                        TextColor="#3E3A4A"/>
 
-                <!-- Main reader view -->
                 <WebView x:Name="ContentWebView"
                          IsVisible="True"
                          InputTransparent="True"
                          BackgroundColor="Transparent"/>
 
-                <!-- Transparent gesture layer -->
                 <Grid x:Name="GestureLayer"
                       BackgroundColor="Transparent">
                     <Grid.GestureRecognizers>
@@ -98,174 +95,7 @@
                         <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipeRight"/>
                     </Grid.GestureRecognizers>
                 </Grid>
-
             </Grid>
-
-            <!-- Overlay -->
-            <BoxView x:Name="Overlay"
-                     IsVisible="False"
-                     Opacity="0"
-                     BackgroundColor="#55000000"
-                     AbsoluteLayout.LayoutBounds="0,0,1,1"
-                     AbsoluteLayout.LayoutFlags="All">
-                <BoxView.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnDismissTapped"/>
-                </BoxView.GestureRecognizers>
-            </BoxView>
-
-            <!-- Bottom floating menu -->
-            <Border x:Name="MenuPopup"
-                    IsVisible="False"
-                    Opacity="0"
-                    Scale="0.98"
-                    WidthRequest="340"
-                    HeightRequest="430"
-                    Padding="16"
-                    StrokeThickness="1"
-                    Stroke="#E5E1F2"
-                    BackgroundColor="#FFFFFF"
-                    AbsoluteLayout.LayoutBounds="0.5,1,340,430"
-                    AbsoluteLayout.LayoutFlags="PositionProportional"
-                    TranslationY="-68">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="22"/>
-                </Border.StrokeShape>
-
-                <ScrollView>
-                    <VerticalStackLayout Spacing="14">
-
-                        <Label Text="Reading Settings"
-                               FontSize="17"
-                               FontAttributes="Bold"
-                               HorizontalTextAlignment="Center"
-                               TextColor="#3E3A4A"/>
-
-                        <!-- Font Size -->
-                        <Label Text="Font Size"
-                               FontSize="15"
-                               HorizontalTextAlignment="Center"
-                               TextColor="#3E3A4A"/>
-
-                        <Label x:Name="FontSizeLabel"
-                               Text="Medium"
-                               FontSize="12"
-                               HorizontalTextAlignment="Center"
-                               TextColor="#6A6577"/>
-
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                            <Button x:Name="SmallBtn"
-                                    Text="Small"
-                                    Clicked="OnFontPresetClicked"
-                                    CommandParameter="0"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-
-                            <Button x:Name="MediumBtn"
-                                    Grid.Column="1"
-                                    Text="Medium"
-                                    Clicked="OnFontPresetClicked"
-                                    CommandParameter="1"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-
-                            <Button x:Name="LargeBtn"
-                                    Grid.Column="2"
-                                    Text="Large"
-                                    Clicked="OnFontPresetClicked"
-                                    CommandParameter="2"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-                        </Grid>
-
-                        <Slider x:Name="FontSlider"
-                                Minimum="0"
-                                Maximum="2"
-                                ValueChanged="OnFontSliderChanged"/>
-
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Label Text="Small"
-                                   TextColor="#6A6577"/>
-                            <Label Grid.Column="1"
-                                   Text="Large"
-                                   HorizontalOptions="End"
-                                   TextColor="#6A6577"/>
-                        </Grid>
-
-                        <!-- Line Spacing -->
-                        <Label Text="Line Spacing"
-                               FontSize="15"
-                               HorizontalTextAlignment="Center"
-                               Margin="0,8,0,0"
-                               TextColor="#3E3A4A"/>
-
-                        <Label x:Name="LineSpacingLabel"
-                               Text="Normal"
-                               FontSize="12"
-                               HorizontalTextAlignment="Center"
-                               TextColor="#6A6577"/>
-
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                            <Button x:Name="CompactBtn"
-                                    Text="Compact"
-                                    Clicked="OnLineSpacingClicked"
-                                    CommandParameter="0"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-
-                            <Button x:Name="NormalBtn"
-                                    Grid.Column="1"
-                                    Text="Normal"
-                                    Clicked="OnLineSpacingClicked"
-                                    CommandParameter="1"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-
-                            <Button x:Name="RelaxedBtn"
-                                    Grid.Column="2"
-                                    Text="Relaxed"
-                                    Clicked="OnLineSpacingClicked"
-                                    CommandParameter="2"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-                        </Grid>
-
-                        <!-- Theme -->
-                        <Label Text="Theme"
-                               FontSize="15"
-                               HorizontalTextAlignment="Center"
-                               Margin="0,8,0,0"
-                               TextColor="#3E3A4A"/>
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                            <Button x:Name="LightBtn"
-                                    Text="☀ Light"
-                                    Clicked="OnThemeClicked"
-                                    CommandParameter="Light"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-
-                            <Button x:Name="DarkBtn"
-                                    Grid.Column="1"
-                                    Text="☾ Dark"
-                                    Clicked="OnThemeClicked"
-                                    CommandParameter="Dark"
-                                    Pressed="OnButtonPressed"
-                                    Released="OnButtonReleased"
-                                    CornerRadius="14"/>
-                        </Grid>
-
-                    </VerticalStackLayout>
-                </ScrollView>
-            </Border>
-
         </AbsoluteLayout>
 
         <!-- Bottom progress -->
@@ -274,7 +104,8 @@
               Padding="18,8,18,10"
               ColumnDefinitions="*,Auto"
               VerticalOptions="Center"
-              BackgroundColor="#F7F6FB">
+              BackgroundColor="#F7F6FB"
+              ZIndex="10">
 
             <ProgressBar x:Name="ReadingProgressBar"
                          Progress="0"
@@ -290,6 +121,282 @@
                    TextColor="#6A6577"/>
         </Grid>
 
+        <!-- Full-screen overlay layer -->
+        <Grid Grid.RowSpan="3"
+              ZIndex="100">
+
+            <!-- Overlay -->
+            <BoxView x:Name="Overlay"
+                     IsVisible="False"
+                     Opacity="0"
+                     BackgroundColor="#55000000">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDismissTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- Full-width bottom sheet -->
+            <Border x:Name="MenuPopup"
+                    IsVisible="False"
+                    Opacity="0"
+                    Scale="1"
+                    StrokeThickness="0"
+                    BackgroundColor="#FFFFFF"
+                    Padding="16,10,16,18"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="End"
+                    HeightRequest="300"
+                    Margin="0"
+                    TranslationY="20">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22,22,0,0"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="10"
+                                     Padding="2,0">
+
+                    <!-- Handle -->
+                    <Border x:Name="HandleBar"
+                            HorizontalOptions="Center"
+                            WidthRequest="38"
+                            HeightRequest="4"
+                            BackgroundColor="#D8D6DE"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="2"/>
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <Label Text="Reading Settings"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#1F1F1F"
+                           Margin="0,0,0,2"/>
+
+                    <!-- Size -->
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+                        <Label Text="Size"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="#1F1F1F"/>
+
+                        <Border x:Name="FontSegmentContainer"
+                                Grid.Column="1"
+                                BackgroundColor="#F1F1F3"
+                                StrokeThickness="0"
+                                Padding="4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16"/>
+                            </Border.StrokeShape>
+
+                            <Grid ColumnDefinitions="*,*,*"
+                                  ColumnSpacing="4">
+                                <Button x:Name="SmallBtn"
+                                        Text="16"
+                                        Clicked="OnFontPresetClicked"
+                                        CommandParameter="0"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+
+                                <Button x:Name="MediumBtn"
+                                        Grid.Column="1"
+                                        Text="18"
+                                        Clicked="OnFontPresetClicked"
+                                        CommandParameter="1"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+
+                                <Button x:Name="LargeBtn"
+                                        Grid.Column="2"
+                                        Text="20"
+                                        Clicked="OnFontPresetClicked"
+                                        CommandParameter="2"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Space -->
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+                        <Label Text="Space"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="#1F1F1F"/>
+
+                        <Border x:Name="SpacingSegmentContainer"
+                                Grid.Column="1"
+                                BackgroundColor="#F1F1F3"
+                                StrokeThickness="0"
+                                Padding="4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16"/>
+                            </Border.StrokeShape>
+
+                            <Grid ColumnDefinitions="*,*,*"
+                                  ColumnSpacing="4">
+                                <Button x:Name="CompactBtn"
+                                        Text="Small"
+                                        Clicked="OnLineSpacingClicked"
+                                        CommandParameter="0"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+
+                                <Button x:Name="NormalBtn"
+                                        Grid.Column="1"
+                                        Text="Medium"
+                                        Clicked="OnLineSpacingClicked"
+                                        CommandParameter="1"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+
+                                <Button x:Name="RelaxedBtn"
+                                        Grid.Column="2"
+                                        Text="Large"
+                                        Clicked="OnLineSpacingClicked"
+                                        CommandParameter="2"
+                                        Pressed="OnButtonPressed"
+                                        Released="OnButtonReleased"
+                                        CornerRadius="12"
+                                        HeightRequest="30"
+                                        FontSize="10"
+                                        BorderWidth="0"
+                                        Padding="0"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#111111"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Theme -->
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+                        <Label Text="Theme"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="#1F1F1F"/>
+
+                        <HorizontalStackLayout Grid.Column="1"
+                                               Spacing="5"
+                                               HorizontalOptions="Start"
+                                               VerticalOptions="Center">
+
+                            <Button x:Name="ThemeWhiteBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="White"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="2"
+                                    BorderColor="#3A3A3A"
+                                    Padding="0"
+                                    BackgroundColor="#F7F6FB"/>
+
+                            <Button x:Name="ThemeBeigeBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Beige"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#D8D2BE"/>
+
+                            <Button x:Name="ThemeGreenBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Green"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#C9D5B9"/>
+
+                            <Button x:Name="ThemeBlueBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Blue"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#C4D2E2"/>
+
+                            <Button x:Name="ThemeDarkBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text="☾"
+                                    FontSize="10"
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Dark"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#101014"
+                                    TextColor="#A5A7AE"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
         <!-- Floating TOC button -->
         <Border x:Name="TocButtonContainer"
                 Grid.Row="1"
@@ -300,7 +407,7 @@
                 HeightRequest="54"
                 Margin="0,0,18,54"
                 StrokeThickness="0"
-                ZIndex="999"
+                ZIndex="50"
                 BackgroundColor="#F1EEFF">
 
             <Border.Shadow>
