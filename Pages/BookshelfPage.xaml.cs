@@ -31,10 +31,22 @@ namespace E_Book.Pages
             }
         }
 
+        public string SelectedCountText
+        {
+            get
+            {
+                int count = Books.Count(b => b.IsSelected);
+                return count == 0 ? "Select books" : $"{count} selected";
+            }
+        }
+
         public ICommand LongPressCommand { get; }
 
         private List<BookItem> _pendingDeleteItems = new();
         private readonly List<BookItem> _subscribedItems = new();
+
+        private bool _isHeaderAnimating;
+        private bool _isSelectionCountPulsing;
 
         public BookshelfPage()
         {
@@ -49,12 +61,14 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
             LoadSavedFiles();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         private void EnsureLibraryExists()
@@ -76,8 +90,8 @@ namespace E_Book.Pages
                 📂 Bookshelf & File Management:
                 ────────────────────────────
                 ➕ Tap the plus button to import files into your bookshelf
-                📖 Tap the book icon next to a file to start reading
-                🗑️ Swipe from left to right or tap the trash icon to remove unwanted files
+                📖 Tap the Read button next to a file to start reading
+                🗑️ Swipe to reveal Delete or tap the trash icon to remove unwanted files
 
                 Supported formats:
                 • TXT  • EPUB  • PDF
@@ -138,6 +152,7 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         private void SubscribeItem(BookItem item)
@@ -162,6 +177,10 @@ namespace E_Book.Pages
                 {
                     UpdateSelectAllText();
                     UpdateConfirmState();
+                    OnPropertyChanged(nameof(SelectedCountText));
+
+                    if (IsMultiSelectMode)
+                        _ = PulseSelectionCountAsync();
                 });
             }
         }
@@ -271,6 +290,7 @@ namespace E_Book.Pages
             {
                 book.IsSelected = !book.IsSelected;
                 UpdateConfirmState();
+                OnPropertyChanged(nameof(SelectedCountText));
             }
         }
 
@@ -285,6 +305,7 @@ namespace E_Book.Pages
                 book.IsSelected = true;
 
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         private async void OnTrashTapped(object sender, EventArgs e)
@@ -323,6 +344,9 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
+
+            _ = PlayMultiSelectEnterAnimationAsync();
         }
 
         private void ExitMultiSelectMode()
@@ -334,9 +358,12 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
+
+            ResetHeaderAnimationState();
         }
 
-        private void OnSelectAllClicked(object sender, EventArgs e)
+        private void OnSelectAllClicked(object? sender, EventArgs e)
         {
             if (!IsMultiSelectMode || Books.Count == 0) return;
 
@@ -346,6 +373,7 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         private void UpdateSelectAllText()
@@ -362,7 +390,7 @@ namespace E_Book.Pages
             SelectAllButton.Text = allSelected ? "Unselect All" : "Select All";
         }
 
-        private void OnCancelMultiSelectClicked(object sender, EventArgs e)
+        private void OnCancelMultiSelectClicked(object? sender, EventArgs e)
         {
             ExitMultiSelectMode();
         }
@@ -387,11 +415,12 @@ namespace E_Book.Pages
             {
                 ConfirmButton.Opacity = 1;
                 ConfirmButton.InputTransparent = false;
+                ConfirmButton.Scale = 1;
                 return;
             }
 
             bool hasSelected = Books.Any(b => b.IsSelected);
-            ConfirmButton.Opacity = hasSelected ? 1.0 : 0.45;
+            ConfirmButton.Opacity = hasSelected ? 1.0 : 0.40;
             ConfirmButton.InputTransparent = !hasSelected;
         }
 
@@ -480,6 +509,139 @@ namespace E_Book.Pages
             }
         }
 
+        private void ResetHeaderAnimationState()
+        {
+            if (CancelChip != null)
+            {
+                CancelChip.Opacity = 1;
+                CancelChip.TranslationX = 0;
+                CancelChip.Scale = 1;
+            }
+
+            if (MultiSelectTitleChip != null)
+            {
+                MultiSelectTitleChip.Opacity = 1;
+                MultiSelectTitleChip.Scale = 1;
+                MultiSelectTitleChip.TranslationY = 0;
+            }
+
+            if (ConfirmButton != null)
+            {
+                ConfirmButton.Opacity = IsMultiSelectMode
+                    ? (Books.Any(b => b.IsSelected) ? 1.0 : 0.40)
+                    : 1.0;
+
+                ConfirmButton.TranslationX = 0;
+                ConfirmButton.Scale = 1;
+            }
+
+            if (SelectAllChip != null)
+            {
+                SelectAllChip.Opacity = 1;
+                SelectAllChip.TranslationY = 0;
+                SelectAllChip.Scale = 1;
+            }
+        }
+
+        private async Task PlayMultiSelectEnterAnimationAsync()
+        {
+            if (_isHeaderAnimating) return;
+            if (!IsMultiSelectMode) return;
+
+            _isHeaderAnimating = true;
+
+            try
+            {
+                await Task.Delay(30);
+
+                if (CancelChip != null)
+                {
+                    CancelChip.Opacity = 0;
+                    CancelChip.TranslationX = -16;
+                }
+
+                if (MultiSelectTitleChip != null)
+                {
+                    MultiSelectTitleChip.Opacity = 0;
+                    MultiSelectTitleChip.Scale = 0.94;
+                    MultiSelectTitleChip.TranslationY = 6;
+                }
+
+                if (ConfirmButton != null)
+                {
+                    ConfirmButton.Opacity = 0;
+                    ConfirmButton.TranslationX = 16;
+                    ConfirmButton.Scale = 0.94;
+                }
+
+                if (SelectAllChip != null)
+                {
+                    SelectAllChip.Opacity = 0;
+                    SelectAllChip.TranslationY = -8;
+                }
+
+                var tasks = new List<Task>();
+
+                if (CancelChip != null)
+                {
+                    tasks.Add(CancelChip.FadeTo(1, 160, Easing.CubicOut));
+                    tasks.Add(CancelChip.TranslateTo(0, 0, 180, Easing.CubicOut));
+                }
+
+                if (MultiSelectTitleChip != null)
+                {
+                    tasks.Add(MultiSelectTitleChip.FadeTo(1, 180, Easing.CubicOut));
+                    tasks.Add(MultiSelectTitleChip.ScaleTo(1, 180, Easing.CubicOut));
+                    tasks.Add(MultiSelectTitleChip.TranslateTo(0, 0, 180, Easing.CubicOut));
+                }
+
+                if (ConfirmButton != null)
+                {
+                    double targetOpacity = Books.Any(b => b.IsSelected) ? 1.0 : 0.40;
+                    tasks.Add(ConfirmButton.FadeTo(targetOpacity, 180, Easing.CubicOut));
+                    tasks.Add(ConfirmButton.TranslateTo(0, 0, 180, Easing.CubicOut));
+                    tasks.Add(ConfirmButton.ScaleTo(1, 180, Easing.CubicOut));
+                }
+
+                if (SelectAllChip != null)
+                {
+                    tasks.Add(SelectAllChip.FadeTo(1, 180, Easing.CubicOut));
+                    tasks.Add(SelectAllChip.TranslateTo(0, 0, 180, Easing.CubicOut));
+                }
+
+                await Task.WhenAll(tasks);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _isHeaderAnimating = false;
+            }
+        }
+
+        private async Task PulseSelectionCountAsync()
+        {
+            if (_isSelectionCountPulsing) return;
+            if (MultiSelectTitleChip == null) return;
+            if (!IsMultiSelectMode) return;
+
+            _isSelectionCountPulsing = true;
+
+            try
+            {
+                await MultiSelectTitleChip.ScaleTo(1.05, 90, Easing.CubicOut);
+                await MultiSelectTitleChip.ScaleTo(1.0, 110, Easing.CubicOut);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _isSelectionCountPulsing = false;
+            }
+        }
+
         private async Task AnimatePress(VisualElement view)
         {
             if (view == null) return;
@@ -512,6 +674,7 @@ namespace E_Book.Pages
         }
 
         public new event PropertyChangedEventHandler? PropertyChanged;
+
         private void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }

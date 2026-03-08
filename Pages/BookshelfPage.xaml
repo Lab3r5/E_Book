@@ -18,167 +18,162 @@
 
             <!-- Header -->
             <Grid Grid.Row="0"
-                  ColumnDefinitions="Auto,*,Auto"
-                  Margin="0,10,0,14"
-                  VerticalOptions="Center"
-                  ColumnSpacing="8">
+                  ColumnDefinitions="108,*,Auto,*,108"
+                  Margin="0,2,0,10"
+                  VerticalOptions="Center">
 
-                <!-- Left area -->
-                <Grid Grid.Column="0"
-                      HorizontalOptions="Start"
-                      VerticalOptions="Center">
+                <!-- Cancel -->
+                <Frame x:Name="CancelChip"
+                       Grid.Column="0"
+                       Padding="12,7"
+                       CornerRadius="14"
+                       HasShadow="False"
+                       BackgroundColor="{AppThemeBinding Light=#F3F1FA, Dark=#24242C}"
+                       HorizontalOptions="Start"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}">
 
-                    <!-- Select All -->
-                    <Button x:Name="SelectAllButton"
-                            Text="Select All"
-                            FontSize="13"
-                            FontAttributes="Bold"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                            Padding="0"
-                            Clicked="OnSelectAllClicked"
-                            IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}" />
-                </Grid>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCancelMultiSelectClicked"/>
+                    </Frame.GestureRecognizers>
 
-                <!-- Center title -->
-                <Grid Grid.Column="1"
-                      HorizontalOptions="Fill"
-                      VerticalOptions="Center">
+                    <Label Text="Cancel"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                </Frame>
 
-                    <!-- Normal title -->
-                    <Label Text="My Library"
-                           FontSize="26"
+                <!-- Normal title -->
+                <Label x:Name="NormalTitleLabel"
+                       Grid.Column="2"
+                       Text="My Library"
+                       FontFamily="Pacifico"
+                       FontSize="34"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       HorizontalOptions="Center"
+                       Margin="0"
+                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                       IsVisible="True">
+
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label"
+                                     Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                     Value="True">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+
+                <!-- Multi-select title -->
+                <Frame x:Name="MultiSelectTitleChip"
+                       Grid.Column="2"
+                       Padding="12,6"
+                       CornerRadius="15"
+                       HasShadow="False"
+                       BackgroundColor="{AppThemeBinding Light=#F4F1FF, Dark=#24242C}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       IsVisible="False">
+
+                    <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=SelectedCountText}"
+                           FontSize="15"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            VerticalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                           IsVisible="True">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="True">
-                                <Setter Property="IsVisible" Value="False" />
-                            </DataTrigger>
-                        </Label.Triggers>
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                    <Frame.Triggers>
+                        <DataTrigger TargetType="Frame"
+                                     Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                     Value="True">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Frame"
+                                     Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                     Value="False">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                    </Frame.Triggers>
+                </Frame>
+
+                <!-- Trash -->
+                <Frame Grid.Column="4"
+                       x:Name="TrashButton"
+                       HeightRequest="44"
+                       WidthRequest="44"
+                       CornerRadius="22"
+                       Padding="0"
+                       HasShadow="False"
+                       HorizontalOptions="End"
+                       VerticalOptions="Center"
+                       BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
+                       IsVisible="True">
+
+                    <Label Text="🗑"
+                           FontSize="18"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTrashTapped"/>
+                        </Label.GestureRecognizers>
                     </Label>
 
-                    <!-- Multi-select title -->
-                    <Label FontSize="20"
+                    <Frame.Triggers>
+                        <DataTrigger TargetType="Frame"
+                                     Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                     Value="True">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                    </Frame.Triggers>
+                </Frame>
+
+                <!-- Confirm -->
+                <Frame Grid.Column="4"
+                       x:Name="ConfirmButton"
+                       HeightRequest="42"
+                       WidthRequest="42"
+                       CornerRadius="21"
+                       Padding="0"
+                       HasShadow="False"
+                       HorizontalOptions="End"
+                       VerticalOptions="Center"
+                       BackgroundColor="#8FD8A2"
+                       IsVisible="False"
+                       Opacity="1">
+
+                    <Label Text="✓"
+                           FontSize="22"
                            FontAttributes="Bold"
-                           HorizontalTextAlignment="Center"
-                           VerticalTextAlignment="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                           IsVisible="False">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=Books.Count}" />
-                                <Span Text=" books" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="True">
-                                <Setter Property="IsVisible" Value="True" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="False">
-                                <Setter Property="IsVisible" Value="False" />
-                            </DataTrigger>
-                        </Label.Triggers>
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnConfirmTapped"/>
+                        </Label.GestureRecognizers>
                     </Label>
-                </Grid>
 
-                <!-- Right area -->
-                <Grid Grid.Column="2"
-                      HorizontalOptions="End"
-                      VerticalOptions="Center"
-                      ColumnDefinitions="Auto,Auto"
-                      ColumnSpacing="8">
+                    <Frame.Triggers>
+                        <DataTrigger TargetType="Frame"
+                                     Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                     Value="True">
+                            <Setter Property="IsVisible" Value="True"/>
+                        </DataTrigger>
+                    </Frame.Triggers>
+                </Frame>
 
-                    <!-- Cancel (multi-select only) -->
-                    <Button Grid.Column="0"
-                            Text="Cancel"
-                            FontSize="13"
-                            FontAttributes="Bold"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                            Padding="0"
-                            Clicked="OnCancelMultiSelectClicked"
-                            IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}" />
-
-                    <!-- Trash -->
-                    <Frame Grid.Column="1"
-                           x:Name="TrashButton"
-                           HeightRequest="40"
-                           WidthRequest="40"
-                           CornerRadius="20"
-                           Padding="0"
-                           HasShadow="False"
-                           BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
-                           IsVisible="True">
-
-                        <Label Text="🗑"
-                               FontSize="18"
-                               TextColor="White"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnTrashTapped"/>
-                            </Label.GestureRecognizers>
-                        </Label>
-
-                        <Frame.Triggers>
-                            <DataTrigger TargetType="Frame"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="True">
-                                <Setter Property="IsVisible" Value="False" />
-                            </DataTrigger>
-                        </Frame.Triggers>
-                    </Frame>
-
-                    <!-- Confirm -->
-                    <Frame Grid.Column="1"
-                           x:Name="ConfirmButton"
-                           HeightRequest="40"
-                           WidthRequest="40"
-                           CornerRadius="20"
-                           Padding="0"
-                           HasShadow="False"
-                           BackgroundColor="#A8E6B3"
-                           IsVisible="False"
-                           Opacity="1">
-
-                        <Label Text="✓"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="White"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnConfirmTapped"/>
-                            </Label.GestureRecognizers>
-                        </Label>
-
-                        <Frame.Triggers>
-                            <DataTrigger TargetType="Frame"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="True">
-                                <Setter Property="IsVisible" Value="True" />
-                            </DataTrigger>
-                        </Frame.Triggers>
-                    </Frame>
-                </Grid>
             </Grid>
 
             <!-- Main container -->
             <Frame Grid.Row="1"
                    BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
                    CornerRadius="28"
-                   Padding="18"
+                   Padding="16"
                    HasShadow="True"
-                   Margin="0,0,0,18">
+                   Margin="0,0,0,10">
 
                 <Frame.Shadow>
                     <Shadow Brush="#18000000"
@@ -187,9 +182,35 @@
                             Opacity="0.18" />
                 </Frame.Shadow>
 
-                <Grid RowDefinitions="*,Auto">
+                <Grid RowDefinitions="Auto,*,Auto">
 
-                    <CollectionView Grid.Row="0"
+                    <!-- Bulk action row -->
+                    <Grid Grid.Row="0"
+                          IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                          Margin="0,0,0,8">
+
+                        <Frame x:Name="SelectAllChip"
+                               Padding="11,6"
+                               CornerRadius="13"
+                               HasShadow="False"
+                               BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A2340}"
+                               HorizontalOptions="Start">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSelectAllClicked"/>
+                            </Frame.GestureRecognizers>
+
+                            <Label x:Name="SelectAllButton"
+                                   Text="Select All"
+                                   FontSize="12.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Frame>
+                    </Grid>
+
+                    <!-- Book list -->
+                    <CollectionView Grid.Row="1"
                                     ItemsSource="{Binding Books}"
                                     SelectionMode="None">
 
@@ -221,17 +242,17 @@
                                     </SwipeView.LeftItems>
 
                                     <Frame CornerRadius="16"
-                                           Padding="10,11"
-                                           Margin="0,0,0,12"
+                                           Padding="10"
+                                           Margin="0,0,0,9"
                                            HasShadow="True"
                                            BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
 
                                         <Frame.Shadow>
                                             <Shadow Brush="#12000000"
-                                                    Offset="0,4"
-                                                    Radius="14"
-                                                    Opacity="0.12" />
+                                                    Offset="0,3"
+                                                    Radius="11"
+                                                    Opacity="0.11" />
                                         </Frame.Shadow>
 
                                         <Grid ColumnDefinitions="Auto,56,*,48"
@@ -242,7 +263,7 @@
                                             <CheckBox Grid.Column="0"
                                                       IsChecked="{Binding IsSelected}"
                                                       VerticalOptions="Center"
-                                                      Scale="0.95"
+                                                      Scale="0.88"
                                                       IsVisible="False">
                                                 <CheckBox.Triggers>
                                                     <DataTrigger TargetType="CheckBox"
@@ -291,7 +312,6 @@
                                                 <VerticalStackLayout Spacing="2"
                                                                      VerticalOptions="Center">
 
-                                                    <!-- File name -->
                                                     <Label Text="{Binding FileName}"
                                                            FontSize="12.5"
                                                            FontAttributes="Bold"
@@ -299,7 +319,6 @@
                                                            MaxLines="1"
                                                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-                                                    <!-- Format -->
                                                     <Frame Padding="6,2"
                                                            CornerRadius="6"
                                                            HasShadow="False"
@@ -312,14 +331,12 @@
                                                                TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
                                                     </Frame>
 
-                                                    <!-- Last opened -->
                                                     <Label Text="{Binding LastOpenedText}"
-                                                           FontSize="9.5"
+                                                           FontSize="9.3"
                                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                                                            LineBreakMode="TailTruncation"
                                                            MaxLines="1" />
 
-                                                    <!-- Continue reading badge -->
                                                     <Frame Padding="5,1"
                                                            CornerRadius="6"
                                                            HasShadow="False"
@@ -328,18 +345,17 @@
                                                            IsVisible="{Binding HasProgress}">
                                                         <HorizontalStackLayout Spacing="4">
                                                             <Label Text="●"
-                                                                   FontSize="8"
+                                                                   FontSize="7.5"
                                                                    TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
                                                                    VerticalOptions="Center" />
                                                             <Label Text="Continue reading"
-                                                                   FontSize="8.5"
+                                                                   FontSize="8"
                                                                    FontAttributes="Bold"
                                                                    TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
                                                                    VerticalOptions="Center" />
                                                         </HorizontalStackLayout>
                                                     </Frame>
 
-                                                    <!-- Compact progress -->
                                                     <Grid ColumnDefinitions="*,Auto"
                                                           ColumnSpacing="6"
                                                           VerticalOptions="Center"
@@ -354,7 +370,7 @@
 
                                                         <Label Grid.Column="1"
                                                                Text="{Binding ProgressPercentText}"
-                                                               FontSize="9"
+                                                               FontSize="8.8"
                                                                FontAttributes="Bold"
                                                                VerticalOptions="Center"
                                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
@@ -397,16 +413,16 @@
                     </CollectionView>
 
                     <!-- Add Book -->
-                    <Button Grid.Row="1"
+                    <Button Grid.Row="2"
                             Text="Add Book"
                             FontSize="20"
                             FontAttributes="Bold"
-                            HeightRequest="64"
-                            CornerRadius="26"
+                            HeightRequest="60"
+                            CornerRadius="24"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
                             TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
                             Clicked="OnAddFileClicked"
-                            Margin="10,16,10,6">
+                            Margin="10,10,10,2">
 
                         <Button.Shadow>
                             <Shadow Brush="#16000000"

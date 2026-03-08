@@ -17,6 +17,7 @@ namespace E_Book
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
+                    fonts.AddFont("Pacifico-Regular.ttf", "Pacifico");
                 });
 
 #if DEBUG
