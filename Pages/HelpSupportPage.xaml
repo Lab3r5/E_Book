@@ -13,114 +13,191 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Unified Header -->
+        <!-- Header -->
         <controls:AppHeader Title="Help &amp; Support"
                             BackCommand="{Binding BackCommand}" />
 
         <!-- Content -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="18" Spacing="14">
+        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Padding="18,10,18,24" Spacing="18">
 
-                <!-- Card: FAQs -->
-                <Border x:Name="FaqCard"
-                        StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
-                        StrokeShape="RoundRectangle 22"
-                        Padding="16">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-
-                        <Border WidthRequest="44"
-                                HeightRequest="44"
-                                BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2A214F}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 22"
-                                VerticalOptions="Center">
-                            <Label Text="?"
-                                   FontSize="22"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center" />
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="FAQs"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="Common questions and answers"
-                                   FontSize="13"
-                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
-                        </VerticalStackLayout>
-
-                        <Label Grid.Column="2"
-                               Text="›"
-                               FontSize="22"
-                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
-                               VerticalTextAlignment="Center" />
-                    </Grid>
-
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnFaqTapped" />
-                    </Border.GestureRecognizers>
-                </Border>
-
-                <!-- Card: Privacy Policy -->
-                <Border x:Name="PrivacyCard"
-                        StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
-                        StrokeShape="RoundRectangle 22"
-                        Padding="16">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-
-                        <Border WidthRequest="44"
-                                HeightRequest="44"
-                                BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2A214F}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 22"
-                                VerticalOptions="Center">
-                            <Label Text="🔒"
-                                   FontSize="20"
-                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center" />
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="Privacy Policy"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="How we handle your data"
-                                   FontSize="13"
-                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
-                        </VerticalStackLayout>
-
-                        <Label Grid.Column="2"
-                               Text="›"
-                               FontSize="22"
-                               TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
-                               VerticalTextAlignment="Center" />
-                    </Grid>
-
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnPrivacyTapped" />
-                    </Border.GestureRecognizers>
-                </Border>
-
-                <!-- Tip -->
-                <Border StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
-                        StrokeShape="RoundRectangle 22"
-                        Padding="16"
-                        Margin="0,10,0,0">
-                    <Label Text="Tip: Email support and in-app guides can be added in a future update."
-                           FontSize="13"
+                <!-- Intro -->
+                <VerticalStackLayout Spacing="4" Padding="2,0,2,0">
+                    <Label Text="Need help with your reading experience?"
+                           FontSize="18"
+                           FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                </Border>
+                    <Label Text="Find answers, contact support, or review policies."
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                </VerticalStackLayout>
+
+                <!-- Support -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Support"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           Margin="2,0,0,0"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <!-- Help Center -->
+                    <Border x:Name="HelpCenterCard"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="14">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              MinimumHeightRequest="68">
+
+                            <Border WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 19"
+                                    VerticalOptions="Center">
+                                <Label Text="?"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="2"
+                                                 VerticalOptions="Center">
+                                <Label Text="Help Center"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label Text="Find FAQs and usage guides"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                   VerticalOptions="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Grid>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnHelpCenterTapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <!-- Contact Support -->
+                    <Border x:Name="ContactCard"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="14">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              MinimumHeightRequest="68">
+
+                            <Border WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 19"
+                                    VerticalOptions="Center">
+                                <Label Text="@"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="2"
+                                                 VerticalOptions="Center">
+                                <Label Text="Contact Support"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label Text="Email us for assistance"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                   VerticalOptions="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Grid>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnContactTapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Legal -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Legal"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           Margin="2,0,0,0"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <Border x:Name="PrivacyCard"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="14">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              MinimumHeightRequest="68">
+
+                            <Border WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 19"
+                                    VerticalOptions="Center">
+                                <Label Text="#"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="2"
+                                                 VerticalOptions="Center">
+                                <Label Text="Privacy Policy"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label Text="Learn how your data is handled"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                   VerticalOptions="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Grid>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPrivacyTapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </VerticalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>
-
     </Grid>
 </ContentPage>

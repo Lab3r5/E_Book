@@ -19,7 +19,24 @@ namespace E_Book.Pages
 
             BackCommand = new Command(async () =>
             {
-                try { await Shell.Current.GoToAsync(".."); return; } catch { }
+                try
+                {
+                    await Shell.Current.GoToAsync("..");
+                    return;
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    await Navigation.PopAsync();
+                    return;
+                }
+                catch
+                {
+                }
+
                 await Navigation.PopModalAsync();
             });
 
@@ -76,6 +93,17 @@ namespace E_Book.Pages
             _ => 0
         };
 
+        private string GetModeDisplayText(ThemeScheduler.ThemeMode mode)
+        {
+            return mode switch
+            {
+                ThemeScheduler.ThemeMode.Auto => "Auto",
+                ThemeScheduler.ThemeMode.Light => "Light",
+                ThemeScheduler.ThemeMode.Dark => "Dark",
+                _ => "Auto"
+            };
+        }
+
         private async Task MoveSegmentAsync(int index, bool animated = true)
         {
             if (SegmentHost.Width <= 0) return;
@@ -94,10 +122,11 @@ namespace E_Book.Pages
             if (_currentIndex == index) return;
 
             await Task.WhenAll(
-                SegmentHighlight.TranslateTo(targetX, 0, 240, Easing.CubicOut),
-                SegmentHighlight.FadeTo(0.92, 120, Easing.CubicOut)
+                SegmentHighlight.TranslateTo(targetX, 0, 220, Easing.CubicOut),
+                SegmentHighlight.ScaleTo(0.98, 90, Easing.CubicOut)
             );
-            await SegmentHighlight.FadeTo(1.0, 120, Easing.CubicOut);
+
+            await SegmentHighlight.ScaleTo(1.0, 90, Easing.CubicOut);
 
             _currentIndex = index;
             UpdateSegmentTextColors(index);
@@ -110,9 +139,18 @@ namespace E_Book.Pages
             int idx = ModeToIndex(ThemeScheduler.Mode);
 
             AutoThemeSettings.IsVisible = ThemeScheduler.Mode == ThemeScheduler.ThemeMode.Auto;
+            CurrentModeLabel.Text = GetModeDisplayText(ThemeScheduler.Mode);
 
             await MoveSegmentAsync(idx, animated);
             UpdateSegmentTextColors(idx);
+        }
+
+        private async Task AnimateCardTap(VisualElement? view)
+        {
+            if (view == null) return;
+
+            await view.ScaleTo(0.985, 70, Easing.CubicOut);
+            await view.ScaleTo(1.0, 100, Easing.CubicOut);
         }
 
         private async void OnAutoTapped(object sender, TappedEventArgs e)
@@ -124,6 +162,7 @@ namespace E_Book.Pages
             ThemeScheduler.StartTimer();
             ThemeScheduler.ApplyNow();
 
+            CurrentModeLabel.Text = GetModeDisplayText(ThemeScheduler.Mode);
             UpdateSegmentTextColors(0);
         }
 
@@ -135,9 +174,9 @@ namespace E_Book.Pages
             await MoveSegmentAsync(1, animated: true);
             ThemeScheduler.ApplyNow();
 
+            CurrentModeLabel.Text = GetModeDisplayText(ThemeScheduler.Mode);
             UpdateSegmentTextColors(1);
 
-            // 兼容旧 DB（可删）
             var r = await db.GetReadingSettingsAsync();
             await db.SaveReadingSettingsAsync(r.FontSize, "Light");
         }
@@ -150,9 +189,9 @@ namespace E_Book.Pages
             await MoveSegmentAsync(2, animated: true);
             ThemeScheduler.ApplyNow();
 
+            CurrentModeLabel.Text = GetModeDisplayText(ThemeScheduler.Mode);
             UpdateSegmentTextColors(2);
 
-            // 兼容旧 DB（可删）
             var r = await db.GetReadingSettingsAsync();
             await db.SaveReadingSettingsAsync(r.FontSize, "Dark");
         }
@@ -176,6 +215,47 @@ namespace E_Book.Pages
                 startupPassword: s.StartupPasswordEnabled,
                 exitLock: s.ExitLockEnabled
             );
+        }
+
+        private async void OnResetTapped(object sender, TappedEventArgs e)
+        {
+            if (sender is VisualElement v)
+                await AnimateCardTap(v);
+
+            bool confirm = await DisplayAlert(
+                "Reset Appearance",
+                "Restore default appearance settings?",
+                "Reset",
+                "Cancel");
+
+            if (!confirm) return;
+
+            ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Auto;
+            ThemeScheduler.LightStart = new TimeSpan(7, 0, 0);
+            ThemeScheduler.DarkStart = new TimeSpan(19, 0, 0);
+
+            LightStartPicker.Time = ThemeScheduler.LightStart;
+            DarkStartPicker.Time = ThemeScheduler.DarkStart;
+
+            KeepScreenOnSwitch.IsToggled = false;
+            DeviceDisplay.KeepScreenOn = false;
+
+            AutoThemeSettings.IsVisible = true;
+
+            ThemeScheduler.StartTimer();
+            ThemeScheduler.ApplyNow();
+
+            var s = await db.GetUserSettingsAsync();
+            await db.SaveSettingsAsync(
+                keepScreenOn: false,
+                startupPassword: s.StartupPasswordEnabled,
+                exitLock: s.ExitLockEnabled
+            );
+
+            CurrentModeLabel.Text = GetModeDisplayText(ThemeScheduler.Mode);
+
+            await MoveSegmentAsync(0, animated: true);
+            UpdateSegmentTextColors(0);
         }
     }
 }

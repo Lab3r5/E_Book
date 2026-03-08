@@ -94,6 +94,9 @@
     <MauiXaml Update="Controls\AppHeader.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Pages\HelpCenterPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\LoginPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -104,6 +107,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\HelpSupportPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\PrivacyPolicyPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\SignUpPage.xaml">

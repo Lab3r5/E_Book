@@ -6,6 +6,7 @@ namespace E_Book.Pages
     public partial class SettingsHomePage : ContentPage
     {
         private bool _entrancePlayed;
+        private bool _isRowAnimating;
 
         public SettingsHomePage()
         {
@@ -19,77 +20,143 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            NameLabel.Text = UserSession.DisplayName;
-            EmailLabel.Text = UserSession.IsGuest ? "" : UserSession.UserId;
-            EmailLabel.IsVisible = !UserSession.IsGuest;
-
+            BindProfileInfo();
             await RunEntranceFlagship();
         }
 
+        private void BindProfileInfo()
+        {
+            var displayName = string.IsNullOrWhiteSpace(UserSession.DisplayName)
+                ? "User"
+                : UserSession.DisplayName.Trim();
+
+            NameLabel.Text = displayName;
+
+            if (UserSession.IsGuest)
+            {
+                EmailLabel.Text = "Guest account";
+            }
+            else
+            {
+                EmailLabel.Text = string.IsNullOrWhiteSpace(UserSession.UserId)
+                    ? "Signed in"
+                    : UserSession.UserId;
+            }
+
+            AvatarLetterLabel.Text = GetAvatarLetter(displayName);
+        }
+
+        private static string GetAvatarLetter(string? name)
+        {
+            var text = (name ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return "U";
+
+            return text.Substring(0, 1).ToUpperInvariant();
+        }
+
         // =========================
-        // ULTRA Entrance
+        // Entrance Animation
         // =========================
         private async Task RunEntranceFlagship()
         {
             if (_entrancePlayed) return;
             _entrancePlayed = true;
 
-            TitleLabel.Opacity = 0; TitleLabel.TranslationY = 10;
-            ProfileCard.Opacity = 0; ProfileCard.TranslationY = 18;
-            MenuCard.Opacity = 0; MenuCard.TranslationY = 18;
-            AppearanceRow.Opacity = 0; AppearanceRow.TranslationY = 14;
-            HelpRow.Opacity = 0; HelpRow.TranslationY = 14;
+            TitleLabel.Opacity = 0;
+            TitleLabel.TranslationY = 8;
+
+            ProfileCard.Opacity = 0;
+            ProfileCard.TranslationY = 14;
+            ProfileCard.Scale = 0.995;
+
+            SectionLabel.Opacity = 0;
+            SectionLabel.TranslationY = 8;
+
+            MenuCard.Opacity = 0;
+            MenuCard.TranslationY = 14;
+            MenuCard.Scale = 0.995;
+
+            AppearanceRow.Opacity = 0;
+            AppearanceRow.TranslationY = 8;
+
+            HelpRow.Opacity = 0;
+            HelpRow.TranslationY = 8;
+
+            FooterLabel.Opacity = 0;
+            FooterLabel.TranslationY = 6;
 
             await Task.WhenAll(
                 TitleLabel.FadeTo(1, 180, Easing.CubicOut),
                 TitleLabel.TranslateTo(0, 0, 220, Easing.CubicOut)
             );
 
-            await Task.Delay(40);
+            await Task.Delay(30);
 
             await Task.WhenAll(
-                ProfileCard.FadeTo(1, 240, Easing.CubicOut),
-                ProfileCard.TranslateTo(0, 0, 300, Easing.CubicOut)
+                ProfileCard.FadeTo(1, 220, Easing.CubicOut),
+                ProfileCard.TranslateTo(0, 0, 260, Easing.CubicOut),
+                ProfileCard.ScaleTo(1.0, 240, Easing.CubicOut)
             );
 
-            await Task.Delay(50);
+            await Task.Delay(24);
 
             await Task.WhenAll(
-                MenuCard.FadeTo(1, 240, Easing.CubicOut),
-                MenuCard.TranslateTo(0, 0, 300, Easing.CubicOut)
+                SectionLabel.FadeTo(1, 160, Easing.CubicOut),
+                SectionLabel.TranslateTo(0, 0, 200, Easing.CubicOut)
+            );
+
+            await Task.Delay(24);
+
+            await Task.WhenAll(
+                MenuCard.FadeTo(1, 220, Easing.CubicOut),
+                MenuCard.TranslateTo(0, 0, 260, Easing.CubicOut),
+                MenuCard.ScaleTo(1.0, 240, Easing.CubicOut)
+            );
+
+            await Task.Delay(34);
+
+            await Task.WhenAll(
+                AppearanceRow.FadeTo(1, 170, Easing.CubicOut),
+                AppearanceRow.TranslateTo(0, 0, 220, Easing.CubicOut)
+            );
+
+            await Task.Delay(28);
+
+            await Task.WhenAll(
+                HelpRow.FadeTo(1, 170, Easing.CubicOut),
+                HelpRow.TranslateTo(0, 0, 220, Easing.CubicOut)
             );
 
             await Task.Delay(60);
 
             await Task.WhenAll(
-                AppearanceRow.FadeTo(1, 200, Easing.CubicOut),
-                AppearanceRow.TranslateTo(0, 0, 260, Easing.CubicOut)
-            );
-
-            await Task.Delay(50);
-
-            await Task.WhenAll(
-                HelpRow.FadeTo(1, 200, Easing.CubicOut),
-                HelpRow.TranslateTo(0, 0, 260, Easing.CubicOut)
+                FooterLabel.FadeTo(1, 200, Easing.CubicOut),
+                FooterLabel.TranslateTo(0, 0, 220, Easing.CubicOut)
             );
         }
 
         // =========================
-        // Button feedback
+        // Button Feedback
         // =========================
-        private static async Task PressDown(VisualElement v)
+        private static async Task PressDown(VisualElement view)
         {
+            if (view == null) return;
+
             await Task.WhenAll(
-                v.ScaleTo(0.965, 70, Easing.CubicOut),
-                v.FadeTo(0.93, 70, Easing.CubicOut)
+                view.ScaleTo(0.975, 70, Easing.CubicOut),
+                view.FadeTo(0.95, 70, Easing.CubicOut)
             );
         }
 
-        private static async Task PressUp(VisualElement v)
+        private static async Task PressUp(VisualElement view)
         {
+            if (view == null) return;
+
             await Task.WhenAll(
-                v.ScaleTo(1.0, 140, Easing.CubicOut),
-                v.FadeTo(1.0, 140, Easing.CubicOut)
+                view.ScaleTo(1.0, 130, Easing.CubicOut),
+                view.FadeTo(1.0, 130, Easing.CubicOut)
             );
         }
 
@@ -102,78 +169,78 @@ namespace E_Book.Pages
             {
                 HapticFeedback.Default.Perform(HapticFeedbackType.Click);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         // =========================
-        // Ripple
+        // Soft Highlight
         // =========================
-        private async Task RippleAsync(Border ripple)
+        private async Task HighlightAsync(Border ripple)
         {
+            if (ripple == null) return;
+
             ripple.Opacity = 0;
-            ripple.Scale = 0.85;
+            ripple.Scale = 0.96;
 
             await Task.WhenAll(
-                ripple.FadeTo(0.95, 90, Easing.CubicOut),
-                ripple.ScaleTo(1.02, 140, Easing.CubicOut)
+                ripple.FadeTo(0.32, 70, Easing.CubicOut),
+                ripple.ScaleTo(1.0, 110, Easing.CubicOut)
             );
 
             await Task.WhenAll(
-                ripple.FadeTo(0, 200, Easing.CubicOut),
-                ripple.ScaleTo(1.08, 200, Easing.CubicOut)
+                ripple.FadeTo(0, 180, Easing.CubicOut),
+                ripple.ScaleTo(1.01, 180, Easing.CubicOut)
             );
         }
 
         // =========================
-        // ICON POP + ROTATE
+        // Bubble Micro Pop
         // =========================
-        private async Task IconPopAsync(VisualElement bubble, VisualElement icon)
+        private static async Task BubblePopAsync(VisualElement bubble)
         {
-            if (bubble == null || icon == null) return;
+            if (bubble == null) return;
 
-            // bubble pop
-            var pop1 = bubble.ScaleTo(1.12, 120, Easing.CubicOut);
-            var pop2 = bubble.ScaleTo(1.0, 180, Easing.CubicOut);
-
-            // icon micro rotate
-            var rotate1 = icon.RotateTo(6, 120, Easing.CubicOut);
-            var rotate2 = icon.RotateTo(0, 180, Easing.CubicOut);
-
-            await Task.WhenAll(pop1, rotate1);
-            await Task.WhenAll(pop2, rotate2);
+            await bubble.ScaleTo(1.045, 90, Easing.CubicOut);
+            await bubble.ScaleTo(1.0, 140, Easing.CubicOut);
         }
 
         // =========================
-        // Row tap master animation
+        // Row Tap Animation
         // =========================
         private async Task RowTapAsync(
             VisualElement row,
             Border ripple,
             VisualElement chevron,
-            VisualElement bubble,
-            VisualElement icon)
+            VisualElement bubble)
         {
+            if (_isRowAnimating) return;
+            _isRowAnimating = true;
+
             TryHaptic();
 
-            var rippleTask = RippleAsync(ripple);
+            try
+            {
+                var highlightTask = HighlightAsync(ripple);
 
-            // micro lift illusion
-            var lift = row.TranslateTo(0, -1, 80, Easing.CubicOut);
-            var shrink = row.ScaleTo(0.988, 70, Easing.CubicOut);
+                await Task.WhenAll(
+                    row.ScaleTo(0.994, 65, Easing.CubicOut),
+                    chevron.TranslateTo(2, 0, 100, Easing.CubicOut)
+                );
 
-            // chevron micro slide
-            var slide = chevron.TranslateTo(3, 0, 120, Easing.CubicOut);
+                await Task.WhenAll(
+                    row.ScaleTo(1.0, 120, Easing.CubicOut),
+                    chevron.TranslateTo(0, 0, 150, Easing.CubicOut)
+                );
 
-            await Task.WhenAll(lift, shrink);
-
-            await row.ScaleTo(1.0, 140, Easing.CubicOut);
-            await row.TranslateTo(0, 0, 140, Easing.CubicOut);
-            await chevron.TranslateTo(0, 0, 180, Easing.CubicOut);
-
-            await rippleTask;
-
-            // icon pop after ripple
-            await IconPopAsync(bubble, icon);
+                await highlightTask;
+                await BubblePopAsync(bubble);
+            }
+            finally
+            {
+                _isRowAnimating = false;
+            }
         }
 
         // =========================
@@ -191,8 +258,7 @@ namespace E_Book.Pages
                 AppearanceRow,
                 AppearanceRipple,
                 AppearanceChevron,
-                AppearanceBubble,
-                AppearanceIcon);
+                AppearanceBubble);
 
             await Shell.Current.GoToAsync("appearance");
         }
@@ -203,8 +269,7 @@ namespace E_Book.Pages
                 HelpRow,
                 HelpRipple,
                 HelpChevron,
-                HelpBubble,
-                HelpIcon);
+                HelpBubble);
 
             await Shell.Current.GoToAsync("help");
         }

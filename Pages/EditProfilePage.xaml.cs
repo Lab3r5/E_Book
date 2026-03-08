@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using E_Book.Services;
 using Microsoft.Maui.Storage;
 
@@ -7,6 +6,7 @@ namespace E_Book.Pages
     public partial class EditProfilePage : ContentPage
     {
         private string ProfileKey => $"profile_name_{UserSession.UserId}";
+        private string _originalName = string.Empty;
 
         public EditProfilePage()
         {
@@ -17,45 +17,93 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            var savedName = Preferences.Get(ProfileKey, UserSession.DisplayName);
+            _originalName = Preferences.Get(ProfileKey, UserSession.DisplayName)?.Trim() ?? string.Empty;
 
-            NameEntry.Text = savedName;
-            EmailEntry.Text = UserSession.IsGuest ? "" : UserSession.UserId;
+            var currentName = UserSession.IsGuest ? "Guest" : _originalName;
+            NameEntry.Text = currentName;
+            EmailLabel.Text = UserSession.IsGuest ? "Guest account" : UserSession.UserId;
 
-            // Guest 不允许编辑
+            AccountTypeLabel.Text = UserSession.IsGuest ? "Guest account" : "Registered account";
+            AvatarLetter.Text = GetAvatarLetter(currentName);
+
             if (UserSession.IsGuest)
             {
                 NameEntry.IsEnabled = false;
-                NameEntry.Text = "Guest";
+                GuestNotice.IsVisible = true;
 
-                SaveLabel.IsVisible = false;
-                GuestTip.IsVisible = true;
-
-                EmailEntry.IsVisible = false;
-                PasswordDots.IsVisible = false;
+                SaveLabel.Opacity = 0.35;
+                ChangePasswordLabel.Opacity = 0.35;
             }
             else
             {
-                SaveLabel.IsVisible = true;
-                GuestTip.IsVisible = false;
+                NameEntry.IsEnabled = true;
+                GuestNotice.IsVisible = false;
 
-                EmailEntry.IsVisible = true;
-                PasswordDots.IsVisible = true;
+                SaveLabel.Opacity = 0.35;
+                ChangePasswordLabel.Opacity = 1.0;
             }
+        }
+
+        private string GetAvatarLetter(string? name)
+        {
+            var text = (name ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return "U";
+
+            return text.Substring(0, 1).ToUpperInvariant();
+        }
+
+        private void UpdateSaveState()
+        {
+            if (UserSession.IsGuest)
+            {
+                SaveLabel.Opacity = 0.35;
+                return;
+            }
+
+            var currentName = NameEntry.Text?.Trim() ?? string.Empty;
+            bool changed = !string.Equals(currentName, _originalName, StringComparison.Ordinal);
+
+            SaveLabel.Opacity = changed ? 1.0 : 0.35;
+            AvatarLetter.Text = GetAvatarLetter(currentName);
         }
 
         private async Task PressAnim(VisualElement view)
         {
             if (view == null) return;
+
             await view.ScaleTo(0.96, 80, Easing.CubicOut);
             await view.ScaleTo(1.0, 120, Easing.CubicOut);
         }
 
         private async Task GoBackAsync()
         {
-            // ✅ 优先 Shell 返回（Modal route）
-            try { await Shell.Current.GoToAsync(".."); return; } catch { }
+            try
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await Navigation.PopAsync();
+                return;
+            }
+            catch
+            {
+            }
+
             await Navigation.PopModalAsync();
+        }
+
+        private void OnNameChanged(object sender, TextChangedEventArgs e)
+        {
+            if (UserSession.IsGuest) return;
+            UpdateSaveState();
         }
 
         private async void OnCancelTapped(object sender, TappedEventArgs e)
@@ -70,15 +118,21 @@ namespace E_Book.Pages
 
             if (UserSession.IsGuest) return;
 
-            var name = NameEntry.Text?.Trim() ?? "";
+            var name = NameEntry.Text?.Trim() ?? string.Empty;
             if (name.Length == 0)
             {
                 await DisplayAlert("Error", "Name cannot be empty.", "OK");
                 return;
             }
 
+            if (string.Equals(name, _originalName, StringComparison.Ordinal))
+                return;
+
             Preferences.Set(ProfileKey, name);
             UserSession.UpdateDisplayName(name);
+            _originalName = name;
+
+            UpdateSaveState();
 
             await DisplayAlert("Saved", "Profile updated.", "OK");
             await GoBackAsync();
@@ -90,7 +144,6 @@ namespace E_Book.Pages
 
             if (UserSession.IsGuest) return;
 
-            // ✅ 仍然用 Shell route
             await Shell.Current.GoToAsync("password");
         }
 
