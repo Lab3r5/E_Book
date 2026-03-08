@@ -27,7 +27,7 @@ namespace E_Book.Pages
         private void BindProfileInfo()
         {
             var displayName = string.IsNullOrWhiteSpace(UserSession.DisplayName)
-                ? "User"
+                ? "Guest"
                 : UserSession.DisplayName.Trim();
 
             NameLabel.Text = displayName;
@@ -67,6 +67,9 @@ namespace E_Book.Pages
             TitleLabel.Opacity = 0;
             TitleLabel.TranslationY = 8;
 
+            HeaderSubTitle.Opacity = 0;
+            HeaderSubTitle.TranslationY = 8;
+
             ProfileCard.Opacity = 0;
             ProfileCard.TranslationY = 14;
             ProfileCard.Scale = 0.995;
@@ -89,7 +92,9 @@ namespace E_Book.Pages
 
             await Task.WhenAll(
                 TitleLabel.FadeTo(1, 180, Easing.CubicOut),
-                TitleLabel.TranslateTo(0, 0, 220, Easing.CubicOut)
+                TitleLabel.TranslateTo(0, 0, 220, Easing.CubicOut),
+                HeaderSubTitle.FadeTo(1, 200, Easing.CubicOut),
+                HeaderSubTitle.TranslateTo(0, 0, 240, Easing.CubicOut)
             );
 
             await Task.Delay(30);

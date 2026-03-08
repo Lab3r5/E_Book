@@ -99,7 +99,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Label Text="Last updated: Version 1.04"
+                <Label Text="Last updated: Version 1.05"
                        FontSize="12"
                        HorizontalOptions="Center"
                        Margin="0,4,0,0"
