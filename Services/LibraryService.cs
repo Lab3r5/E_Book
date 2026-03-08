@@ -40,16 +40,39 @@ namespace E_Book.Services
             }).ToList();
         }
 
-        public static List<BookItem> Search(string keyword)
+        public static List<BookItem> SearchFromCache(IEnumerable<BookItem> books, string keyword)
         {
             keyword = (keyword ?? "").Trim();
-            if (keyword.Length == 0) return new List<BookItem>();
+            if (string.IsNullOrWhiteSpace(keyword))
+                return new List<BookItem>();
 
-            var all = LoadBooks();
+            var all = books?.ToList() ?? new List<BookItem>();
+            string lowerKeyword = keyword.ToLowerInvariant();
 
-            return all.Where(b =>
-                    b.FileName.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            return all
+                .Where(b =>
+                {
+                    string title = Path.GetFileNameWithoutExtension(b.FileName ?? "");
+                    string format = b.Format ?? "";
+
+                    return title.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                           || format.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+                })
+                .OrderByDescending(b =>
+                    Path.GetFileNameWithoutExtension(b.FileName ?? "")
+                        .Equals(keyword, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(b =>
+                    Path.GetFileNameWithoutExtension(b.FileName ?? "")
+                        .StartsWith(keyword, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(b => b.LastOpenedTicks)
+                .ThenBy(b => b.DisplayFileName)
                 .ToList();
+        }
+
+        public static List<BookItem> Search(string keyword)
+        {
+            var all = LoadBooks();
+            return SearchFromCache(all, keyword);
         }
 
         public static string GetFormatTag(string path)

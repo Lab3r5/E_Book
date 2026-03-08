@@ -1,11 +1,21 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
+using E_Book.Models;
 using E_Book.Services;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 
 namespace E_Book.Pages
 {
     public partial class SearchPage : ContentPage
     {
-        public ObservableCollection<SearchResultItem> Results { get; } = new();
+        public ObservableCollection<BookItem> Results { get; } = new();
+
+        private readonly List<BookItem> _allBooks = new();
+        private bool _isLoaded;
 
         public SearchPage()
         {
@@ -13,10 +23,197 @@ namespace E_Book.Pages
             ResultList.ItemsSource = Results;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
+
+            LoadBooksToCache();
             RenderHistory();
+            RestoreStateFromCurrentInput();
+            FocusSearchLater();
+
+            if (string.IsNullOrWhiteSpace(SearchEntry?.Text))
+            {
+                await PlayEmptyAnimation();
+            }
+        }
+
+        private void LoadBooksToCache()
+        {
+            _allBooks.Clear();
+
+            var books = LibraryService.LoadBooks();
+            foreach (var book in books)
+            {
+                ReadingMetaStore.ApplyToBook(book);
+                book.RefreshVisualMeta();
+                _allBooks.Add(book);
+            }
+
+            _isLoaded = true;
+        }
+
+        private async void FocusSearchLater()
+        {
+            await Task.Delay(180);
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SearchEntry?.Focus();
+            });
+        }
+
+        private void RestoreStateFromCurrentInput()
+        {
+            var keyword = (SearchEntry.Text ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                Results.Clear();
+                ShowInitialState();
+                UpdateClearButtonVisibility();
+                return;
+            }
+
+            DoSearch(keyword, saveHistory: false);
+        }
+
+        private void OnSearchPressed(object sender, EventArgs e)
+        {
+            DoSearch(SearchEntry.Text ?? string.Empty, saveHistory: true);
+        }
+
+        private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateClearButtonVisibility();
+
+            var keyword = (e.NewTextValue ?? string.Empty).Trim();
+
+            if (!_isLoaded)
+                return;
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                Results.Clear();
+                ShowInitialState();
+                _ = PlayEmptyAnimation();
+                return;
+            }
+
+            DoSearch(keyword, saveHistory: true);
+        }
+
+        private void UpdateClearButtonVisibility()
+        {
+            if (ClearTextLabel == null || SearchEntry == null)
+                return;
+
+            ClearTextLabel.IsVisible = !string.IsNullOrWhiteSpace(SearchEntry.Text);
+        }
+
+        private void DoSearch(string keyword, bool saveHistory)
+        {
+            keyword = (keyword ?? string.Empty).Trim();
+            Results.Clear();
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                ShowInitialState();
+                return;
+            }
+
+            if (saveHistory)
+            {
+                SearchHistoryStore.Add(UserSession.UserId, keyword);
+                RenderHistory();
+            }
+
+            var result = LibraryService.SearchFromCache(_allBooks, keyword);
+
+            foreach (var book in result)
+            {
+                ReadingMetaStore.ApplyToBook(book);
+                book.RefreshVisualMeta();
+                Results.Add(book);
+
+            }
+
+            if (Results.Count == 0)
+                ShowNoResultState(keyword);
+            else
+                ShowResultState();
+        }
+
+        private void ShowInitialState()
+        {
+            ResultTitleLabel.IsVisible = false;
+            ResultList.IsVisible = false;
+
+            EmptyStateLayout.IsVisible = true;
+            EmptyTitleLabel.Text = "Search your books";
+            EmptySubLabel.Text = "Find books you added to your library.";
+
+            ResetEmptyVisualState();
+        }
+
+        private void ShowNoResultState(string keyword)
+        {
+            ResultTitleLabel.IsVisible = false;
+            ResultList.IsVisible = false;
+
+            EmptyStateLayout.IsVisible = true;
+            EmptyTitleLabel.Text = "No search results";
+            EmptySubLabel.Text = $"No books matched \"{keyword}\". Try another title or file format.";
+
+            ResetEmptyVisualState();
+            _ = PlayEmptyAnimation();
+        }
+
+        private void ShowResultState()
+        {
+            ResultTitleLabel.IsVisible = true;
+            ResultList.IsVisible = true;
+            EmptyStateLayout.IsVisible = false;
+
+            _ = PlayResultListAnimation();
+        }
+
+        private void ResetEmptyVisualState()
+        {
+            if (EmptyImage != null)
+            {
+                EmptyImage.Opacity = 0;
+                EmptyImage.Scale = 0.85;
+            }
+
+            if (EmptyTitleLabel != null)
+                EmptyTitleLabel.Opacity = 0;
+
+            if (EmptySubLabel != null)
+                EmptySubLabel.Opacity = 0;
+        }
+
+        private async Task PlayEmptyAnimation()
+        {
+            if (EmptyImage == null || !EmptyStateLayout.IsVisible)
+                return;
+
+            ResetEmptyVisualState();
+
+            await Task.Delay(120);
+
+            if (!EmptyStateLayout.IsVisible)
+                return;
+
+            await Task.WhenAll(
+                EmptyImage.FadeTo(1, 260, Easing.CubicOut),
+                EmptyImage.ScaleTo(1, 320, Easing.SpringOut)
+            );
+
+            await Task.WhenAll(
+                EmptyTitleLabel.FadeTo(1, 200, Easing.CubicOut),
+                EmptySubLabel.FadeTo(1, 220, Easing.CubicOut)
+            );
         }
 
         private void RenderHistory()
@@ -28,90 +225,172 @@ namespace E_Book.Pages
 
             foreach (var keyword in list)
             {
-                var chip = new HorizontalStackLayout { Spacing = 6 };
-
-                var textBtn = new Button { Text = keyword, Padding = new Thickness(10, 6) };
-                textBtn.Clicked += (_, __) =>
-                {
-                    SearchBarBox.Text = keyword;
-                    DoSearch(keyword);
-                };
-
-                var delBtn = new Button { Text = "✕", Padding = new Thickness(10, 6) };
-                delBtn.Clicked += async (_, __) =>
-                {
-                    bool ok = await DisplayAlert("Delete", $"Delete history \"{keyword}\"?", "Yes", "No");
-                    if (!ok) return;
-
-                    SearchHistoryStore.Delete(UserSession.UserId, keyword);
-                    RenderHistory();
-                };
-
-                chip.Children.Add(textBtn);
-                chip.Children.Add(delBtn);
-
+                var chip = BuildHistoryChip(keyword);
                 HistoryContainer.Children.Add(chip);
             }
         }
 
-        private void OnPopularClicked(object sender, EventArgs e)
+        private View BuildHistoryChip(string keyword)
         {
-            if (sender is Button b)
+            var holder = new Grid
             {
-                SearchBarBox.Text = b.Text;
-                DoSearch(b.Text);
-            }
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(GridLength.Auto)
+                },
+                ColumnSpacing = 6,
+                Margin = new Thickness(0, 0, 8, 8)
+            };
+
+            var keywordFrame = new Frame
+            {
+                Padding = new Thickness(12, 6),
+                CornerRadius = 14,
+                HasShadow = false,
+                BackgroundColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                    ? Color.FromArgb("#2B2B2F")
+                    : Color.FromArgb("#F4F1FF"),
+                Content = new Label
+                {
+                    Text = keyword,
+                    FontSize = 12.5,
+                    TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                        ? Colors.White
+                        : Color.FromArgb("#4A426F")
+                }
+            };
+
+            var tap = new TapGestureRecognizer();
+            tap.Tapped += (_, __) =>
+            {
+                SearchEntry.Text = keyword;
+                DoSearch(keyword, saveHistory: true);
+            };
+            keywordFrame.GestureRecognizers.Add(tap);
+
+            var deleteLabel = new Label
+            {
+                Text = "✕",
+                FontSize = 13,
+                VerticalOptions = LayoutOptions.Center,
+                TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                    ? Color.FromArgb("#C8C1E3")
+                    : Color.FromArgb("#8D86B2")
+            };
+
+            var deleteTap = new TapGestureRecognizer();
+            deleteTap.Tapped += async (_, __) =>
+            {
+                bool ok = await DisplayAlert("Delete", $"Delete history \"{keyword}\"?", "Yes", "No");
+                if (!ok) return;
+
+                SearchHistoryStore.Delete(UserSession.UserId, keyword);
+                RenderHistory();
+            };
+            deleteLabel.GestureRecognizers.Add(deleteTap);
+
+            holder.Add(keywordFrame);
+            holder.Add(deleteLabel, 1);
+
+            return holder;
         }
 
-        private void OnSearchPressed(object sender, EventArgs e)
+        private void OnClearTapped(object sender, TappedEventArgs e)
         {
-            DoSearch(SearchBarBox.Text ?? "");
-        }
-
-        private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            // 规则：输入不记录历史
-        }
-
-        private void DoSearch(string keyword)
-        {
-            keyword = (keyword ?? "").Trim();
+            SearchEntry.Text = string.Empty;
             Results.Clear();
+            ShowInitialState();
+            SearchEntry.Focus();
+            UpdateClearButtonVisibility();
+            _ = PlayEmptyAnimation();
+        }
 
-            if (keyword.Length == 0)
-            {
-                StatusLabel.Text = "Type a keyword to search.";
-                return;
-            }
+        private void OnCancelTapped(object sender, TappedEventArgs e)
+        {
+            SearchEntry.Text = string.Empty;
+            Results.Clear();
+            ShowInitialState();
+            SearchEntry.Unfocus();
+            UpdateClearButtonVisibility();
+            _ = PlayEmptyAnimation();
+        }
 
-            // 演示用：小于3个字符当作无结果
-            if (keyword.Length < 3)
-            {
-                StatusLabel.Text = "No search results. Try a different keyword.";
-                return;
-            }
+        private async void OnClearHistoryTapped(object sender, TappedEventArgs e)
+        {
+            bool ok = await DisplayAlert("Clear history", "Delete all recent searches?", "Yes", "No");
+            if (!ok) return;
 
-            StatusLabel.Text = "Search Results";
-
-            Results.Add(new SearchResultItem { Title = keyword, Author = "Unknown Author" });
-            Results.Add(new SearchResultItem { Title = $"{keyword} (Illustrated)", Author = "Unknown Author" });
+            SearchHistoryStore.Clear(UserSession.UserId);
+            RenderHistory();
         }
 
         private async void OnReadClicked(object sender, EventArgs e)
         {
-            if (sender is Button btn && btn.CommandParameter is SearchResultItem item)
-            {
-                SearchHistoryStore.AddOnRead(UserSession.UserId, SearchBarBox.Text ?? item.Title);
-                RenderHistory();
+            if (sender is not Button button || button.CommandParameter is not BookItem book)
+                return;
 
-                await DisplayAlert("Read", $"Open: {item.Title}", "OK");
-            }
+            await OpenBookAsync(book);
         }
-    }
 
-    public class SearchResultItem
-    {
-        public string Title { get; set; } = "";
-        public string Author { get; set; } = "";
+        private async void OnResultCardTapped(object sender, TappedEventArgs e)
+        {
+            if (e.Parameter is not BookItem book)
+                return;
+
+            await OpenBookAsync(book);
+        }
+
+        private async Task OpenBookAsync(BookItem book)
+        {
+            if (!File.Exists(book.FullPath))
+            {
+                await DisplayAlert("Error", "File not found!", "OK");
+
+                LoadBooksToCache();
+
+                var keyword = (SearchEntry.Text ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(keyword))
+                {
+                    Results.Clear();
+                    ShowInitialState();
+                    await PlayEmptyAnimation();
+                }
+                else
+                {
+                    DoSearch(keyword, saveHistory: false);
+                }
+
+                return;
+            }
+
+            var keywordToSave = (SearchEntry.Text ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(keywordToSave))
+            {
+                SearchHistoryStore.AddOnRead(UserSession.UserId, keywordToSave);
+                RenderHistory();
+            }
+
+            ReadingMetaStore.UpdateLastOpened(book.FullPath);
+
+            var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
+            await Shell.Current.GoToAsync(route);
+        }
+
+        private async Task PlayResultListAnimation()
+        {
+            if (ResultList == null || !ResultList.IsVisible)
+                return;
+
+            ResultList.Opacity = 0;
+            ResultList.TranslationY = 18;
+
+            await Task.Delay(40);
+
+            await Task.WhenAll(
+                ResultList.FadeTo(1, 220, Easing.CubicOut),
+                ResultList.TranslateTo(0, 0, 220, Easing.CubicOut)
+            );
+        }
     }
 }

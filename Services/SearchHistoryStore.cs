@@ -1,15 +1,21 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.Maui.Storage;
 
 namespace E_Book.Services
 {
     public static class SearchHistoryStore
     {
+        private const int MaxItems = 10;
+
         private static string Key(string userId) => $"search_history_{userId}";
 
         public static List<string> Get(string userId)
         {
             var json = Preferences.Get(Key(userId), "[]");
+
             try
             {
                 return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
@@ -27,27 +33,31 @@ namespace E_Book.Services
         }
 
         /// <summary>
-        /// 只有“有效搜索并点击阅读”才调用这个方法。
-        /// 规则：最多7条；新增插入到最前；超过则删除最旧（末尾）。
+        /// 搜索时记录历史。
+        /// 规则：最多10条；新增插入到最前；重复项先移除再插入。
         /// </summary>
-        public static void AddOnRead(string userId, string keyword)
+        public static void Add(string userId, string keyword)
         {
             keyword = (keyword ?? "").Trim();
             if (keyword.Length == 0) return;
 
             var list = Get(userId);
 
-            // 去重（不允许叠加效果）
             list.RemoveAll(x => string.Equals(x, keyword, StringComparison.OrdinalIgnoreCase));
-
-            // 最新放前面
             list.Insert(0, keyword);
 
-            // 最多7条
-            if (list.Count > 7)
-                list = list.Take(7).ToList();
+            if (list.Count > MaxItems)
+                list = list.Take(MaxItems).ToList();
 
             Save(userId, list);
+        }
+
+        /// <summary>
+        /// 点击阅读后也可调用，内部仍复用 Add。
+        /// </summary>
+        public static void AddOnRead(string userId, string keyword)
+        {
+            Add(userId, keyword);
         }
 
         public static void Delete(string userId, string keyword)

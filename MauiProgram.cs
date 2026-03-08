@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
+using Microsoft.Maui.Handlers;
+#if ANDROID
+using Android.Graphics.Drawables;
+#endif
 
 namespace E_Book
 {
@@ -11,7 +15,7 @@ namespace E_Book
 
             builder
                 .UseMauiApp<App>()
-                .UseMauiCommunityToolkit()   // ✅ 关键：启用 Toolkit（长按 TouchBehavior / 其他工具）
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -19,6 +23,13 @@ namespace E_Book
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                     fonts.AddFont("Pacifico-Regular.ttf", "Pacifico");
                 });
+
+            EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, view) =>
+            {
+#if ANDROID
+                handler.PlatformView.Background = new ColorDrawable(Android.Graphics.Color.Transparent);
+#endif
+            });
 
 #if DEBUG
             builder.Logging.AddDebug();

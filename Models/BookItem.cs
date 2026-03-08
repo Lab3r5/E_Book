@@ -18,8 +18,12 @@ namespace E_Book.Models
                 _fileName = value;
                 UpdateCover();
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(DisplayFileName));
             }
         }
+
+        public string DisplayFileName =>
+            Path.GetFileNameWithoutExtension(FileName ?? "") ?? "";
 
         private string _fullPath = "";
         public string FullPath
@@ -138,6 +142,7 @@ namespace E_Book.Models
         public void RefreshVisualMeta()
         {
             UpdateCover();
+            OnPropertyChanged(nameof(DisplayFileName));
             OnPropertyChanged(nameof(HasProgress));
             OnPropertyChanged(nameof(ProgressPercentText));
             OnPropertyChanged(nameof(HasLastOpened));
