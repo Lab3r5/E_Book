@@ -5,199 +5,376 @@
 
 ---
 
-## 🏷 Version | 版本信息
+# 🏷 Version | 版本信息
 
-![Version](https://img.shields.io/badge/version-v1.04-purple)
+![Version](https://img.shields.io/badge/version-v1.05-purple)
 ![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
+![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-Current Version: **v1.04 – Flagship UI Upgrade**  
-当前版本：**v1.04 – 旗舰级 UI 交互升级**
+Current Version: **v1.05 – Smart Bookshelf System**  
+当前版本：**v1.05 – 智能书架系统升级**
 
 ---
 
-## ✨ Project Overview | 项目简介
+# 📱 App Preview | 应用预览
 
-**E_Book** is a cross-platform e-book reader developed using .NET MAUI, focusing on professional UI design, motion interaction, and structured mobile architecture.
+### Bookshelf Interface
 
-E_Book 是一个基于 .NET MAUI 开发的跨平台电子书阅读应用，重点强调专业级 UI 设计、动效交互系统以及规范化移动端架构。
+The redesigned bookshelf now displays reading progress, automatically generated book covers, and recently opened books.
 
-Developed for:  
-INFT2051 – Mobile Application Development  
+重新设计的书架界面现在可以显示阅读进度、自动生成的书籍封面以及最近阅读书籍。
+
+*(Preview screenshots can be added here)*
+
+---
+
+# ✨ Project Overview | 项目简介
+
+**E_Book** is a cross-platform mobile e-book reader developed using **.NET MAUI**.
+
+The application focuses on:
+
+- Clean UI design
+- Structured mobile architecture
+- Modern reading experience
+- Lightweight local storage
+
+E_Book 是一个基于 **.NET MAUI** 构建的跨平台电子书阅读应用，重点关注：
+
+- 清晰的 UI 设计
+- 结构化移动应用架构
+- 现代阅读体验
+- 轻量级本地数据存储
+
+Developed for:
+
+**INFT2051 – Mobile Application Development**  
 University of Newcastle
 
 ---
 
-## 🚀 Latest Release – v1.04  
-## 最新版本 – v1.04
+# 🚀 Latest Release – v1.05  
+# 最新版本 – v1.05
 
-### 🎯 Flagship Settings UI & Motion System Upgrade  
-### 旗舰级 Settings 页面与动效系统升级
+## 🧠 Smart Bookshelf System Upgrade  
+## 智能书架系统升级
 
-This version introduces a complete redesign of the Settings module, elevating the application from a functional student project to a premium-quality mobile interface.
+Version **v1.05** introduces a major upgrade to the bookshelf system, transforming the static book list into a smart reading dashboard.
 
-本次版本对 Settings 模块进行了全面重构，使项目从“功能完成型作业”升级为“具备高级交互体验的产品级界面”。
+v1.05 版本对书架系统进行了全面升级，使书架从简单的文件列表变为智能阅读管理界面。
 
----
+Key improvements include:
 
-## 📱 Core Features | 核心功能
-
-### 📖 Reading System | 阅读系统
-
-- TXT file import  
-  支持 TXT 文件导入
-- Reading progress persistence  
-  阅读进度自动保存
-- Adjustable font size  
-  可调节字体大小
-- Light / Dark theme support  
-  支持浅色 / 深色模式
-- Minimal distraction layout  
-  简洁阅读界面设计
+- Automatic book cover generation
+- Reading progress tracking
+- Continue reading indicators
+- Recently opened sorting
+- Metadata persistence system
 
 ---
 
-### 👤 User System | 用户系统
-
-- Guest & Registered user logic  
-  游客与注册用户逻辑区分
-- Editable profile (non-guest only)  
-  注册用户可编辑个人资料
-- Local preference storage  
-  本地偏好数据存储
-- Logout state management  
-  安全登出逻辑管理
+# 📚 Core Features | 核心功能
 
 ---
 
-### ⚙ Settings Module (v1.04 Upgrade)  
-### 设置模块（v1.04 升级）
+# 📖 Reading System | 阅读系统
 
-- iOS-style grouped layout  
-  iOS 分组式布局风格
-- Rounded card-based UI  
-  圆角卡片式设计
-- Icon bubble system  
-  图标气泡视觉结构
-- Chevron micro-interaction  
-  右箭头微交互动效
-- Ripple touch feedback  
-  点击波纹反馈效果
-- Row scale animation  
-  行点击缩放动画
-- Staggered entrance animation  
-  分层延迟入场动画
-- Haptic vibration (Android)  
-  Android 触觉震动反馈
-- Micro elevation illusion  
-  微浮动视觉层次效果
+The reading system supports multiple document formats and provides a minimal distraction reading environment.
 
----
+阅读系统支持多种文档格式，并提供简洁的阅读体验。
 
-## 🎬 Motion & Interaction Design  
-## 动效与交互系统
+Features:
 
-E_Book integrates advanced animation orchestration to deliver a premium user experience.
+- TXT file reading
+- EPUB support
+- PDF external reader support
+- DOCX / RTF support
+- Adjustable font size
+- Light / Dark reading theme
+- Reading progress persistence
+- Resume reading from last position
 
-E_Book 集成高级动画控制系统，以提供更专业的移动端交互体验。
+功能包括：
 
-Includes:
-
-- Fade + slide entrance transitions  
-  淡入 + 滑动入场效果
-- Icon pop & subtle rotation feedback  
-  图标弹出与微旋转反馈
-- Press scale animation  
-  按压缩放效果
-- Ripple overlay interaction  
-  波纹交互覆盖层
-- Animation replay protection  
-  动画重复播放保护机制
-- Stable tab switching state handling  
-  Tab 切换稳定状态管理
+- TXT 文本阅读
+- EPUB 电子书支持
+- PDF 外部阅读器支持
+- DOCX / RTF 文档支持
+- 字体大小调整
+- 深色 / 浅色阅读模式
+- 阅读进度自动保存
+- 自动恢复阅读位置
 
 ---
 
-## 🏗 Architecture | 技术架构
+# 📚 Smart Bookshelf System (v1.05)  
+# 智能书架系统（v1.05）
 
-- .NET MAUI Shell Navigation  
-  MAUI Shell 路由导航结构
-- Cross-platform UI layer  
-  跨平台 UI 结构设计
-- Platform-specific Android enhancement  
-  Android 平台特定优化
-- SQLite local database  
-  SQLite 本地数据库
-- Preferences API  
-  偏好数据存储系统
-- Modular page architecture  
-  模块化页面结构
+The bookshelf system has been redesigned to behave more like a real commercial reading application.
+
+书架系统经过重构，提供更接近商业阅读应用的体验。
 
 ---
 
-## 🔧 Tech Stack | 技术栈
+## 📖 Automatic Book Cover Generation  
+## 自动生成书籍封面
 
-- C#
-- .NET MAUI
-- SQLite
-- Android Material Components
-- Shell Navigation
-- Material Icons (Font-based)
+Each imported book automatically receives a generated cover.
+
+每本导入的书籍都会自动生成封面。
+
+The system extracts characters from the book title to create a visual identifier.
+
+系统会根据书名提取字符生成封面文字。
+
+Examples:
+
+```
+
+Cyberpunk2077 → CY
+Usage Guidelines → UG
+中国小说 → 中国
+
+```
+
+Each cover also receives a generated color palette.
+
+每个封面都会自动生成颜色主题。
 
 ---
 
-## 📊 Version Evolution | 版本演进
+## 📊 Reading Progress Tracking  
+## 阅读进度显示
+
+Bookshelf now shows:
+
+- Reading progress bar
+- Reading percentage
+- Continue reading indicator
+
+书架现在可以显示：
+
+- 阅读进度条
+- 阅读百分比
+- Continue Reading 提示
+
+This allows users to quickly identify partially read books.
+
+方便用户快速识别未读完的书籍。
+
+---
+
+## 🕒 Recently Opened Sorting  
+## 最近阅读排序
+
+Books are automatically sorted by last opened time.
+
+书籍会根据最近阅读时间自动排序。
+
+Recently opened books appear at the top of the bookshelf.
+
+最近阅读的书籍会自动显示在最前面。
+
+---
+
+## 🧠 Reading Metadata System
+
+A new service **ReadingMetaStore** is introduced.
+
+新增 **ReadingMetaStore** 服务。
+
+This service manages:
+
+- Reading progress
+- Last opened timestamp
+- Reading metadata persistence
+
+用于管理：
+
+- 阅读进度
+- 最近阅读时间
+- 阅读元数据存储
+
+---
+
+# ⚙ Bookshelf Interaction System  
+# 书架交互系统
+
+The bookshelf includes modern mobile interaction patterns.
+
+书架包含现代移动应用交互方式。
+
+Supported interactions:
+
+- Swipe to delete books
+- Multi-select delete mode
+- Select All / Cancel actions
+- Animated delete confirmation dialog
+- Toast notification system
+
+支持：
+
+- 左滑删除书籍
+- 多选删除模式
+- 全选 / 取消操作
+- 删除确认弹窗动画
+- Toast 提示
+
+---
+
+# 🎨 UI Design Improvements (v1.05)  
+# UI 界面优化（v1.05）
+
+Major visual improvements include:
+
+- Redesigned bookshelf layout
+- Balanced book cover size
+- Compact reading progress bar
+- Better title readability
+- Improved small-screen compatibility
+- Cleaner multi-select header layout
+
+界面优化包括：
+
+- 重新设计书架布局
+- 调整书籍封面比例
+- 优化阅读进度条
+- 提升书名可读性
+- 小屏设备适配优化
+- 多选模式头部布局优化
+
+---
+
+# 🏗 Architecture | 技术架构
+
+E_Book uses a modular mobile architecture based on **.NET MAUI**.
+
+E_Book 采用基于 **.NET MAUI** 的模块化架构。
+
+Architecture highlights:
+
+- MAUI Shell navigation
+- Modular page system
+- Service layer abstraction
+- Local metadata persistence
+- Cross-platform UI design
+
+架构特点：
+
+- MAUI Shell 路由导航
+- 模块化页面结构
+- Service 层解耦
+- 本地元数据存储
+- 跨平台 UI 设计
+
+---
+
+# 📂 Project Structure | 项目结构
+
+```
+
+E_Book
+│
+├── Models
+│   └── BookItem.cs
+│
+├── Pages
+│   ├── BookshelfPage.xaml
+│   ├── BookshelfPage.xaml.cs
+│   ├── ReadingPage.xaml
+│   ├── ReadingPage.xaml.cs
+│   ├── SearchPage
+│   └── SettingsPage
+│
+├── Services
+│   ├── LibraryService.cs
+│   └── ReadingMetaStore.cs
+│
+├── Resources
+│   ├── Styles
+│   └── Images
+│
+└── AppShell.xaml
+
+```
+
+---
+
+# 🔧 Tech Stack | 技术栈
+
+- **C#**
+- **.NET MAUI**
+- **SQLite**
+- **Shell Navigation**
+- **Preferences API**
+- **Android Material Components**
+
+---
+
+# 📊 Version Evolution | 版本演进
 
 | Version | Description | 说明 |
-|----------|------------|------|
-| v1.01 | Base reading system | 阅读基础功能完成 |
-| v1.02 | UI layout refinement | UI 结构优化 |
+|-------|-------------|------|
+| v1.01 | Base reading system | 阅读基础功能 |
+| v1.02 | UI layout refinement | UI 布局优化 |
 | v1.03 | Custom animated TabBar | 自定义动画 TabBar |
-| v1.04 | Flagship Settings redesign | 旗舰级 Settings 动效升级 |
+| v1.04 | Flagship Settings redesign | Settings 页面升级 |
+| v1.05 | Smart Bookshelf system | 智能书架系统 |
 
 ---
 
-## 🎯 Design Philosophy | 设计理念
+# 🎯 Design Philosophy | 设计理念
 
 E_Book emphasizes:
 
-- Clear visual hierarchy  
-  清晰的视觉层级
-- Motion-driven feedback  
-  动效驱动交互反馈
-- Platform consistency  
-  平台一致性体验
+- Clean UI design  
+- Motion-driven interaction  
+- Structured architecture  
 - Minimalist purple theme  
-  紫色极简设计风格
-- Structured mobile architecture  
-  规范化移动端架构设计
+- Mobile-first design
+
+E_Book 强调：
+
+- 清晰 UI 设计
+- 动效交互体验
+- 结构化应用架构
+- 紫色极简主题
+- 移动优先设计
 
 ---
 
-## 🛣 Future Roadmap | 后续规划
+# 🛣 Future Roadmap | 后续规划
 
-- Global animation controller  
-  全局动画控制系统
-- Unified motion curve system  
-  统一动效曲线体系
-- MVVM refactor  
-  MVVM 架构重构
-- Performance profiling  
-  性能分析优化
-- iOS platform refinement  
-  iOS 平台细节优化
+Planned future features:
+
+- Reading analytics dashboard
+- Smart book recommendations
+- MVVM architecture refactor
+- Performance profiling
+- iOS UI refinement
+
+未来计划功能：
+
+- 阅读统计系统
+- 智能书籍推荐
+- MVVM 架构重构
+- 性能优化
+- iOS 平台 UI 优化
 
 ---
 
-## 👨‍💻 Developer | 开发者
+# 👨‍💻 Developer | 开发者
 
-Shen Jiawei  
+**Shen Jiawei**  
 University of Newcastle  
 Mobile Application Development
 
 ---
 
-## 📜 License | 许可说明
+# 📜 License | 许可说明
 
-This project is developed for educational purposes.  
+This project is developed for educational purposes.
+
 本项目用于教学与学习用途。
+```
