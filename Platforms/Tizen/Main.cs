@@ -1,17 +1,17 @@
-using System;
 using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
 
-namespace EZ_Read
-{
-    internal class Program : MauiApplication
-    {
-        protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+namespace E_Book;
 
-        static void Main(string[] args)
-        {
-            var app = new Program();
-            app.Run(args);
-        }
+public partial class Program : MauiApplication
+{
+    public Program() : base() { }
+
+    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+
+    public static void Main(string[] args)
+    {
+        var app = new Program();
+        app.Run(args);
     }
 }
