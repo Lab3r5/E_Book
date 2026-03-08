@@ -31,7 +31,6 @@ namespace E_Book.Data
         {
             try
             {
-                // 如果旧数据库存在，并且新数据库不存在，就复制迁移
                 if (File.Exists(oldDbPath) && !File.Exists(newDbPath))
                 {
                     File.Copy(oldDbPath, newDbPath);
@@ -39,7 +38,6 @@ namespace E_Book.Data
             }
             catch
             {
-                // 迁移失败不影响程序启动
             }
         }
 
@@ -55,7 +53,16 @@ namespace E_Book.Data
             await database.CreateTableAsync<ReadingSettings>();
             await database.CreateTableAsync<ReadingProgress>();
 
-            // 如果没有设置记录，插入默认值
+            try
+            {
+                await database.ExecuteAsync(
+                    "ALTER TABLE ReadingProgress ADD COLUMN TotalPages INTEGER NOT NULL DEFAULT 0");
+            }
+            catch
+            {
+                // 字段已存在时忽略
+            }
+
             var existingSettings = await database.Table<UserSettings>().FirstOrDefaultAsync();
             if (existingSettings == null)
             {
@@ -138,7 +145,6 @@ namespace E_Book.Data
             }
         }
 
-        // 兼容旧代码的重载
         public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor)
         {
             await SaveReadingSettingsAsync(fontSize, backgroundColor, 1.65);
@@ -152,14 +158,17 @@ namespace E_Book.Data
         }
 
         // ================= Reading Progress =================
-        public async Task SaveReadingProgressAsync(string fileName, int page)
+        public async Task SaveReadingProgressAsync(string fileName, int page, int totalPages)
         {
             await EnsureInitializedAsync();
+
             var existing = await database.Table<ReadingProgress>()
-                                          .FirstOrDefaultAsync(p => p.FileName == fileName);
+                                         .FirstOrDefaultAsync(p => p.FileName == fileName);
+
             if (existing != null)
             {
                 existing.LastPage = page;
+                existing.TotalPages = totalPages;
                 await database.UpdateAsync(existing);
             }
             else
@@ -167,17 +176,39 @@ namespace E_Book.Data
                 await database.InsertAsync(new ReadingProgress
                 {
                     FileName = fileName,
-                    LastPage = page
+                    LastPage = page,
+                    TotalPages = totalPages
                 });
             }
+        }
+
+        // 兼容旧代码
+        public async Task SaveReadingProgressAsync(string fileName, int page)
+        {
+            await SaveReadingProgressAsync(fileName, page, 0);
         }
 
         public async Task<int> GetReadingProgressAsync(string fileName)
         {
             await EnsureInitializedAsync();
             var existing = await database.Table<ReadingProgress>()
-                                          .FirstOrDefaultAsync(p => p.FileName == fileName);
+                                         .FirstOrDefaultAsync(p => p.FileName == fileName);
             return existing?.LastPage ?? 0;
+        }
+
+        public async Task<ReadingProgress> GetReadingProgressRecordAsync(string fileName)
+        {
+            await EnsureInitializedAsync();
+
+            var existing = await database.Table<ReadingProgress>()
+                                         .FirstOrDefaultAsync(p => p.FileName == fileName);
+
+            return existing ?? new ReadingProgress
+            {
+                FileName = fileName,
+                LastPage = 0,
+                TotalPages = 0
+            };
         }
     }
 
@@ -215,6 +246,9 @@ namespace E_Book.Data
     {
         [PrimaryKey]
         public string FileName { get; set; } = string.Empty;
+
         public int LastPage { get; set; } = 0;
+
+        public int TotalPages { get; set; } = 0;
     }
 }

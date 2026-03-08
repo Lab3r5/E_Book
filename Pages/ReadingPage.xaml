@@ -84,8 +84,7 @@
 
                 <WebView x:Name="ContentWebView"
                          IsVisible="True"
-                         InputTransparent="True"
-                         BackgroundColor="Transparent"/>
+                         InputTransparent="True"/>
 
                 <Grid x:Name="GestureLayer"
                       BackgroundColor="Transparent">
