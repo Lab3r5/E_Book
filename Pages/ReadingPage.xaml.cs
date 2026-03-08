@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using System.Net;
 using System.Globalization;
 using E_Book.Data;
+using E_Book.Services;
 
 using VersOne.Epub;
 using Mammoth;
@@ -188,6 +189,7 @@ namespace E_Book.Pages
         private async Task InitializeReaderAsync()
         {
             TitleLabel.Text = Path.GetFileNameWithoutExtension(FilePath);
+            ReadingMetaStore.UpdateLastOpened(FilePath);
 
             try
             {
@@ -1920,6 +1922,10 @@ namespace E_Book.Pages
             if (string.IsNullOrEmpty(FilePath))
                 return;
 
+            int totalPages = GetTotalPages();
+            if (totalPages <= 0)
+                return;
+
             if (currentPage == _lastSavedPage)
                 return;
 
@@ -1928,7 +1934,12 @@ namespace E_Book.Pages
             await dbHelper.SaveReadingProgressAsync(
                 GetReadingKey(),
                 currentPage,
-                GetTotalPages());
+                totalPages);
+
+            ReadingMetaStore.UpdateProgress(
+                FilePath,
+                currentPage + 1,
+                totalPages);
         }
 
         private async Task SaveCurrentReadingSettings()

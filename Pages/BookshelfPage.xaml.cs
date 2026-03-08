@@ -51,6 +51,12 @@ namespace E_Book.Pages
             UpdateConfirmState();
         }
 
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            LoadSavedFiles();
+        }
+
         private void EnsureLibraryExists()
         {
             LibraryService.EnsureLibraryExists();
@@ -59,7 +65,6 @@ namespace E_Book.Pages
 
             if (!File.Exists(guidePath))
             {
-                // ✅ 你原来的 Usage Guidelines 内容（保留）
                 string guideContent = """
                 Welcome to E_Book 📘
 
@@ -70,10 +75,10 @@ namespace E_Book.Pages
                 ────────────────────────────
                 📂 Bookshelf & File Management:
                 ────────────────────────────
-                ➕ Tap the plus button to import files into your bookshelf  
-                📖 Tap the book icon next to a file to start reading  
-                🗑️ Tap the trash icon to remove unwanted files from the bookshelf  
-                
+                ➕ Tap the plus button to import files into your bookshelf
+                📖 Tap the book icon next to a file to start reading
+                🗑️ Swipe from left to right or tap the trash icon to remove unwanted files
+
                 Supported formats:
                 • TXT  • EPUB  • PDF
                 • HTML/HTM  • DOCX  • RTF
@@ -85,35 +90,18 @@ namespace E_Book.Pages
                 🛠️ Reading Features:
                 ────────────────────────────
                 • Swipe left or right to navigate pages or chapters
-                • Tap the center of the screen to show or hide reading tools  
-                • Tap the ❮ back button to return to the bookshelf  
+                • Tap the center of the screen to show or hide reading tools
+                • Tap the ❮ back button to return to the bookshelf
                 • Tap the Aa button to customize your reading experience:
                    - Adjust font size (Small / Medium / Large)
                    - Switch between Light and Dark reading themes
 
-                All changes are applied instantly to improve reading comfort.
-
-                ────────────────────────────
-                🔐 Settings (from ⚙️ page):
-                ────────────────────────────
-                From the Settings page, you can:
-                • Enable password protection when launching the app  
-                • Automatically lock the app after exiting (password required)  
-                • Keep the screen on while reading to avoid interruptions
-                
-                These options help protect your privacy and enhance usability.
-
                 ────────────────────────────
                 📌 Reading Tips:
                 ────────────────────────────
-                ✓ Reading progress is saved automatically for each document  
-                ✓ You will continue reading from where you last stopped  
-                ✓ Adjust font size and theme to reduce eye strain  
-                ✓ All data is stored locally on your device for privacy and performance
-                
-                ────────────────────────────
-                Thank you for using E_Book!
-                Enjoy a simple, flexible, and focused reading experience.
+                ✓ Reading progress is saved automatically
+                ✓ Recent books appear first on the bookshelf
+                ✓ You can continue from where you last stopped
                 """;
 
                 File.WriteAllText(guidePath, guideContent);
@@ -126,10 +114,21 @@ namespace E_Book.Pages
 
             var list = LibraryService.LoadBooks();
 
-            Books.Clear();
             foreach (var b in list)
             {
                 b.IsSelected = false;
+                ReadingMetaStore.ApplyToBook(b);
+            }
+
+            var sorted = list
+                .OrderByDescending(b => b.LastOpenedTicks > 0)
+                .ThenByDescending(b => b.LastOpenedTicks)
+                .ThenBy(b => b.FileName)
+                .ToList();
+
+            Books.Clear();
+            foreach (var b in sorted)
+            {
                 Books.Add(b);
                 SubscribeItem(b);
             }
@@ -243,7 +242,6 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ Read（正常模式可用）
         private async void OnFileClicked(object sender, EventArgs e)
         {
             if (IsMultiSelectMode) return;
@@ -257,12 +255,14 @@ namespace E_Book.Pages
                     return;
                 }
 
+                ReadingMetaStore.UpdateLastOpened(book.FullPath);
+                LoadSavedFiles();
+
                 var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
                 await Shell.Current.GoToAsync(route);
             }
         }
 
-        // ✅ 点击左侧内容区域：多选模式下切换选中
         private void OnItemTapped(object sender, TappedEventArgs e)
         {
             if (!IsMultiSelectMode) return;
@@ -274,7 +274,6 @@ namespace E_Book.Pages
             }
         }
 
-        // ✅ 长按：进入多选并选中当前项
         private void OnItemLongPressed(BookItem? book)
         {
             if (book == null) return;
@@ -282,11 +281,12 @@ namespace E_Book.Pages
             if (!IsMultiSelectMode)
                 EnterMultiSelectMode();
 
-            book.IsSelected = true;
+            if (!book.IsSelected)
+                book.IsSelected = true;
+
             UpdateConfirmState();
         }
 
-        // ✅ 顶部垃圾桶
         private async void OnTrashTapped(object sender, EventArgs e)
         {
             await AnimatePress(TrashButton);
@@ -297,18 +297,15 @@ namespace E_Book.Pages
                 return;
             }
 
-            // 单本：直接弹窗
             if (Books.Count == 1)
             {
                 OpenDeleteDialog(new List<BookItem> { Books[0] }, single: true);
                 return;
             }
 
-            // 多本：进入多选模式
             EnterMultiSelectMode();
         }
 
-        // ✅ Swipe Delete（单本）
         private void OnSwipeDelete(object sender, EventArgs e)
         {
             if (sender is SwipeItem swipe && swipe.CommandParameter is BookItem book)
@@ -370,7 +367,6 @@ namespace E_Book.Pages
             ExitMultiSelectMode();
         }
 
-        // ✅ Confirm（多选删除）
         private async void OnConfirmTapped(object sender, EventArgs e)
         {
             if (!IsMultiSelectMode) return;
@@ -399,8 +395,6 @@ namespace E_Book.Pages
             ConfirmButton.InputTransparent = !hasSelected;
         }
 
-        // ===== Delete Dialog =====
-
         private async void OpenDeleteDialog(List<BookItem> items, bool single)
         {
             _pendingDeleteItems = items;
@@ -422,6 +416,8 @@ namespace E_Book.Pages
 
         private async Task ShowDeleteDialog()
         {
+            DeleteDialog.Opacity = 0;
+            DeleteDialog.Scale = 0.85;
             DeleteOverlay.IsVisible = true;
 
             await Task.WhenAll(
@@ -473,6 +469,8 @@ namespace E_Book.Pages
                 if (File.Exists(book.FullPath))
                     File.Delete(book.FullPath);
 
+                ReadingMetaStore.Remove(book.FullPath);
+
                 if (reloadAfter)
                     LoadSavedFiles();
             }
@@ -481,8 +479,6 @@ namespace E_Book.Pages
                 await DisplayAlert("Error", $"Failed to delete file: {ex.Message}", "OK");
             }
         }
-
-        // ===== Animations & Toast =====
 
         private async Task AnimatePress(VisualElement view)
         {
