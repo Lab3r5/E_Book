@@ -1,6 +1,3 @@
----
-
-```markdown
 # 📚 E_Book
 
 > A modern cross-platform e-book reader built with .NET MAUI  
