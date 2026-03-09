@@ -215,16 +215,63 @@
                                     SelectionMode="None">
 
                         <CollectionView.EmptyView>
-                            <Grid VerticalOptions="Center"
-                                  HorizontalOptions="Center">
-                                <VerticalStackLayout Spacing="10"
+                            <Grid x:Name="EmptyStateContainer"
+                                  VerticalOptions="Center"
+                                  HorizontalOptions="Center"
+                                  Margin="20,0,20,20"
+                                  Opacity="0"
+                                  TranslationY="20">
+
+                                <VerticalStackLayout Spacing="16"
                                                      HorizontalOptions="Center"
                                                      VerticalOptions="Center">
-                                    <Label Text="No books available"
-                                           FontSize="16"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
-                                           HorizontalTextAlignment="Center"/>
+
+                                    <!-- Icon -->
+                                    <Frame HeightRequest="96"
+                                           WidthRequest="96"
+                                           Padding="0"
+                                           CornerRadius="30"
+                                           HasShadow="False"
+                                           BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                                           HorizontalOptions="Center">
+
+                                        <Grid>
+                                            <Label x:Name="EmptyIcon"
+                                                   Text="📚"
+                                                   FontSize="40"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Grid>
+                                    </Frame>
+
+                                    <!-- Title -->
+                                    <Label Text="Your Library is Empty"
+                                           FontSize="20"
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                                    <!-- Subtitle -->
+                                    <Label Text="Import your first book to start reading."
+                                           FontSize="14"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="WordWrap"
+                                           WidthRequest="260"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+
+                                    <!-- CTA Button -->
+                                    <Button Text="Add Your First Book"
+                                            FontSize="14"
+                                            FontAttributes="Bold"
+                                            HeightRequest="46"
+                                            WidthRequest="200"
+                                            CornerRadius="16"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                            TextColor="White"
+                                            Clicked="OnAddFileClicked"/>
+
                                 </VerticalStackLayout>
+
                             </Grid>
                         </CollectionView.EmptyView>
 

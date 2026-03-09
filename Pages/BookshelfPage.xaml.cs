@@ -64,11 +64,18 @@ namespace E_Book.Pages
             OnPropertyChanged(nameof(SelectedCountText));
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
+
             LoadSavedFiles();
             OnPropertyChanged(nameof(SelectedCountText));
+
+            if (Books.Count == 0)
+            {
+                await AnimateEmptyState();
+                _ = StartEmptyIconBreathing();
+            }
         }
 
         private void EnsureLibraryExists()
@@ -82,40 +89,100 @@ namespace E_Book.Pages
                 string guideContent = """
                 Welcome to E_Book 📘
 
-                E_Book is a lightweight and multi-format reading application built with .NET MAUI.
-                It helps you organize, read, and customize your documents with a clean,
-                distraction-free reading experience across different file types.
+                E_Book is a modern cross-platform e-book reader built with .NET MAUI.
+                In version 1.05, the app focuses on a smarter bookshelf experience with
+                reading metadata, progress tracking, and improved mobile interactions.
 
                 ────────────────────────────
-                📂 Bookshelf & File Management:
+                📚 Smart Bookshelf System
                 ────────────────────────────
-                ➕ Tap the plus button to import files into your bookshelf
-                📖 Tap the Read button next to a file to start reading
-                🗑️ Swipe to reveal Delete or tap the trash icon to remove unwanted files
+                Your bookshelf is more than a file list. It works like a reading dashboard.
+
+                • Imported books appear in your library automatically
+                • Each book receives an automatically generated cover
+                • Cover text is created from the book title
+                • Books can display reading progress and progress percentage
+                • Continue Reading badges help identify unfinished books
+                • Recently opened books are sorted to the top
 
                 Supported formats:
-                • TXT  • EPUB  • PDF
-                • HTML/HTM  • DOCX  • RTF
+                • TXT
+                • EPUB
+                • PDF
+                • HTML / HTM
+                • DOCX
+                • RTF
 
-                Imported files are copied into the app’s local Library folder and managed
-                automatically by the application to ensure stable access and permissions.
+                All imported files are copied into the app's local Library folder for
+                stable access and file management.
 
                 ────────────────────────────
-                🛠️ Reading Features:
+                ➕ Importing Books
                 ────────────────────────────
-                • Swipe left or right to navigate pages or chapters
+                To add a new book:
+
+                • Tap the Add Book button
+                • Choose a supported file from your device
+                • The file will be copied into your E_Book library
+                • Duplicate file names will not be imported again
+
+                ────────────────────────────
+                📖 Reading Features
+                ────────────────────────────
+                E_Book provides a clean and distraction-free reading experience.
+
+                • Tap Read to open a book
+                • Swipe left or right to change pages
                 • Tap the center of the screen to show or hide reading tools
-                • Tap the ❮ back button to return to the bookshelf
-                • Tap the Aa button to customize your reading experience:
-                   - Adjust font size (Small / Medium / Large)
-                   - Switch between Light and Dark reading themes
+                • Use the back button to return to the bookshelf
+
+                You can also customize:
+                • Font size
+                • Light / Dark theme
+                • Reading appearance
 
                 ────────────────────────────
-                📌 Reading Tips:
+                🧠 Reading Metadata
                 ────────────────────────────
+                E_Book automatically remembers your reading activity.
+
                 ✓ Reading progress is saved automatically
-                ✓ Recent books appear first on the bookshelf
-                ✓ You can continue from where you last stopped
+                ✓ Last opened time is recorded
+                ✓ Continue reading from where you left off
+                ✓ Progress is shown in the bookshelf and search results
+
+                ────────────────────────────
+                🗑️ Bookshelf Interactions
+                ────────────────────────────
+                The bookshelf supports modern mobile interaction patterns.
+
+                • Swipe a book to reveal Delete
+                • Tap the trash icon to enter multi-select delete mode
+                • Long-press a book to quickly begin selection
+                • Use Select All or Unselect All during multi-select mode
+                • Tap Confirm to delete selected books
+                • A confirmation dialog appears before deletion
+                • Toast messages provide quick feedback after actions
+
+                ────────────────────────────
+                🔎 Search
+                ────────────────────────────
+                Use Search to quickly find books in your library.
+
+                • Search by file name keywords
+                • Tap a result card to open a book
+                • Review recent search history
+                • View reading progress for matching books
+
+                ────────────────────────────
+                💡 Tips
+                ────────────────────────────
+                • Recently opened books appear first on the bookshelf
+                • Books with saved progress are easier to resume
+                • Large files may take longer to load on first open
+                • Deleting a book permanently removes it from the library
+
+                Enjoy your reading experience with E_Book v1.05!
                 """;
 
                 File.WriteAllText(guidePath, guideContent);
@@ -671,6 +738,32 @@ namespace E_Book.Pages
             );
 
             ToastFrame.IsVisible = false;
+        }
+
+        private async Task AnimateEmptyState()
+        {
+            if (EmptyStateContainer == null)
+                return;
+
+            EmptyStateContainer.Opacity = 0;
+            EmptyStateContainer.TranslationY = 20;
+
+            await Task.WhenAll(
+                EmptyStateContainer.FadeTo(1, 400, Easing.CubicOut),
+                EmptyStateContainer.TranslateTo(0, 0, 420, Easing.CubicOut)
+            );
+        }
+
+        private async Task StartEmptyIconBreathing()
+        {
+            if (EmptyIcon == null)
+                return;
+
+            while (Books.Count == 0)
+            {
+                await EmptyIcon.ScaleTo(1.08, 900, Easing.CubicInOut);
+                await EmptyIcon.ScaleTo(1.0, 900, Easing.CubicInOut);
+            }
         }
 
         public new event PropertyChangedEventHandler? PropertyChanged;
