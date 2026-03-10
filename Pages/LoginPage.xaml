@@ -5,29 +5,255 @@
     xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
     x:Class="E_Book.Pages.LoginPage"
     shell:Shell.NavBarIsVisible="False"
-    Padding="24"
-    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#0F0F12}">
+    BackgroundColor="#F7F6FB">
 
-    <VerticalStackLayout Spacing="14" VerticalOptions="Center">
-        <Label Text="Welcome Back"
-               FontSize="28"
-               FontAttributes="Bold"
-               TextColor="{AppThemeBinding Light=#2E2A3B, Dark=#EDEAF6}"/>
+    <Grid Padding="20,36,20,20">
 
-        <Entry x:Name="EmailEntry"
-               Placeholder="Email"
-               Keyboard="Email"
-               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
-               PlaceholderColor="{AppThemeBinding Light=#A9A4B8, Dark=#7B7688}"/>
+        <Grid VerticalOptions="Center"
+              HorizontalOptions="Center"
+              WidthRequest="360">
 
-        <Entry x:Name="PasswordEntry"
-               Placeholder="Password"
-               IsPassword="True"
-               TextColor="{AppThemeBinding Light=#3E3A4A, Dark=#EDEAF6}"
-               PlaceholderColor="{AppThemeBinding Light=#A9A4B8, Dark=#7B7688}"/>
+            <!-- Main Card -->
+            <Frame x:Name="LoginCard"
+                   Padding="24,62,24,24"
+                   CornerRadius="28"
+                   HasShadow="True"
+                   BackgroundColor="#FCFAFF"
+                   Opacity="0"
+                   TranslationY="40">
 
-        <Button Text="Log In" Clicked="OnLoginClicked" />
-        <Button Text="Continue as Guest" Clicked="OnGuestClicked" />
-        <Button Text="Sign Up" Clicked="OnSignUpClicked" />
-    </VerticalStackLayout>
+                <Frame.Shadow>
+                    <Shadow Brush="#22000000"
+                            Offset="0,10"
+                            Radius="24"
+                            Opacity="0.16" />
+                </Frame.Shadow>
+
+                <VerticalStackLayout Spacing="16">
+
+                    <!-- Title -->
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Welcome Back"
+                               HorizontalTextAlignment="Center"
+                               FontSize="34"
+                               FontAttributes="Bold"
+                               TextColor="#3D36B3" />
+
+                        <Label Text="Please log in to continue."
+                               HorizontalTextAlignment="Center"
+                               FontSize="16"
+                               TextColor="#2F2B85" />
+                    </VerticalStackLayout>
+
+                    <!-- Email -->
+                    <Border x:Name="EmailBorder"
+                            Stroke="#E8E0F8"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 18"
+                            BackgroundColor="#FCFAFF"
+                            HeightRequest="58"
+                            Padding="18,0">
+
+                        <Entry x:Name="EmailEntry"
+                               Placeholder="Email"
+                               Keyboard="Email"
+                               ReturnType="Next"
+                               Completed="OnEmailCompleted"
+                               FontSize="16"
+                               BackgroundColor="Transparent"
+                               TextColor="#2E2A3B"
+                               PlaceholderColor="#A09AB2"
+                               VerticalOptions="Center" />
+                    </Border>
+
+                    <!-- Password -->
+                    <Border x:Name="PasswordBorder"
+                            Stroke="#E8E0F8"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 18"
+                            BackgroundColor="#FCFAFF"
+                            HeightRequest="58"
+                            Padding="0">
+
+                        <Grid ColumnDefinitions="*,Auto,Auto"
+                              ColumnSpacing="8"
+                              Padding="18,0">
+
+                            <Entry x:Name="PasswordEntry"
+                                   Grid.Column="0"
+                                   Placeholder="Password"
+                                   IsPassword="True"
+                                   ReturnType="Go"
+                                   Completed="OnPasswordCompleted"
+                                   FontSize="16"
+                                   BackgroundColor="Transparent"
+                                   TextColor="#2E2A3B"
+                                   PlaceholderColor="#A09AB2"
+                                   VerticalOptions="Center" />
+
+                            <Button x:Name="TogglePasswordButton"
+                                    Grid.Column="1"
+                                    Text="👁"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#B496F4"
+                                    FontSize="16"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    Margin="4,0,0,0"
+                                    Padding="0"
+                                    CornerRadius="0"
+                                    BorderWidth="0"
+                                    Clicked="OnTogglePasswordClicked"
+                                    VerticalOptions="Center" />
+
+                            <Label Text="Forget?"
+                                   Grid.Column="2"
+                                   FontSize="14"
+                                   TextColor="#2F2B85"
+                                   VerticalTextAlignment="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnForgetTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                        </Grid>
+                    </Border>
+
+                    <!-- Login Button -->
+                    <Grid HeightRequest="60">
+
+                        <Button x:Name="LoginButton"
+                                Text="Log In"
+                                HeightRequest="60"
+                                CornerRadius="24"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                TextColor="White"
+                                Clicked="OnLoginClicked">
+
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#D9C5FF" Offset="0" />
+                                    <GradientStop Color="#B496F4" Offset="1" />
+                                </LinearGradientBrush>
+                            </Button.Background>
+
+                            <Button.Shadow>
+                                <Shadow Brush="#22000000"
+                                        Offset="0,8"
+                                        Radius="18"
+                                        Opacity="0.12" />
+                            </Button.Shadow>
+                        </Button>
+
+                        <ActivityIndicator x:Name="LoginLoading"
+                                           IsVisible="False"
+                                           IsRunning="False"
+                                           Color="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Divider -->
+                    <Grid ColumnDefinitions="*,Auto,*">
+
+                        <BoxView Grid.Column="0"
+                                 HeightRequest="1"
+                                 VerticalOptions="Center"
+                                 BackgroundColor="#E8E0F8" />
+
+                        <Label Grid.Column="1"
+                               Text="or"
+                               Margin="12,0"
+                               FontAttributes="Bold"
+                               TextColor="#2F2B85" />
+
+                        <BoxView Grid.Column="2"
+                                 HeightRequest="1"
+                                 VerticalOptions="Center"
+                                 BackgroundColor="#E8E0F8" />
+                    </Grid>
+
+                    <!-- Guest -->
+                    <Button Text="Continue as Guest"
+                            HeightRequest="58"
+                            CornerRadius="22"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            BackgroundColor="#FCFAFF"
+                            BorderColor="#E7E2F6"
+                            BorderWidth="1"
+                            TextColor="#2F2B85"
+                            Clicked="OnGuestClicked">
+
+                        <Button.Shadow>
+                            <Shadow Brush="#22000000"
+                                    Offset="0,8"
+                                    Radius="16"
+                                    Opacity="0.08" />
+                        </Button.Shadow>
+                    </Button>
+
+                    <!-- Sign Up -->
+                    <HorizontalStackLayout HorizontalOptions="Center"
+                                           Spacing="4"
+                                           Padding="4"
+                                           Margin="0,2,0,0">
+
+                        <Label Text="Don't have an account?"
+                               FontSize="16"
+                               TextColor="#2F2B85"
+                               VerticalOptions="Center" />
+
+                        <Button Text="Sign Up"
+                                Clicked="OnSignUpClicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#3D36B3"
+                                FontAttributes="Bold"
+                                FontSize="16"
+                                Padding="0"
+                                Margin="0"
+                                WidthRequest="84"
+                                HeightRequest="26"
+                                BorderWidth="0"
+                                CornerRadius="0"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Floating Logo -->
+            <Grid x:Name="LogoFrame"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Start"
+                  TranslationY="-22"
+                  Opacity="0"
+                  WidthRequest="96"
+                  HeightRequest="96">
+
+                <Border Stroke="#D8CCF6"
+                        StrokeThickness="2"
+                        StrokeShape="RoundRectangle 48"
+                        BackgroundColor="#FCFAFF">
+
+                    <Border.Shadow>
+                        <Shadow Brush="#22000000"
+                                Offset="0,7"
+                                Radius="16"
+                                Opacity="0.10" />
+                    </Border.Shadow>
+                </Border>
+
+                <Image Source="app_logo.png"
+                       WidthRequest="380"
+                       HeightRequest="350"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Grid>
+
+        </Grid>
+
+    </Grid>
 </ContentPage>

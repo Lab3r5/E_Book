@@ -1,4 +1,5 @@
 ﻿using E_Book.Pages;
+using E_Book.Services;
 using Microsoft.Maui.ApplicationModel;
 
 namespace E_Book
@@ -22,12 +23,15 @@ namespace E_Book
         private bool _tabsBoundOnce;
 #endif
 
+        private bool _startupRedirectDone;
+
         public AppShell()
         {
             InitializeComponent();
 
             RegisterRoutes();
             Navigated += OnShellNavigated;
+            Loaded += OnShellLoaded;
         }
 
         private void RegisterRoutes()
@@ -38,6 +42,24 @@ namespace E_Book
             Routing.RegisterRoute(RouteHelp, typeof(HelpSupportPage));
             Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
             Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
+        }
+
+        private async void OnShellLoaded(object? sender, EventArgs e)
+        {
+            if (_startupRedirectDone)
+                return;
+
+            _startupRedirectDone = true;
+            Loaded -= OnShellLoaded;
+
+            if (UserSession.HasSession)
+            {
+                await GoToAsync($"//{RouteTabs}/{RouteBookshelf}");
+            }
+            else
+            {
+                await GoToAsync($"//{RouteLogin}");
+            }
         }
 
         private void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
@@ -80,6 +102,7 @@ namespace E_Book
             if (Handler == null)
             {
                 Navigated -= OnShellNavigated;
+                Loaded -= OnShellLoaded;
             }
         }
     }

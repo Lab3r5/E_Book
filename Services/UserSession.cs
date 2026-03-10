@@ -10,9 +10,18 @@ namespace E_Book.Services
 
         public const string GuestUserId = "guest";
 
+        public static bool HasSession =>
+            Preferences.ContainsKey(KeyUserId) ||
+            Preferences.ContainsKey(KeyIsGuest) ||
+            Preferences.ContainsKey(KeyDisplayName);
+
         public static string UserId => Preferences.Get(KeyUserId, GuestUserId);
+
         public static bool IsGuest => Preferences.Get(KeyIsGuest, true);
+
         public static string DisplayName => Preferences.Get(KeyDisplayName, "Guest");
+
+        public static bool IsLoggedIn => HasSession && !IsGuest;
 
         public static void SetGuest()
         {
@@ -30,7 +39,6 @@ namespace E_Book.Services
 
         public static void Logout()
         {
-            // 注意：不删除Guest数据，只是回到Guest session 或回到Login
             Preferences.Remove(KeyUserId);
             Preferences.Remove(KeyIsGuest);
             Preferences.Remove(KeyDisplayName);

@@ -71,6 +71,8 @@ namespace E_Book.Pages
             LoadSavedFiles();
             OnPropertyChanged(nameof(SelectedCountText));
 
+            await PlayEntranceAnimationAsync();
+
             if (Books.Count == 0)
             {
                 await AnimateEmptyState();
@@ -78,6 +80,42 @@ namespace E_Book.Pages
             }
         }
 
+        private async Task PlayEntranceAnimationAsync()
+        {
+            if (RootHost != null)
+                RootHost.Opacity = 0;
+
+            if (HeaderSection != null)
+            {
+                HeaderSection.Opacity = 0;
+                HeaderSection.TranslationY = -16;
+            }
+
+            if (MainCard != null)
+            {
+                MainCard.Opacity = 0;
+                MainCard.TranslationY = 26;
+            }
+
+            if (RootHost != null)
+                await RootHost.FadeTo(1, 120, Easing.CubicOut);
+
+            var tasks = new List<Task>();
+
+            if (HeaderSection != null)
+            {
+                tasks.Add(HeaderSection.FadeTo(1, 320, Easing.CubicOut));
+                tasks.Add(HeaderSection.TranslateTo(0, 0, 320, Easing.CubicOut));
+            }
+
+            if (MainCard != null)
+            {
+                tasks.Add(MainCard.FadeTo(1, 420, Easing.CubicOut));
+                tasks.Add(MainCard.TranslateTo(0, 0, 420, Easing.CubicOut));
+            }
+
+            await Task.WhenAll(tasks);
+        }
         private void EnsureLibraryExists()
         {
             LibraryService.EnsureLibraryExists();

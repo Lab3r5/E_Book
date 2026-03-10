@@ -10,17 +10,21 @@
 
     <Grid x:Name="RootHost"
           HorizontalOptions="Fill"
-          VerticalOptions="Fill">
+          VerticalOptions="Fill"
+           Opacity="0">
 
         <Grid x:Name="RootGrid"
               RowDefinitions="Auto,*"
               Padding="24,18">
 
             <!-- Header -->
-            <Grid Grid.Row="0"
+            <Grid x:Name="HeaderSection"
+                  Grid.Row="0"
                   ColumnDefinitions="108,*,Auto,*,108"
                   Margin="0,2,0,10"
-                  VerticalOptions="Center">
+                  VerticalOptions="Center"
+                  Opacity="0"
+                  TranslationY="-16">
 
                 <!-- Cancel -->
                 <Frame x:Name="CancelChip"
@@ -168,12 +172,15 @@
             </Grid>
 
             <!-- Main container -->
-            <Frame Grid.Row="1"
+            <Frame x:Name="MainCard"
+                   Grid.Row="1"
                    BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
                    CornerRadius="28"
                    Padding="16"
                    HasShadow="True"
-                   Margin="0,0,0,10">
+                   Margin="0,0,0,10"
+                   Opacity="0"
+                   TranslationY="26">
 
                 <Frame.Shadow>
                     <Shadow Brush="#18000000"
