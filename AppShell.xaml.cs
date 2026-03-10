@@ -5,33 +5,60 @@ namespace E_Book
 {
     public partial class AppShell : Shell
     {
+        public const string RouteLogin = "login";
+        public const string RouteTabs = "tabs";
+        public const string RouteBookshelf = "bookshelf";
+        public const string RouteSearch = "search";
+        public const string RouteSettings = "settings";
+
+        public const string RouteSignup = "signup";
+        public const string RouteEditProfile = "edit-profile";
+        public const string RouteAppearance = "appearance";
+        public const string RouteHelp = "help";
+        public const string RoutePassword = "password";
+        public const string RouteReading = "reading";
+
 #if ANDROID
-        private bool _tabsBoundOnce = false;
+        private bool _tabsBoundOnce;
 #endif
 
         public AppShell()
         {
             InitializeComponent();
 
-            Routing.RegisterRoute("signup", typeof(SignUpPage));
-            Routing.RegisterRoute("edit-profile", typeof(EditProfilePage));
-            Routing.RegisterRoute("appearance", typeof(AppearancePage));
-            Routing.RegisterRoute("help", typeof(HelpSupportPage));
-            Routing.RegisterRoute("password", typeof(PasswordPage));
-            Routing.RegisterRoute("reading", typeof(ReadingPage));
-
+            RegisterRoutes();
             Navigated += OnShellNavigated;
+        }
+
+        private void RegisterRoutes()
+        {
+            Routing.RegisterRoute(RouteSignup, typeof(SignUpPage));
+            Routing.RegisterRoute(RouteEditProfile, typeof(EditProfilePage));
+            Routing.RegisterRoute(RouteAppearance, typeof(AppearancePage));
+            Routing.RegisterRoute(RouteHelp, typeof(HelpSupportPage));
+            Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
+            Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
         }
 
         private void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
         {
 #if ANDROID
-            var loc = CurrentState?.Location?.ToString() ?? "";
+            HandleAndroidTabRebind();
+#endif
+        }
 
-            // 只在进入 tabs 的时候触发一次
-            if (loc.StartsWith("//tabs"))
+#if ANDROID
+        private void HandleAndroidTabRebind()
+        {
+            string location = CurrentState?.Location?.ToString() ?? string.Empty;
+
+            bool isInTabs = location.StartsWith($"//{RouteTabs}", StringComparison.OrdinalIgnoreCase);
+
+            if (isInTabs)
             {
-                if (_tabsBoundOnce) return;
+                if (_tabsBoundOnce)
+                    return;
+
                 _tabsBoundOnce = true;
 
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -41,10 +68,19 @@ namespace E_Book
             }
             else
             {
-                // 离开 tabs（例如去 login）后，允许下次再触发
                 _tabsBoundOnce = false;
             }
+        }
 #endif
+
+        protected override void OnHandlerChanged()
+        {
+            base.OnHandlerChanged();
+
+            if (Handler == null)
+            {
+                Navigated -= OnShellNavigated;
+            }
         }
     }
 }

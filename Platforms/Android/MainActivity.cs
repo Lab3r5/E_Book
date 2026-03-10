@@ -1,12 +1,14 @@
-﻿using Android.App;
+﻿using Android.Animation;
+using Android.App;
 using Android.Content.PM;
-using Android.OS;
-using Android.Views;
+using Android.Graphics;
 using Android.Graphics.Drawables;
-using Android.Animation;
+using Android.OS;
+using Android.Util;
+using Android.Views;
 using Android.Views.Animations;
+using Android.Widget;
 
-using Google.Android.Material.BottomNavigation;
 using Google.Android.Material.Navigation;
 
 using System;
@@ -37,18 +39,22 @@ namespace E_Book
         private AView? _pill;
         private int _lastIndex = -1;
 
-        private bool _pumpStarted = false;
-        private bool _ensureLoopRunning = false;
-        private int _ensureTries = 0;
+        private bool _pumpStarted;
+        private bool _ensureLoopRunning;
+        private int _ensureTries;
 
-        // 胶囊松紧（中间效果保持不变）
-        private const int PillPadH = 18;
-        private const int PillPadV = 8;
-
-        // 左右边缘额外扩展：用来“挤掉”边缘白色
-        private const int EdgeExtra = 14;
+        private AnimatorSet? _currentAnimator;
 
         private const string PillTag = "__EBOOK_PILL__";
+
+        // 胶囊 padding
+        private const int PillPadH = 18;
+        private const int PillPadV = 11;
+        private const int EdgeExtra = 14;
+
+        private const long MoveDuration = 280L;
+        private const long ResizeDuration = 240L;
+        private const float AnimationOvershoot = 0.9f;
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
@@ -63,20 +69,39 @@ namespace E_Book
             StartEnsureLoop();
         }
 
+        protected override void OnPause()
+        {
+            base.OnPause();
+            StopCurrentAnimation();
+            _pumpStarted = false;
+        }
+
+        protected override void OnDestroy()
+        {
+            StopCurrentAnimation();
+            ResetAllState();
+            Instance = null;
+            base.OnDestroy();
+        }
+
         public void RebindBottomTabBar()
         {
             ResetAllState();
             StartEnsureLoop();
         }
 
-        // =========================
-        // Disposed guards
-        // =========================
         private static bool IsDisposed(Java.Lang.Object? obj)
         {
             if (obj == null) return true;
-            try { return obj.Handle == IntPtr.Zero; }
-            catch { return true; }
+
+            try
+            {
+                return obj.Handle == IntPtr.Zero;
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         private bool IsBarAlive()
@@ -84,16 +109,20 @@ namespace E_Book
             if (_bar == null) return false;
             if (IsDisposed(_bar)) return false;
 
-            try { return _bar.IsAttachedToWindow; }
-            catch { return false; }
+            try
+            {
+                return _bar.IsAttachedToWindow;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        // =========================
-        // Ensure loop
-        // =========================
         private void StartEnsureLoop()
         {
-            if (_ensureLoopRunning) return;
+            if (_ensureLoopRunning)
+                return;
 
             _ensureLoopRunning = true;
             _ensureTries = 0;
@@ -105,9 +134,15 @@ namespace E_Book
         {
             _ensureTries++;
 
-            bool ok = false;
-            try { ok = TryFindBarAndAttach(); }
-            catch { ok = false; }
+            bool ok;
+            try
+            {
+                ok = TryFindBarAndAttach();
+            }
+            catch
+            {
+                ok = false;
+            }
 
             if (ok)
             {
@@ -116,9 +151,13 @@ namespace E_Book
             }
 
             if (_ensureTries < 30)
+            {
                 Window.DecorView?.PostDelayed(EnsureOnce, 150);
+            }
             else
+            {
                 _ensureLoopRunning = false;
+            }
         }
 
         private bool TryFindBarAndAttach()
@@ -126,7 +165,6 @@ namespace E_Book
             var decor = Window.DecorView;
             if (decor == null) return false;
 
-            // bar 被重建/释放时，清状态
             if (!IsBarAlive())
             {
                 RemovePillIfExists();
@@ -136,36 +174,84 @@ namespace E_Book
                 _pumpStarted = false;
             }
 
-            var bars = new List<AView>();
-            CollectBars(decor, bars);
-            if (bars.Count == 0) return false;
+            var bestBar = FindBestNavigationBar(decor);
+            if (bestBar == null) return false;
+
+            PrepareBar(bestBar);
+
+            if (!IsBarAlive() || _bar == null)
+                return false;
+
+            if (!TryCollectTabItems(_bar, _itemViews))
+                return false;
+
+            EnsurePillOnBar(_bar);
+            EnsureCheckedFallback(_bar);
+
+            int idx = GetCheckedIndex(_bar);
+            if (idx < 0 || idx >= _itemViews.Count)
+                idx = 0;
+
+            _lastIndex = idx;
+
+            ApplyItemVisualState(idx);
+            SnapTo(idx);
+
+            StartPump();
+            return true;
+        }
+
+        private NavigationBarView? FindBestNavigationBar(AView root)
+        {
+            var bars = new List<NavigationBarView>();
+            CollectBars(root, bars);
+
+            if (bars.Count == 0)
+                return null;
 
             NavigationBarView? best = null;
-            float bestY = -1;
+            float bestY = -1f;
 
-            foreach (var v in bars)
+            foreach (var bar in bars)
             {
-                var nb = v as NavigationBarView;     // ✅ BottomNavigationView 也会被当成 NavigationBarView
-                if (nb == null) continue;
-                if (IsDisposed(nb)) continue;
+                if (IsDisposed(bar))
+                    continue;
 
-                int menuSize = 0;
-                try { menuSize = nb.Menu?.Size() ?? 0; } catch { menuSize = 0; }
-                if (menuSize <= 0) continue;
+                int menuSize;
+                try
+                {
+                    menuSize = bar.Menu?.Size() ?? 0;
+                }
+                catch
+                {
+                    menuSize = 0;
+                }
 
-                float y = -1;
-                try { y = v.GetY(); } catch { y = -1; }
+                if (menuSize <= 0)
+                    continue;
+
+                float y;
+                try
+                {
+                    y = bar.GetY();
+                }
+                catch
+                {
+                    y = -1f;
+                }
 
                 if (y > bestY)
                 {
                     bestY = y;
-                    best = nb;
+                    best = bar;
                 }
             }
 
-            if (best == null) return false;
+            return best;
+        }
 
-            // bar 变化：重建
+        private void PrepareBar(NavigationBarView best)
+        {
             if (_bar == null || !ReferenceEquals(_bar, best))
             {
                 RemovePillIfExists();
@@ -175,52 +261,46 @@ namespace E_Book
                 _lastIndex = -1;
                 _pumpStarted = false;
 
-                // ✅ 每次抓到新 bar 都强制应用样式（禁用系统胶囊）
                 ApplyBaseColors(_bar);
-
-                // ✅ 清理历史残留 pill
                 RemoveOtherPillsFromBar(_bar, keep: null);
             }
             else
             {
-                // ✅ 即使 bar 没变，也要再 apply 一次，防止切换后 Material 重置样式
                 ApplyBaseColors(_bar);
             }
+        }
 
-            if (!IsBarAlive()) return false;
+        private bool TryCollectTabItems(NavigationBarView bar, List<AView> items)
+        {
+            items.Clear();
 
-            // ✅ 优先用 MenuView 子项抓 item（顺序最稳定）
-            _itemViews.Clear();
-            CollectMenuChildrenAsItems(_bar, _itemViews);
-
-            int expected = 0;
-            try { expected = _bar.Menu?.Size() ?? 0; } catch { expected = 0; }
-
-            // fallback
-            if (_itemViews.Count < expected)
+            int expected;
+            try
             {
-                _itemViews.Clear();
-                CollectItemViews(_bar, _itemViews);
+                expected = bar.Menu?.Size() ?? 0;
+            }
+            catch
+            {
+                expected = 0;
             }
 
-            if (expected <= 0) return false;
-            if (_itemViews.Count < expected) return false;
+            if (expected <= 0)
+                return false;
 
-            EnsurePillOnBar(_bar);
-            EnsureCheckedFallback(_bar);
+            CollectMenuChildrenAsItems(bar, items);
 
-            int idx = GetCheckedIndex(_bar);
-            if (idx < 0 || idx >= _itemViews.Count) idx = 0;
+            if (items.Count >= expected)
+                return true;
 
-            _lastIndex = idx;
-            SnapTo(idx);
+            items.Clear();
+            CollectItemViews(bar, items);
 
-            StartPump();
-            return true;
+            return items.Count >= expected;
         }
 
         private void ResetAllState()
         {
+            StopCurrentAnimation();
             RemovePillIfExists();
 
             if (_bar != null && !IsDisposed(_bar))
@@ -234,12 +314,11 @@ namespace E_Book
             _ensureTries = 0;
         }
 
-        // =========================
-        // Pump loop (不会影响 Shell 点击)
-        // =========================
         private void StartPump()
         {
-            if (_bar == null || _pumpStarted) return;
+            if (_bar == null || _pumpStarted)
+                return;
+
             _pumpStarted = true;
             PumpOnce();
         }
@@ -256,29 +335,31 @@ namespace E_Book
 
             try
             {
-                if (_bar == null) { _pumpStarted = false; return; }
+                if (_bar == null)
+                {
+                    _pumpStarted = false;
+                    return;
+                }
 
-                // ✅ 关键：每轮都强制禁用系统 ActiveIndicator（切换后它会自己回来）
                 ApplyBaseColors(_bar);
 
-                if (_itemViews.Count == 0)
+                if (_itemViews.Count == 0 && !TryCollectTabItems(_bar, _itemViews))
                 {
-                    CollectMenuChildrenAsItems(_bar, _itemViews);
-                    int expected = 0; try { expected = _bar.Menu?.Size() ?? 0; } catch { expected = 0; }
+                    if (IsBarAlive())
+                        _bar.PostDelayed(PumpOnce, 120);
 
-                    if (_itemViews.Count < expected)
-                    {
-                        _itemViews.Clear();
-                        CollectItemViews(_bar, _itemViews);
-                    }
+                    return;
                 }
 
                 EnsureCheckedFallback(_bar);
                 EnsurePillOnBar(_bar);
 
                 int idx = GetCheckedIndex(_bar);
+
                 if (idx >= 0 && idx < _itemViews.Count && _pill != null)
                 {
+                    ApplyItemVisualState(idx);
+
                     if (_lastIndex == -1)
                     {
                         _lastIndex = idx;
@@ -307,9 +388,6 @@ namespace E_Book
             }
         }
 
-        // =========================
-        // Styling (✅ 禁用系统胶囊就在这里)
-        // =========================
         private void ApplyBaseColors(NavigationBarView bar)
         {
             bool isNight =
@@ -325,14 +403,10 @@ namespace E_Book
             bar.SetClipChildren(false);
             bar.SetClipToPadding(false);
 
-            // ✅ 关键：关闭 Material3 的 Active Indicator（系统自带胶囊）
             try { bar.ItemActiveIndicatorEnabled = false; } catch { }
             try { bar.ItemActiveIndicatorColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
-
-            // 可选：关闭涟漪，避免视觉盖住 pill
             try { bar.ItemRippleColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
 
-            // icon/text tint
             var states = new int[][]
             {
                 new int[] { Android.Resource.Attribute.StateChecked },
@@ -352,9 +426,132 @@ namespace E_Book
             bar.ItemTextColor = csl;
         }
 
-        // =========================
-        // Pill helpers
-        // =========================
+        private void ApplyItemVisualState(int selectedIndex)
+        {
+            if (_itemViews.Count == 0)
+                return;
+
+            for (int i = 0; i < _itemViews.Count; i++)
+            {
+                var item = _itemViews[i];
+                if (item == null) continue;
+
+                bool isSelected = i == selectedIndex;
+
+                TryAdjustIconInsideItem(item, isSelected);
+                TryAdjustLabelInsideItem(item, isSelected);
+            }
+        }
+
+        private void TryAdjustIconInsideItem(AView item, bool isSelected)
+        {
+            try
+            {
+                if (item is not AViewGroup vg)
+                    return;
+
+                var iconView = FindImageView(vg);
+                if (iconView == null)
+                    return;
+
+                iconView.Post(() =>
+                {
+                    try
+                    {
+                        iconView.PivotX = iconView.Width / 2f;
+                        iconView.PivotY = iconView.Height / 2f;
+
+                        iconView.ScaleX = isSelected ? 1.22f : 1.10f;
+                        iconView.ScaleY = isSelected ? 1.22f : 1.10f;
+
+                        iconView.TranslationY = isSelected ? 2f : 1f;
+                    }
+                    catch
+                    {
+                    }
+                });
+            }
+            catch
+            {
+            }
+        }
+
+        private void TryAdjustLabelInsideItem(AView item, bool isSelected)
+        {
+            try
+            {
+                if (item is not AViewGroup vg)
+                    return;
+
+                var label = FindTextView(vg);
+                if (label == null)
+                    return;
+
+                label.SetSingleLine(true);
+                label.SetIncludeFontPadding(false);
+                label.SetTextSize(ComplexUnitType.Sp, 10.5f);
+                label.TranslationY = isSelected ? -1f : -2.5f;
+                label.SetTypeface(label.Typeface, isSelected ? TypefaceStyle.Bold : TypefaceStyle.Normal);
+            }
+            catch
+            {
+            }
+        }
+
+        private ImageView? FindImageView(AViewGroup root)
+        {
+            for (int i = 0; i < root.ChildCount; i++)
+            {
+                var child = root.GetChildAt(i);
+
+                if (child is ImageView iv)
+                    return iv;
+
+                if (child is AViewGroup childGroup)
+                {
+                    var found = FindImageView(childGroup);
+                    if (found != null) return found;
+                }
+            }
+
+            return null;
+        }
+
+        private TextView? FindTextView(AViewGroup root)
+        {
+            for (int i = 0; i < root.ChildCount; i++)
+            {
+                var child = root.GetChildAt(i);
+
+                if (child is TextView tv)
+                    return tv;
+
+                if (child is AViewGroup childGroup)
+                {
+                    var found = FindTextView(childGroup);
+                    if (found != null) return found;
+                }
+            }
+
+            return null;
+        }
+
+        private void StopCurrentAnimation()
+        {
+            try
+            {
+                _currentAnimator?.Cancel();
+                _currentAnimator?.Dispose();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _currentAnimator = null;
+            }
+        }
+
         private void RemovePillIfExists()
         {
             try
@@ -362,13 +559,19 @@ namespace E_Book
                 if (_pill != null && _pill.Parent is AViewGroup vg)
                     vg.RemoveView(_pill);
             }
-            catch { }
-            finally { _pill = null; }
+            catch
+            {
+            }
+            finally
+            {
+                _pill = null;
+            }
         }
 
         private void RemoveOtherPillsFromBar(NavigationBarView bar, AView? keep)
         {
-            if (bar is not AViewGroup vg) return;
+            if (bar is not AViewGroup vg)
+                return;
 
             for (int i = vg.ChildCount - 1; i >= 0; i--)
             {
@@ -413,9 +616,6 @@ namespace E_Book
             _pill = pill;
         }
 
-        // =========================
-        // Checked fallback
-        // =========================
         private void EnsureCheckedFallback(NavigationBarView bar)
         {
             try
@@ -424,12 +624,17 @@ namespace E_Book
                 if (menu == null) return;
 
                 for (int i = 0; i < menu.Size(); i++)
-                    if (menu.GetItem(i).IsChecked) return;
+                {
+                    if (menu.GetItem(i).IsChecked)
+                        return;
+                }
 
                 if (menu.Size() > 0)
                     menu.GetItem(0).SetChecked(true);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private int GetCheckedIndex(NavigationBarView bar)
@@ -440,16 +645,18 @@ namespace E_Book
                 if (menu == null) return -1;
 
                 for (int i = 0; i < menu.Size(); i++)
-                    if (menu.GetItem(i).IsChecked) return i;
+                {
+                    if (menu.GetItem(i).IsChecked)
+                        return i;
+                }
             }
-            catch { }
+            catch
+            {
+            }
 
             return -1;
         }
 
-        // =========================
-        // Positioning + animation
-        // =========================
         private void SnapTo(int index)
         {
             if (_bar == null || _pill == null) return;
@@ -466,8 +673,7 @@ namespace E_Book
 
             var t = CalcTargetOnBar(item, index, _itemViews.Count);
 
-            var lp = _pill.LayoutParameters;
-            if (lp == null) lp = new AViewGroup.LayoutParams(t.w, t.h);
+            var lp = _pill.LayoutParameters ?? new AViewGroup.LayoutParams(t.w, t.h);
             lp.Width = t.w;
             lp.Height = t.h;
             _pill.LayoutParameters = lp;
@@ -490,18 +696,17 @@ namespace E_Book
                 return;
             }
 
-            var t = CalcTargetOnBar(item, index, _itemViews.Count);
+            StopCurrentAnimation();
 
-            const long MoveDur = 280;
-            const long SizeDur = 240;
-            const float Overshoot = 0.9f;
+            var t = CalcTargetOnBar(item, index, _itemViews.Count);
 
             var moveX = ObjectAnimator.OfFloat(_pill, "translationX", _pill.TranslationX, t.x);
             var moveY = ObjectAnimator.OfFloat(_pill, "translationY", _pill.TranslationY, t.y);
-            moveX.SetDuration(MoveDur);
-            moveY.SetDuration(MoveDur);
-            moveX.SetInterpolator(new OvershootInterpolator(Overshoot));
-            moveY.SetInterpolator(new OvershootInterpolator(Overshoot));
+
+            moveX.SetDuration(MoveDuration);
+            moveY.SetDuration(MoveDuration);
+            moveX.SetInterpolator(new OvershootInterpolator(AnimationOvershoot));
+            moveY.SetInterpolator(new OvershootInterpolator(AnimationOvershoot));
 
             int targetW = t.w;
             int targetH = t.h;
@@ -510,29 +715,30 @@ namespace E_Book
             int curH = _pill.Height <= 0 ? targetH : _pill.Height;
 
             var widthAnim = ValueAnimator.OfInt(curW, targetW);
-            widthAnim.SetDuration(SizeDur);
-            widthAnim.SetInterpolator(new OvershootInterpolator(Overshoot));
+            widthAnim.SetDuration(ResizeDuration);
+            widthAnim.SetInterpolator(new OvershootInterpolator(AnimationOvershoot));
             widthAnim.Update += (s, e) =>
             {
                 var lp = _pill.LayoutParameters;
                 if (lp == null) return;
-                lp.Width = (int)widthAnim.AnimatedValue;
+                lp.Width = (int)widthAnim.AnimatedValue!;
                 _pill.LayoutParameters = lp;
             };
 
             var heightAnim = ValueAnimator.OfInt(curH, targetH);
-            heightAnim.SetDuration(SizeDur);
-            heightAnim.SetInterpolator(new OvershootInterpolator(Overshoot));
+            heightAnim.SetDuration(ResizeDuration);
+            heightAnim.SetInterpolator(new OvershootInterpolator(AnimationOvershoot));
             heightAnim.Update += (s, e) =>
             {
                 var lp = _pill.LayoutParameters;
                 if (lp == null) return;
-                lp.Height = (int)heightAnim.AnimatedValue;
+                lp.Height = (int)heightAnim.AnimatedValue!;
                 _pill.LayoutParameters = lp;
             };
 
             var set = new AnimatorSet();
             set.PlayTogether(moveX, moveY, widthAnim, heightAnim);
+            _currentAnimator = set;
             set.Start();
         }
 
@@ -542,6 +748,7 @@ namespace E_Book
 
             int[] barLoc = new int[2];
             int[] itemLoc = new int[2];
+
             _bar.GetLocationOnScreen(barLoc);
             item.GetLocationOnScreen(itemLoc);
 
@@ -572,13 +779,10 @@ namespace E_Book
             return (x, y, w, h);
         }
 
-        // =========================
-        // Find bar & items
-        // =========================
-        private void CollectBars(AView root, List<AView> list)
+        private void CollectBars(AView root, List<NavigationBarView> list)
         {
-            if (root is NavigationBarView) list.Add(root);
-            if (root is BottomNavigationView bnv) list.Add(bnv);
+            if (root is NavigationBarView navBar)
+                list.Add(navBar);
 
             if (root is AViewGroup vg)
             {
@@ -591,7 +795,7 @@ namespace E_Book
         {
             if (root == null) return;
 
-            string name = root.Class?.SimpleName ?? "";
+            string name = root.Class?.SimpleName ?? string.Empty;
 
             if (name.Contains("ItemView") &&
                 (name.Contains("NavigationBar") || name.Contains("BottomNavigation")))
@@ -611,7 +815,7 @@ namespace E_Book
         {
             if (root == null) return;
 
-            string name = root.Class?.SimpleName ?? "";
+            string name = root.Class?.SimpleName ?? string.Empty;
 
             if (name.Contains("MenuView") &&
                 (name.Contains("BottomNavigation") || name.Contains("NavigationBar")))

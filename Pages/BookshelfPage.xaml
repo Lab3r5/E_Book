@@ -460,32 +460,90 @@
                     </CollectionView>
 
                     <!-- Add Book -->
-                    <Button Grid.Row="2"
-                            Text="Add Book"
-                            FontSize="20"
-                            FontAttributes="Bold"
-                            HeightRequest="60"
-                            CornerRadius="24"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
-                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                            Clicked="OnAddFileClicked"
-                            Margin="10,10,10,2">
+                    <Frame Grid.Row="2"
+                           Padding="0"
+                           Margin="10,12,10,4"
+                           CornerRadius="26"
+                           HasShadow="True"
+                           BackgroundColor="Transparent"
+                           IsVisible="True">
 
-                        <Button.Shadow>
-                            <Shadow Brush="#16000000"
-                                    Offset="0,6"
-                                    Radius="18"
-                                    Opacity="0.16" />
-                        </Button.Shadow>
+                        <Frame.Shadow>
+                            <Shadow Brush="#22000000"
+                                    Offset="0,8"
+                                    Radius="20"
+                                    Opacity="0.18" />
+                        </Frame.Shadow>
 
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button"
-                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                         Value="True">
-                                <Setter Property="IsVisible" Value="False" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
+                        <Grid HeightRequest="62">
+
+                            <Grid.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="{AppThemeBinding Light=#7A63FF, Dark=#8A74FF}" Offset="0.0" />
+                                    <GradientStop Color="{AppThemeBinding Light=#9B8CFF, Dark=#6E58E8}" Offset="1.0" />
+                                </LinearGradientBrush>
+                            </Grid.Background>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  Padding="18,0">
+
+                                <Frame Grid.Column="0"
+                                       HeightRequest="34"
+                                       WidthRequest="34"
+                                       Padding="0"
+                                       CornerRadius="17"
+                                       HasShadow="False"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="#22FFFFFF">
+
+                                    <Label Text="+"
+                                           FontSize="22"
+                                           FontAttributes="Bold"
+                                           TextColor="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Frame>
+
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="0"
+                                                     Padding="12,0,0,0"
+                                                     VerticalOptions="Center">
+
+                                    <Label Text="Add Book"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="White"
+                                           LineBreakMode="NoWrap" />
+
+                                    <Label Text="Import a new file to your library"
+                                           FontSize="11"
+                                           TextColor="#EDE9FF"
+                                           LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2"
+                                       Text="›"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="White"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="End" />
+
+                            </Grid>
+
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAddFileClicked" />
+                            </Grid.GestureRecognizers>
+
+                            <Grid.Triggers>
+                                <DataTrigger TargetType="Grid"
+                                             Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                             Value="True">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                            </Grid.Triggers>
+                        </Grid>
+                    </Frame>
 
                 </Grid>
             </Frame>
