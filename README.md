@@ -398,5 +398,3 @@ This project is developed for **educational purposes**.
 ```
 
 ---
-
-会让你的项目看起来 **像一个真正的商业开源项目**。
