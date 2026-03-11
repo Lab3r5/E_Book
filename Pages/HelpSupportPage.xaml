@@ -7,6 +7,7 @@
     x:Class="E_Book.Pages.HelpSupportPage"
     shell:Shell.TabBarIsVisible="False"
     shell:Shell.NavBarIsVisible="False"
+    shell:Shell.PresentationMode="ModalAnimated"
     NavigationPage.HasNavigationBar="False"
     Padding="0"
     BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">

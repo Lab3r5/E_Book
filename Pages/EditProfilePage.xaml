@@ -6,6 +6,7 @@
     x:Class="E_Book.Pages.EditProfilePage"
     shell:Shell.TabBarIsVisible="False"
     shell:Shell.NavBarIsVisible="False"
+    shell:Shell.PresentationMode="ModalAnimated"
     NavigationPage.HasNavigationBar="False"
     BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
 
