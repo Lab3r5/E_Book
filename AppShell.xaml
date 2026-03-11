@@ -10,6 +10,7 @@
     <ShellContent
         Route="login"
         Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False"
         ContentTemplate="{DataTemplate pages:LoginPage}" />
 
     <!-- MAIN TABS -->
@@ -18,26 +19,22 @@
             Title="My Library"
             Route="bookshelf"
             Icon="tab_bookshelf.png"
+            Shell.NavBarIsVisible="False"
             ContentTemplate="{DataTemplate pages:BookshelfPage}" />
 
         <ShellContent
             Title="Search"
             Route="search"
             Icon="tab_search.png"
+            Shell.NavBarIsVisible="False"
             ContentTemplate="{DataTemplate pages:SearchPage}" />
 
         <ShellContent
             Title="Setting"
             Route="settings"
             Icon="tab_settings.png"
+            Shell.NavBarIsVisible="False"
             ContentTemplate="{DataTemplate pages:SettingsHomePage}" />
     </TabBar>
 
-    <!-- SUB PAGES (MODAL) -->
-    <ShellContent Route="signup"        Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:SignUpPage}" />
-    <ShellContent Route="edit-profile"  Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:EditProfilePage}" />
-    <ShellContent Route="appearance"    Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:AppearancePage}" />
-    <ShellContent Route="help"          Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:HelpSupportPage}" />
-    <ShellContent Route="password"      Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:PasswordPage}" />
-    <ShellContent Route="reading"       Shell.PresentationMode="ModalAnimated" ContentTemplate="{DataTemplate pages:ReadingPage}" />
 </Shell>

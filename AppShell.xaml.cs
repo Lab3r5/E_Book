@@ -52,7 +52,7 @@ namespace E_Book
             _startupRedirectDone = true;
             Loaded -= OnShellLoaded;
 
-            if (UserSession.HasSession)
+            if (UserSession.TryConsumeQuickLogin())
             {
                 await GoToAsync($"//{RouteTabs}/{RouteBookshelf}");
             }
@@ -73,7 +73,6 @@ namespace E_Book
         private void HandleAndroidTabRebind()
         {
             string location = CurrentState?.Location?.ToString() ?? string.Empty;
-
             bool isInTabs = location.StartsWith($"//{RouteTabs}", StringComparison.OrdinalIgnoreCase);
 
             if (isInTabs)

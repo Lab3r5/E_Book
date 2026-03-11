@@ -1,4 +1,5 @@
 using E_Book.Services;
+using Microsoft.Maui.Storage;
 
 namespace E_Book.Pages;
 
@@ -7,6 +8,7 @@ public partial class LoginPage : ContentPage
     private bool _passwordVisible;
     private bool _hasAnimatedIn;
     private bool _isLogoBreathing;
+    private bool _isThemeAnimating;
 
     public LoginPage()
     {
@@ -17,11 +19,15 @@ public partial class LoginPage : ContentPage
 
         PasswordEntry.Focused += OnEntryFocused;
         PasswordEntry.Unfocused += OnEntryUnfocused;
+
+        UpdateThemeIcon();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        UpdateThemeIcon();
 
         if (!_hasAnimatedIn)
         {
@@ -72,6 +78,56 @@ public partial class LoginPage : ContentPage
         }
     }
 
+    private void UpdateThemeIcon()
+    {
+        if (ThemeIconLabel == null) return;
+
+        ThemeIconLabel.Text = Application.Current?.RequestedTheme == AppTheme.Dark ? "☀" : "🌙";
+    }
+
+    private async void OnThemeToggleTapped(object sender, TappedEventArgs e)
+    {
+        if (Application.Current == null || _isThemeAnimating)
+            return;
+
+        _isThemeAnimating = true;
+
+        try
+        {
+            // Button press animation
+            var pressAnim = Task.WhenAll(
+                ThemeToggleBorder.ScaleTo(0.90, 90, Easing.CubicOut),
+                ThemeIconLabel.RotateTo(90, 120, Easing.CubicOut)
+            );
+
+            // Subtle content fade
+            var fadeOutAnim = LoginCard.FadeTo(0.82, 120, Easing.CubicOut);
+
+            await Task.WhenAll(pressAnim, fadeOutAnim);
+
+            // Toggle theme
+            Application.Current.UserAppTheme =
+                Application.Current.RequestedTheme == AppTheme.Dark
+                    ? AppTheme.Light
+                    : AppTheme.Dark;
+
+            UpdateThemeIcon();
+
+            // Recover with a small bounce
+            ThemeIconLabel.Rotation = -90;
+
+            await Task.WhenAll(
+                ThemeToggleBorder.ScaleTo(1.00, 140, Easing.SpringOut),
+                ThemeIconLabel.RotateTo(0, 180, Easing.SpringOut),
+                LoginCard.FadeTo(1.00, 180, Easing.CubicInOut)
+            );
+        }
+        finally
+        {
+            _isThemeAnimating = false;
+        }
+    }
+
     private void OnEmailCompleted(object sender, EventArgs e)
     {
         PasswordEntry.Focus();
@@ -115,8 +171,14 @@ public partial class LoginPage : ContentPage
 
         await Task.Delay(700);
 
-        var displayName = email.Contains('@') ? email.Split('@')[0] : email;
-        UserSession.SetUser(email.ToLowerInvariant(), displayName);
+        var normalizedEmail = email.ToLowerInvariant();
+        var savedName = Preferences.Get($"profile_name_{normalizedEmail}", string.Empty)?.Trim() ?? string.Empty;
+
+        var displayName = !string.IsNullOrWhiteSpace(savedName)
+            ? savedName
+            : (normalizedEmail.Contains('@') ? normalizedEmail.Split('@')[0] : normalizedEmail);
+
+        UserSession.SetUser(normalizedEmail, displayName);
 
         LoginLoading.IsRunning = false;
         LoginLoading.IsVisible = false;
@@ -165,7 +227,12 @@ public partial class LoginPage : ContentPage
 
     private void OnEntryUnfocused(object sender, FocusEventArgs e)
     {
-        EmailBorder.Stroke = Color.FromArgb("#E8E0F8");
-        PasswordBorder.Stroke = Color.FromArgb("#E8E0F8");
+        EmailBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
+
+        PasswordBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
     }
 }

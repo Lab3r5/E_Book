@@ -7,6 +7,8 @@ public partial class SignUpPage : ContentPage
     private bool _passwordVisible;
     private bool _hasAnimatedIn;
     private bool _isLogoBreathing;
+    private bool _isThemeAnimating;
+    private bool _isNavigatingBack;
 
     public SignUpPage()
     {
@@ -20,11 +22,15 @@ public partial class SignUpPage : ContentPage
 
         PasswordEntry.Focused += OnEntryFocused;
         PasswordEntry.Unfocused += OnEntryUnfocused;
+
+        UpdateThemeIcon();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        UpdateThemeIcon();
 
         if (!_hasAnimatedIn)
         {
@@ -71,6 +77,53 @@ public partial class SignUpPage : ContentPage
             await LogoFrame.ScaleTo(1.02, 1400, Easing.SinInOut);
             if (!_isLogoBreathing) break;
             await LogoFrame.ScaleTo(1.00, 1400, Easing.SinInOut);
+        }
+    }
+
+    private void UpdateThemeIcon()
+    {
+        if (ThemeIconLabel == null) return;
+
+        ThemeIconLabel.Text =
+            Application.Current?.RequestedTheme == AppTheme.Dark ? "☀" : "🌙";
+    }
+
+    private async void OnThemeToggleTapped(object sender, TappedEventArgs e)
+    {
+        if (Application.Current == null || _isThemeAnimating)
+            return;
+
+        _isThemeAnimating = true;
+
+        try
+        {
+            var pressAnim = Task.WhenAll(
+                ThemeToggleBorder.ScaleTo(0.90, 90, Easing.CubicOut),
+                ThemeIconLabel.RotateTo(90, 120, Easing.CubicOut)
+            );
+
+            var fadeOutAnim = SignUpCard.FadeTo(0.82, 120, Easing.CubicOut);
+
+            await Task.WhenAll(pressAnim, fadeOutAnim);
+
+            Application.Current.UserAppTheme =
+                Application.Current.RequestedTheme == AppTheme.Dark
+                    ? AppTheme.Light
+                    : AppTheme.Dark;
+
+            UpdateThemeIcon();
+
+            ThemeIconLabel.Rotation = -90;
+
+            await Task.WhenAll(
+                ThemeToggleBorder.ScaleTo(1.00, 140, Easing.SpringOut),
+                ThemeIconLabel.RotateTo(0, 180, Easing.SpringOut),
+                SignUpCard.FadeTo(1.00, 180, Easing.CubicInOut)
+            );
+        }
+        finally
+        {
+            _isThemeAnimating = false;
         }
     }
 
@@ -125,7 +178,7 @@ public partial class SignUpPage : ContentPage
         SignUpLoading.IsRunning = true;
 
         await Task.Delay(700);
-
+        
         UserSession.SetUser(email.ToLowerInvariant(), name);
 
         SignUpLoading.IsRunning = false;
@@ -137,9 +190,39 @@ public partial class SignUpPage : ContentPage
         await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
     }
 
+    private async Task AnimateBackAndGoAsync()
+    {
+        if (_isNavigatingBack)
+            return;
+
+        _isNavigatingBack = true;
+        _isLogoBreathing = false;
+
+        try
+        {
+            await Task.WhenAll(
+                SignUpCard.FadeTo(0, 180, Easing.CubicIn),
+                SignUpCard.TranslateTo(0, 26, 180, Easing.CubicIn),
+                LogoFrame.FadeTo(0, 160, Easing.CubicIn),
+                LogoFrame.ScaleTo(0.94, 160, Easing.CubicIn)
+            );
+
+            await Shell.Current.GoToAsync("..");
+        }
+        finally
+        {
+            _isNavigatingBack = false;
+        }
+    }
+
+    private async void OnBackTapped(object sender, TappedEventArgs e)
+    {
+        await AnimateBackAndGoAsync();
+    }
+
     private async void OnBackClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("..");
+        await AnimateBackAndGoAsync();
     }
 
     private void OnEntryFocused(object sender, FocusEventArgs e)
@@ -156,8 +239,16 @@ public partial class SignUpPage : ContentPage
 
     private void OnEntryUnfocused(object sender, FocusEventArgs e)
     {
-        NameBorder.Stroke = Color.FromArgb("#E8E0F8");
-        EmailBorder.Stroke = Color.FromArgb("#E8E0F8");
-        PasswordBorder.Stroke = Color.FromArgb("#E8E0F8");
+        NameBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
+
+        EmailBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
+
+        PasswordBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
     }
 }

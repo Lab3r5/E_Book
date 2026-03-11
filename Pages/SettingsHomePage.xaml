@@ -400,7 +400,7 @@
             <!-- Footer -->
             <Label x:Name="FooterLabel"
                    Grid.Row="2"
-                   Text="Version 1.05"
+                   Text="Version 1.06"
                    FontSize="12"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="End"

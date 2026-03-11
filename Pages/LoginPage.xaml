@@ -5,11 +5,43 @@
     xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
     x:Class="E_Book.Pages.LoginPage"
     shell:Shell.NavBarIsVisible="False"
-    BackgroundColor="#F7F6FB">
+    BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#121212}">
 
-    <Grid Padding="20,36,20,20">
+    <Grid x:Name="RootGrid"
+          Padding="20,36,20,20"
+          RowDefinitions="Auto,*">
 
-        <Grid VerticalOptions="Center"
+        <!-- Top Right Theme Toggle -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,56"
+              Margin="0,0,0,8">
+
+            <Border x:Name="ThemeToggleBorder"
+                    Grid.Column="1"
+                    WidthRequest="46"
+                    HeightRequest="46"
+                    BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#1E1E1E}"
+                    Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
+                    StrokeThickness="1"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    StrokeShape="RoundRectangle 23">
+
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnThemeToggleTapped" />
+                </Border.GestureRecognizers>
+
+                <Label x:Name="ThemeIconLabel"
+                       Text="🌙"
+                       FontSize="18"
+                       TextColor="{AppThemeBinding Light=#3D36B3, Dark=White}"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center" />
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="1"
+              VerticalOptions="Center"
               HorizontalOptions="Center"
               WidthRequest="360">
 
@@ -18,7 +50,7 @@
                    Padding="24,62,24,24"
                    CornerRadius="28"
                    HasShadow="True"
-                   BackgroundColor="#FCFAFF"
+                   BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#1A1A1E}"
                    Opacity="0"
                    TranslationY="40">
 
@@ -37,20 +69,20 @@
                                HorizontalTextAlignment="Center"
                                FontSize="34"
                                FontAttributes="Bold"
-                               TextColor="#3D36B3" />
+                               TextColor="{AppThemeBinding Light=#3D36B3, Dark=White}" />
 
                         <Label Text="Please log in to continue."
                                HorizontalTextAlignment="Center"
                                FontSize="16"
-                               TextColor="#2F2B85" />
+                               TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}" />
                     </VerticalStackLayout>
 
                     <!-- Email -->
                     <Border x:Name="EmailBorder"
-                            Stroke="#E8E0F8"
+                            Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 18"
-                            BackgroundColor="#FCFAFF"
+                            BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#23232A}"
                             HeightRequest="58"
                             Padding="18,0">
 
@@ -61,17 +93,17 @@
                                Completed="OnEmailCompleted"
                                FontSize="16"
                                BackgroundColor="Transparent"
-                               TextColor="#2E2A3B"
-                               PlaceholderColor="#A09AB2"
+                               TextColor="{AppThemeBinding Light=#2E2A3B, Dark=White}"
+                               PlaceholderColor="{AppThemeBinding Light=#A09AB2, Dark=#8F8AA0}"
                                VerticalOptions="Center" />
                     </Border>
 
                     <!-- Password -->
                     <Border x:Name="PasswordBorder"
-                            Stroke="#E8E0F8"
+                            Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 18"
-                            BackgroundColor="#FCFAFF"
+                            BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#23232A}"
                             HeightRequest="58"
                             Padding="0">
 
@@ -87,8 +119,8 @@
                                    Completed="OnPasswordCompleted"
                                    FontSize="16"
                                    BackgroundColor="Transparent"
-                                   TextColor="#2E2A3B"
-                                   PlaceholderColor="#A09AB2"
+                                   TextColor="{AppThemeBinding Light=#2E2A3B, Dark=White}"
+                                   PlaceholderColor="{AppThemeBinding Light=#A09AB2, Dark=#8F8AA0}"
                                    VerticalOptions="Center" />
 
                             <Button x:Name="TogglePasswordButton"
@@ -109,7 +141,7 @@
                             <Label Text="Forget?"
                                    Grid.Column="2"
                                    FontSize="14"
-                                   TextColor="#2F2B85"
+                                   TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}"
                                    VerticalTextAlignment="Center">
                                 <Label.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnForgetTapped" />
@@ -160,18 +192,18 @@
                         <BoxView Grid.Column="0"
                                  HeightRequest="1"
                                  VerticalOptions="Center"
-                                 BackgroundColor="#E8E0F8" />
+                                 BackgroundColor="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}" />
 
                         <Label Grid.Column="1"
                                Text="or"
                                Margin="12,0"
                                FontAttributes="Bold"
-                               TextColor="#2F2B85" />
+                               TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}" />
 
                         <BoxView Grid.Column="2"
                                  HeightRequest="1"
                                  VerticalOptions="Center"
-                                 BackgroundColor="#E8E0F8" />
+                                 BackgroundColor="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}" />
                     </Grid>
 
                     <!-- Guest -->
@@ -180,10 +212,10 @@
                             CornerRadius="22"
                             FontSize="16"
                             FontAttributes="Bold"
-                            BackgroundColor="#FCFAFF"
-                            BorderColor="#E7E2F6"
+                            BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#23232A}"
+                            BorderColor="{AppThemeBinding Light=#E7E2F6, Dark=#2D2D35}"
                             BorderWidth="1"
-                            TextColor="#2F2B85"
+                            TextColor="{AppThemeBinding Light=#2F2B85, Dark=White}"
                             Clicked="OnGuestClicked">
 
                         <Button.Shadow>
@@ -202,13 +234,13 @@
 
                         <Label Text="Don't have an account?"
                                FontSize="16"
-                               TextColor="#2F2B85"
+                               TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}"
                                VerticalOptions="Center" />
 
                         <Button Text="Sign Up"
                                 Clicked="OnSignUpClicked"
                                 BackgroundColor="Transparent"
-                                TextColor="#3D36B3"
+                                TextColor="{AppThemeBinding Light=#3D36B3, Dark=#B9A8FF}"
                                 FontAttributes="Bold"
                                 FontSize="16"
                                 Padding="0"
@@ -233,10 +265,10 @@
                   WidthRequest="96"
                   HeightRequest="96">
 
-                <Border Stroke="#D8CCF6"
+                <Border Stroke="{AppThemeBinding Light=#D8CCF6, Dark=#2F2A46}"
                         StrokeThickness="2"
                         StrokeShape="RoundRectangle 48"
-                        BackgroundColor="#FCFAFF">
+                        BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#1A1A1E}">
 
                     <Border.Shadow>
                         <Shadow Brush="#22000000"

@@ -7,7 +7,7 @@
 
     <Grid RowDefinitions="10,56">
 
-        <!-- Brand gradient strip -->
+        <!-- Top gradient strip -->
         <Grid Grid.Row="0">
             <Grid.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -17,7 +17,7 @@
             </Grid.Background>
         </Grid>
 
-        <!-- Top Bar -->
+        <!-- Header bar -->
         <Grid Grid.Row="1"
               ColumnDefinitions="56,*,56"
               Padding="12,8"
@@ -34,20 +34,21 @@
                     HorizontalOptions="Start"
                     VerticalOptions="Center">
 
-                <Label x:Name="BackTapTarget"
-                       Text="‹"
-                       FontSize="28"
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackTapped"/>
+                </Border.GestureRecognizers>
+
+                <Label Text="‹"
+                       FontSize="24"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=#221551, Dark=White}"
                        HorizontalTextAlignment="Center"
-                       VerticalTextAlignment="Center">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnBackTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
+                       VerticalTextAlignment="Center"
+                       TranslationX="1"
+                       TranslationY="-1" />
             </Border>
 
-            <!-- Center title -->
+            <!-- Title -->
             <Label x:Name="TitleLabel"
                    Grid.Column="1"
                    Text="Title"
@@ -58,13 +59,14 @@
                    VerticalOptions="Center"
                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-            <!-- Right slot (optional) -->
+            <!-- Right slot -->
             <ContentView x:Name="RightSlot"
                          Grid.Column="2"
                          WidthRequest="44"
                          HeightRequest="44"
                          HorizontalOptions="End"
-                         VerticalOptions="Center" />
+                         VerticalOptions="Center"/>
+
         </Grid>
 
     </Grid>
