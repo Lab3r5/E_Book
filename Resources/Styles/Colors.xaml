@@ -26,6 +26,11 @@
     <!-- 额外品牌色（可以视情况使用） -->
     <Color x:Key="Success">#22C58B</Color>
     <Color x:Key="Danger">#FF4B4B</Color>
+    <Color x:Key="ReadLightPurple">#9C8CFF</Color>
+    <Color x:Key="ReadDarkPurple">#5B3DFF</Color>
+    <Color x:Key="DangerRed">#FF5A5A</Color>
+    <Color x:Key="DangerLightRed">#FF7A7A</Color>
+    <Color x:Key="DangerDarkRed">#C62828</Color>
 
     <!-- 基础黑白 -->
     <Color x:Key="White">#FFFFFF</Color>

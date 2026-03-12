@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="E_Book.Pages.SignUpPage"
+    Title="Sign Up"
+    Padding="24">
+
+    <VerticalStackLayout Spacing="14" VerticalOptions="Center">
+        <Entry x:Name="NameEntry" Placeholder="Name" />
+        <Entry x:Name="EmailEntry" Placeholder="Email" Keyboard="Email" />
+        <Entry x:Name="PasswordEntry" Placeholder="Password" IsPassword="True" />
+
+        <Button Text="Sign Up" Clicked="OnSignUpClicked" />
+        <Button Text="Back to Login" Clicked="OnBackClicked" />
+    </VerticalStackLayout>
+</ContentPage>
