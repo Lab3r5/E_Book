@@ -257,35 +257,9 @@ namespace E_Book.Pages
             BookCollectionView.TranslationY = 10;
 
             await Task.WhenAll(
-                BookCollectionView.FadeTo(1, 200, Easing.CubicOut),
-                BookCollectionView.TranslateTo(0, 0, 200, Easing.CubicOut)
+                BookCollectionView.FadeTo(1, 220, Easing.CubicOut),
+                BookCollectionView.TranslateTo(0, 0, 240, Easing.CubicOut)
             );
-
-            await Task.Delay(40);
-
-            var visibleViews = BookCollectionView.VisibleViews;
-
-            int delay = 0;
-            foreach (var view in visibleViews)
-            {
-                view.Opacity = 0;
-                view.TranslationY = 14;
-
-                _ = Task.Run(async () =>
-                {
-                    await Task.Delay(delay);
-
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        await Task.WhenAll(
-                            view.FadeTo(1, 220, Easing.CubicOut),
-                            view.TranslateTo(0, 0, 220, Easing.CubicOut)
-                            );
-                    });
-                });
-
-                delay += 35;
-            }
         }
 
         private void EnsureLibraryExists()
