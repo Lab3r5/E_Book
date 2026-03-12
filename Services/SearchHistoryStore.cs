@@ -10,7 +10,8 @@ namespace E_Book.Services
     {
         private const int MaxItems = 10;
 
-        private static string Key(string userId) => $"search_history_{userId}";
+        private static string Key(string userId)
+            => $"search_history_{UserSession.BuildSafeStorageKey(userId)}";
 
         public static List<string> Get(string userId)
         {
@@ -32,10 +33,6 @@ namespace E_Book.Services
             Preferences.Set(Key(userId), json);
         }
 
-        /// <summary>
-        /// 搜索时记录历史。
-        /// 规则：最多10条；新增插入到最前；重复项先移除再插入。
-        /// </summary>
         public static void Add(string userId, string keyword)
         {
             keyword = (keyword ?? "").Trim();
@@ -52,9 +49,6 @@ namespace E_Book.Services
             Save(userId, list);
         }
 
-        /// <summary>
-        /// 点击阅读后也可调用，内部仍复用 Add。
-        /// </summary>
         public static void AddOnRead(string userId, string keyword)
         {
             Add(userId, keyword);

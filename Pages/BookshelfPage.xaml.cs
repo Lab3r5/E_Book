@@ -63,6 +63,10 @@ namespace E_Book.Pages
         private bool _isEmptyIconBreathing;
         private bool _hasLoadedOnce;
 
+        // 性能优化关键：按需刷新，而不是每次 OnAppearing 都刷新
+        private bool _refreshOnNextAppear = true;
+        private bool _animateListOnNextAppear = true;
+
         public BookshelfPage()
         {
             InitializeComponent();
@@ -84,15 +88,15 @@ namespace E_Book.Pages
 
             await Task.Yield();
 
-            bool showSkeleton = !_hasLoadedOnce;
+            bool firstLoad = !_hasLoadedOnce;
+            bool shouldRefresh = firstLoad || _refreshOnNextAppear;
+            bool shouldAnimateList = firstLoad || _animateListOnNextAppear;
 
-            if (showSkeleton)
+            if (firstLoad)
             {
                 IsLoadingBooks = true;
                 _ = StartSkeletonShimmer();
             }
-
-            var loadTask = RefreshBooksAsync(showLoadingPlaceholder: showSkeleton);
 
             if (!_hasPlayedEntrance)
             {
@@ -120,18 +124,45 @@ namespace E_Book.Pages
                 }
             }
 
-            await loadTask;
+            if (shouldRefresh)
+            {
+                await RefreshBooksAsync(showLoadingPlaceholder: firstLoad);
+                _refreshOnNextAppear = false;
+            }
+
             _hasLoadedOnce = true;
 
-            if (Books.Count == 0)
+            if (shouldAnimateList)
             {
-                await AnimateEmptyState();
-                _ = StartEmptyIconBreathing();
+                if (Books.Count == 0)
+                {
+                    await AnimateEmptyState();
+                    _ = StartEmptyIconBreathing();
+                }
+                else
+                {
+                    _isEmptyIconBreathing = false;
+                    await AnimateBookListAppearance();
+                }
+
+                _animateListOnNextAppear = false;
             }
             else
             {
                 _isEmptyIconBreathing = false;
-                await AnimateBookListAppearance();
+
+                if (BookCollectionView != null)
+                {
+                    BookCollectionView.Opacity = 1;
+                    BookCollectionView.TranslationY = 0;
+                    BookCollectionView.IsVisible = !IsLoadingBooks;
+                }
+
+                if (EmptyStateContainer != null)
+                {
+                    EmptyStateContainer.Opacity = 1;
+                    EmptyStateContainer.TranslationY = 0;
+                }
             }
         }
 
@@ -484,9 +515,13 @@ namespace E_Book.Pages
             }
 
             await SaveFileToLibrary(result, targetPath);
+
             await RefreshBooksAsync();
             await AnimateBookListAppearance();
             await ShowToast("Imported successfully");
+
+            _refreshOnNextAppear = false;
+            _animateListOnNextAppear = false;
         }
 
         private async Task SaveFileToLibrary(FileResult file, string targetPath)
@@ -512,12 +547,17 @@ namespace E_Book.Pages
                 if (!File.Exists(book.FullPath))
                 {
                     await DisplayAlert("Error", "File not found!", "OK");
+                    _refreshOnNextAppear = true;
+                    _animateListOnNextAppear = false;
                     await RefreshBooksAsync();
                     return;
                 }
 
                 ReadingMetaStore.UpdateLastOpened(book.FullPath);
-                await RefreshBooksAsync();
+
+                // 不要在跳转前刷新整页，避免切换时卡顿
+                _refreshOnNextAppear = true;
+                _animateListOnNextAppear = false;
 
                 var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
                 await Shell.Current.GoToAsync(route);
@@ -728,6 +768,9 @@ namespace E_Book.Pages
             await RefreshBooksAsync();
             await AnimateBookListAppearance();
             await ShowToast("Deleted successfully");
+
+            _refreshOnNextAppear = false;
+            _animateListOnNextAppear = false;
         }
 
         private async Task DeleteBookFileAsync(BookItem book, bool reloadAfter)

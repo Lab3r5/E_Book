@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using E_Book.Data;
+using E_Book.Services;
 
 namespace E_Book.Pages
 {
@@ -19,6 +20,28 @@ namespace E_Book.Pages
             UpdateValidationState();
         }
 
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            if (UserSession.IsGuest)
+            {
+                entryPassword.IsEnabled = false;
+                entryConfirmPassword.IsEnabled = false;
+                ConfirmButton.IsEnabled = false;
+                ConfirmButton.Opacity = 0.45;
+                ValidationMessageLabel.Text = "Guest account cannot set a password.";
+                ValidationMessageLabel.IsVisible = true;
+            }
+            else
+            {
+                entryPassword.IsEnabled = true;
+                entryConfirmPassword.IsEnabled = true;
+                ValidationMessageLabel.IsVisible = false;
+                UpdateValidationState();
+            }
+        }
+
         private void OnTogglePasswordTapped(object sender, TappedEventArgs e)
         {
             entryPassword.IsPassword = !entryPassword.IsPassword;
@@ -33,11 +56,21 @@ namespace E_Book.Pages
 
         private void OnPasswordFieldsChanged(object sender, TextChangedEventArgs e)
         {
+            if (UserSession.IsGuest)
+                return;
+
             UpdateValidationState();
         }
 
         private void UpdateValidationState()
         {
+            if (UserSession.IsGuest)
+            {
+                ConfirmButton.IsEnabled = false;
+                ConfirmButton.Opacity = 0.45;
+                return;
+            }
+
             string password = entryPassword?.Text?.Trim() ?? string.Empty;
             string confirmPassword = entryConfirmPassword?.Text?.Trim() ?? string.Empty;
 
@@ -97,6 +130,12 @@ namespace E_Book.Pages
 
         private async void OnConfirmClicked(object sender, EventArgs e)
         {
+            if (UserSession.IsGuest)
+            {
+                await DisplayAlert("Unavailable", "Guest account cannot set a password.", "OK");
+                return;
+            }
+
             string password = entryPassword.Text?.Trim() ?? string.Empty;
             string confirmPassword = entryConfirmPassword.Text?.Trim() ?? string.Empty;
 
@@ -120,9 +159,9 @@ namespace E_Book.Pages
                 ConfirmButton.Text = "Saving...";
                 ConfirmButton.Opacity = 1.0;
 
-                await dbHelper.SavePasswordAsync(password);
+                await dbHelper.UpdatePasswordAsync(UserSession.UserId, password);
 
-                await DisplayAlert("Success", "Password has been set.", "OK");
+                await DisplayAlert("Success", "Password has been updated.", "OK");
                 await Navigation.PopAsync();
             }
             catch

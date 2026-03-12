@@ -1,11 +1,13 @@
 using E_Book.Services;
+using E_Book.Data;
 using Microsoft.Maui.Storage;
 
 namespace E_Book.Pages
 {
     public partial class EditProfilePage : ContentPage
     {
-        private string ProfileKey => $"profile_name_{UserSession.UserId}";
+        private readonly Database _database = new();
+
         private string _originalName = string.Empty;
 
         public EditProfilePage()
@@ -13,11 +15,19 @@ namespace E_Book.Pages
             InitializeComponent();
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
-            _originalName = Preferences.Get(ProfileKey, UserSession.DisplayName)?.Trim() ?? string.Empty;
+            if (UserSession.IsGuest)
+            {
+                _originalName = "Guest";
+            }
+            else
+            {
+                var user = await _database.GetUserAsync(UserSession.UserId);
+                _originalName = user?.DisplayName?.Trim() ?? UserSession.DisplayName;
+            }
 
             var currentName = UserSession.IsGuest ? "Guest" : _originalName;
 
@@ -157,7 +167,7 @@ namespace E_Book.Pages
             if (string.Equals(name, _originalName, StringComparison.Ordinal))
                 return;
 
-            Preferences.Set(ProfileKey, name);
+            await _database.UpdateUserDisplayNameAsync(UserSession.UserId, name);
             UserSession.UpdateDisplayName(name);
 
             _originalName = name;

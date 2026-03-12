@@ -1,9 +1,12 @@
 using E_Book.Services;
+using E_Book.Data;
 
 namespace E_Book.Pages;
 
 public partial class SignUpPage : ContentPage
 {
+    private readonly Database _database = new();
+
     private bool _passwordVisible;
     private bool _hasAnimatedIn;
     private bool _isLogoBreathing;
@@ -177,17 +180,34 @@ public partial class SignUpPage : ContentPage
         SignUpLoading.IsVisible = true;
         SignUpLoading.IsRunning = true;
 
-        await Task.Delay(700);
-        
-        UserSession.SetUser(email.ToLowerInvariant(), name);
+        try
+        {
+            await Task.Delay(500);
 
-        SignUpLoading.IsRunning = false;
-        SignUpLoading.IsVisible = false;
+            string normalizedEmail = UserSession.NormalizeUserId(email);
 
-        SignUpButton.Text = "Sign Up";
-        SignUpButton.IsEnabled = true;
+            var result = await _database.RegisterUserAsync(normalizedEmail, name, password);
+            if (!result.Success)
+            {
+                await DisplayAlert("Sign up failed", result.Message, "OK");
+                return;
+            }
 
-        await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
+            UserSession.SetUser(normalizedEmail, name);
+            LibraryService.EnsureLibraryExists();
+            ThemeScheduler.StartTimer();
+            ThemeScheduler.ApplyNow();
+
+            await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
+        }
+        finally
+        {
+            SignUpLoading.IsRunning = false;
+            SignUpLoading.IsVisible = false;
+
+            SignUpButton.Text = "Sign Up";
+            SignUpButton.IsEnabled = true;
+        }
     }
 
     private async Task AnimateBackAndGoAsync()

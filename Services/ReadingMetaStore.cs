@@ -8,7 +8,7 @@ namespace E_Book.Services
 {
     public static class ReadingMetaStore
     {
-        private const string MetaKey = "ebook_reading_meta_v1";
+        private static string MetaKey => $"ebook_reading_meta_{UserSession.StorageKey}_v2";
 
         private class ReadingMeta
         {
@@ -79,6 +79,11 @@ namespace E_Book.Services
 
             if (all.Remove(key))
                 SaveAll(all);
+        }
+
+        public static void ClearCurrentUser()
+        {
+            Preferences.Default.Remove(MetaKey);
         }
 
         private static Dictionary<string, ReadingMeta> LoadAll()

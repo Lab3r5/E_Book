@@ -1,10 +1,12 @@
 using E_Book.Services;
-using Microsoft.Maui.Storage;
+using E_Book.Data;
 
 namespace E_Book.Pages;
 
 public partial class LoginPage : ContentPage
 {
+    private readonly Database _database = new();
+
     private bool _passwordVisible;
     private bool _hasAnimatedIn;
     private bool _isLogoBreathing;
@@ -165,23 +167,33 @@ public partial class LoginPage : ContentPage
         LoginLoading.IsVisible = true;
         LoginLoading.IsRunning = true;
 
-        await Task.Delay(700);
+        try
+        {
+            await Task.Delay(500);
 
-        var normalizedEmail = email.ToLowerInvariant();
-        var savedName = Preferences.Get($"profile_name_{normalizedEmail}", string.Empty)?.Trim() ?? string.Empty;
+            string normalizedEmail = UserSession.NormalizeUserId(email);
 
-        var displayName = !string.IsNullOrWhiteSpace(savedName)
-            ? savedName
-            : (normalizedEmail.Contains('@') ? normalizedEmail.Split('@')[0] : normalizedEmail);
+            var user = await _database.ValidateUserAsync(normalizedEmail, password);
+            if (user == null)
+            {
+                await DisplayAlert("Login failed", "Incorrect email or password.", "OK");
+                return;
+            }
 
-        UserSession.SetUser(normalizedEmail, displayName);
+            UserSession.SetUser(user.UserId, user.DisplayName);
+            LibraryService.EnsureLibraryExists();
+            ThemeScheduler.StartTimer();
+            ThemeScheduler.ApplyNow();
 
-        LoginLoading.IsRunning = false;
-        LoginLoading.IsVisible = false;
-        LoginButton.Text = "Log In";
-        LoginButton.IsEnabled = true;
-
-        await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
+            await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
+        }
+        finally
+        {
+            LoginLoading.IsRunning = false;
+            LoginLoading.IsVisible = false;
+            LoginButton.Text = "Log In";
+            LoginButton.IsEnabled = true;
+        }
     }
 
     private async void OnGuestClicked(object sender, EventArgs e)
@@ -193,6 +205,10 @@ public partial class LoginPage : ContentPage
         }
 
         UserSession.SetGuest();
+        LibraryService.EnsureLibraryExists();
+        ThemeScheduler.StartTimer();
+        ThemeScheduler.ApplyNow();
+
         await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteBookshelf}");
     }
 

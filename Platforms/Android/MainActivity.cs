@@ -346,7 +346,7 @@ namespace E_Book
                 if (_itemViews.Count == 0 && !TryCollectTabItems(_bar, _itemViews))
                 {
                     if (IsBarAlive())
-                        _bar.PostDelayed(PumpOnce, 120);
+                        _bar.PostDelayed(PumpOnce, 150);
 
                     return;
                 }
@@ -368,17 +368,20 @@ namespace E_Book
                     else if (idx != _lastIndex)
                     {
                         _lastIndex = idx;
-                        AnimateTo(idx);
-                    }
-                    else
-                    {
+
                         if (_pill.Width == 0 || _pill.Height == 0)
                             SnapTo(idx);
+                        else
+                            AnimateTo(idx);
+                    }
+                    else if (_pill.Width == 0 || _pill.Height == 0)
+                    {
+                        SnapTo(idx);
                     }
                 }
 
                 if (IsBarAlive())
-                    _bar.PostDelayed(PumpOnce, 120);
+                    _bar.PostDelayed(PumpOnce, 220);
             }
             catch
             {
@@ -454,6 +457,15 @@ namespace E_Book
                 if (iconView == null)
                     return;
 
+                bool isNight =
+                    (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
+                    == Android.Content.Res.UiMode.NightYes;
+
+                var selectedColor = Android.Graphics.Color.White;
+                var unselectedColor = isNight
+                    ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
+                    : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
+
                 iconView.Post(() =>
                 {
                     try
@@ -465,6 +477,8 @@ namespace E_Book
                         iconView.ScaleY = isSelected ? 1.22f : 1.10f;
 
                         iconView.TranslationY = isSelected ? 2f : 1f;
+
+                        iconView.SetColorFilter(isSelected ? selectedColor : unselectedColor);
                     }
                     catch
                     {
@@ -487,11 +501,21 @@ namespace E_Book
                 if (label == null)
                     return;
 
+                bool isNight =
+                    (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
+                    == Android.Content.Res.UiMode.NightYes;
+
+                var selectedColor = Android.Graphics.Color.White;
+                var unselectedColor = isNight
+                    ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
+                    : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
+
                 label.SetSingleLine(true);
                 label.SetIncludeFontPadding(false);
                 label.SetTextSize(ComplexUnitType.Sp, 10.5f);
                 label.TranslationY = isSelected ? -1f : -2.5f;
                 label.SetTypeface(label.Typeface, isSelected ? TypefaceStyle.Bold : TypefaceStyle.Normal);
+                label.SetTextColor(isSelected ? selectedColor : unselectedColor);
             }
             catch
             {
@@ -602,7 +626,7 @@ namespace E_Book
             var pill = new AView(this);
 
             var bg = new GradientDrawable();
-            bg.SetColor(Android.Graphics.Color.Rgb(0x7A, 0x63, 0xFF));
+            bg.SetColor(Android.Graphics.Color.Rgb(0x7D, 0x63, 0xFF));
             bg.SetCornerRadius(999f);
             pill.Background = bg;
 

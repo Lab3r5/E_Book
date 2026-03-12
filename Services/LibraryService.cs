@@ -9,18 +9,80 @@ namespace E_Book.Services
 {
     public static class LibraryService
     {
-        public static readonly string LibraryPath =
-            Path.Combine(FileSystem.AppDataDirectory, "Library");
+        private const string LegacyMigrationFlag = "library_migrated_to_multi_user_v1";
 
         public static readonly string[] SupportedExtensions =
         {
             ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf"
         };
 
+        public static string UsersRootPath =>
+            Path.Combine(FileSystem.AppDataDirectory, "Users");
+
+        public static string CurrentUserRootPath =>
+            Path.Combine(UsersRootPath, UserSession.StorageKey);
+
+        public static string LibraryPath =>
+            Path.Combine(CurrentUserRootPath, "Library");
+
+        public static string GuestLibraryPath =>
+            Path.Combine(UsersRootPath, UserSession.BuildSafeStorageKey(UserSession.GuestUserId), "Library");
+
+        public static string LegacySharedLibraryPath =>
+            Path.Combine(FileSystem.AppDataDirectory, "Library");
+
         public static void EnsureLibraryExists()
         {
+            EnsureLegacySharedLibraryMigratedToGuest();
+            EnsureCurrentUserLibraryExists();
+        }
+
+        public static void EnsureCurrentUserLibraryExists()
+        {
+            if (!Directory.Exists(UsersRootPath))
+                Directory.CreateDirectory(UsersRootPath);
+
+            if (!Directory.Exists(CurrentUserRootPath))
+                Directory.CreateDirectory(CurrentUserRootPath);
+
             if (!Directory.Exists(LibraryPath))
                 Directory.CreateDirectory(LibraryPath);
+        }
+
+        private static void EnsureLegacySharedLibraryMigratedToGuest()
+        {
+            if (Preferences.Get(LegacyMigrationFlag, false))
+                return;
+
+            try
+            {
+                if (!Directory.Exists(UsersRootPath))
+                    Directory.CreateDirectory(UsersRootPath);
+
+                if (!Directory.Exists(GuestLibraryPath))
+                    Directory.CreateDirectory(GuestLibraryPath);
+
+                if (Directory.Exists(LegacySharedLibraryPath))
+                {
+                    var files = Directory.GetFiles(LegacySharedLibraryPath)
+                        .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                        .ToList();
+
+                    foreach (var sourceFile in files)
+                    {
+                        string fileName = Path.GetFileName(sourceFile);
+                        string targetFile = Path.Combine(GuestLibraryPath, fileName);
+
+                        if (!File.Exists(targetFile))
+                            File.Copy(sourceFile, targetFile, overwrite: false);
+                    }
+                }
+
+                Preferences.Set(LegacyMigrationFlag, true);
+            }
+            catch
+            {
+            }
         }
 
         public static List<BookItem> LoadBooks()
@@ -42,12 +104,11 @@ namespace E_Book.Services
 
         public static List<BookItem> SearchFromCache(IEnumerable<BookItem> books, string keyword)
         {
-            keyword = (keyword ?? "").Trim();
+            keyword = (keyword ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(keyword))
                 return new List<BookItem>();
 
             var all = books?.ToList() ?? new List<BookItem>();
-            string lowerKeyword = keyword.ToLowerInvariant();
 
             return all
                 .Where(b =>

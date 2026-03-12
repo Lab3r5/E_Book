@@ -1,4 +1,6 @@
 ﻿using Microsoft.Maui.Storage;
+using System;
+using System.IO;
 
 namespace E_Book.Services
 {
@@ -33,6 +35,8 @@ namespace E_Book.Services
             !string.IsNullOrWhiteSpace(UserId) &&
             QuickLoginRemaining > 0;
 
+        public static string StorageKey => BuildSafeStorageKey(UserId);
+
         public static void SetGuest()
         {
             Preferences.Set(KeyUserId, GuestUserId);
@@ -43,9 +47,12 @@ namespace E_Book.Services
 
         public static void SetUser(string userId, string displayName)
         {
-            Preferences.Set(KeyUserId, userId);
+            string normalizedUserId = NormalizeUserId(userId);
+
+            Preferences.Set(KeyUserId, normalizedUserId);
             Preferences.Set(KeyIsGuest, false);
-            Preferences.Set(KeyDisplayName, displayName);
+            Preferences.Set(KeyDisplayName,
+                string.IsNullOrWhiteSpace(displayName) ? normalizedUserId : displayName.Trim());
         }
 
         public static void Logout()
@@ -63,7 +70,7 @@ namespace E_Book.Services
 
         public static void UpdateDisplayName(string displayName)
         {
-            Preferences.Set(KeyDisplayName, displayName);
+            Preferences.Set(KeyDisplayName, displayName?.Trim() ?? "Guest");
         }
 
         public static void SetQuickLoginCount(int count)
@@ -87,6 +94,32 @@ namespace E_Book.Services
             int remaining = QuickLoginRemaining - 1;
             Preferences.Set(KeyQuickLoginRemaining, Math.Max(remaining, 0));
             return true;
+        }
+
+        public static string NormalizeUserId(string? userId)
+        {
+            userId = (userId ?? string.Empty).Trim().ToLowerInvariant();
+            return string.IsNullOrWhiteSpace(userId) ? GuestUserId : userId;
+        }
+
+        public static string BuildSafeStorageKey(string? userId)
+        {
+            string normalized = NormalizeUserId(userId);
+
+            if (normalized == GuestUserId)
+                return GuestUserId;
+
+            foreach (char c in Path.GetInvalidFileNameChars())
+                normalized = normalized.Replace(c, '_');
+
+            normalized = normalized.Replace("@", "_at_")
+                                   .Replace(".", "_")
+                                   .Replace(" ", "_");
+
+            while (normalized.Contains("__"))
+                normalized = normalized.Replace("__", "_");
+
+            return normalized;
         }
     }
 }

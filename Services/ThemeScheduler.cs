@@ -11,11 +11,11 @@ namespace E_Book.Services
             Dark = 2
         }
 
-        private const string KeyMode = "theme_mode";                   // int
-        private const string KeyLightStart = "auto_theme_light_start"; // "HH:mm"
-        private const string KeyDarkStart = "auto_theme_dark_start";  // "HH:mm"
-
         private static bool _timerStarted;
+
+        private static string KeyMode => $"theme_mode_{UserSession.StorageKey}";
+        private static string KeyLightStart => $"auto_theme_light_start_{UserSession.StorageKey}";
+        private static string KeyDarkStart => $"auto_theme_dark_start_{UserSession.StorageKey}";
 
         public static ThemeMode Mode
         {
@@ -73,14 +73,10 @@ namespace E_Book.Services
             };
         }
 
-        /// <summary>
-        /// Light: [lightStart, darkStart) ; Dark: else (自动跨天)
-        /// 例：lightStart=06:00 darkStart=22:00
-        /// Dark: 22:00-24:00 + 00:00-06:00
-        /// </summary>
         public static AppTheme GetThemeForTime(TimeSpan now, TimeSpan lightStart, TimeSpan darkStart)
         {
             bool isLight;
+
             if (lightStart < darkStart)
                 isLight = now >= lightStart && now < darkStart;
             else
@@ -93,6 +89,7 @@ namespace E_Book.Services
         {
             if (TimeSpan.TryParseExact(s, @"hh\:mm", null, out var t))
                 return t;
+
             return fallback;
         }
     }
