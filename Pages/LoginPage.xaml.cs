@@ -94,18 +94,15 @@ public partial class LoginPage : ContentPage
 
         try
         {
-            // Button press animation
             var pressAnim = Task.WhenAll(
                 ThemeToggleBorder.ScaleTo(0.90, 90, Easing.CubicOut),
                 ThemeIconLabel.RotateTo(90, 120, Easing.CubicOut)
             );
 
-            // Subtle content fade
             var fadeOutAnim = LoginCard.FadeTo(0.82, 120, Easing.CubicOut);
 
             await Task.WhenAll(pressAnim, fadeOutAnim);
 
-            // Toggle theme
             Application.Current.UserAppTheme =
                 Application.Current.RequestedTheme == AppTheme.Dark
                     ? AppTheme.Light
@@ -113,7 +110,6 @@ public partial class LoginPage : ContentPage
 
             UpdateThemeIcon();
 
-            // Recover with a small bounce
             ThemeIconLabel.Rotation = -90;
 
             await Task.WhenAll(

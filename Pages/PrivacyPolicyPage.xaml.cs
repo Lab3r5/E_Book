@@ -14,23 +14,12 @@ namespace E_Book.Pages
             {
                 try
                 {
-                    await Navigation.PopAsync();
-                    return;
-                }
-                catch
-                {
-                }
-
-                try
-                {
                     await Shell.Current.GoToAsync("..");
-                    return;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    await DisplayAlert("Navigation Error", ex.Message, "OK");
                 }
-
-                await Navigation.PopModalAsync();
             });
 
             BindingContext = this;

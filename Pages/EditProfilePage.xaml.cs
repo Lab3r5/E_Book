@@ -20,12 +20,20 @@ namespace E_Book.Pages
             _originalName = Preferences.Get(ProfileKey, UserSession.DisplayName)?.Trim() ?? string.Empty;
 
             var currentName = UserSession.IsGuest ? "Guest" : _originalName;
+
             NameEntry.Text = currentName;
             EmailLabel.Text = UserSession.IsGuest ? "Guest account" : UserSession.UserId;
 
             AccountTypeLabel.Text = UserSession.IsGuest ? "Guest account" : "Registered account";
             AvatarLetter.Text = GetAvatarLetter(currentName);
 
+            ApplyGuestModeUI();
+            UpdateQuickLoginUI();
+            UpdateSaveState();
+        }
+
+        private void ApplyGuestModeUI()
+        {
             if (UserSession.IsGuest)
             {
                 NameEntry.IsEnabled = false;
@@ -33,19 +41,18 @@ namespace E_Book.Pages
 
                 SaveLabel.Opacity = 0.35;
                 ChangePasswordLabel.Opacity = 0.35;
+                QuickLoginValueLabel.Opacity = 0.35;
             }
             else
             {
                 NameEntry.IsEnabled = true;
                 GuestNotice.IsVisible = false;
 
-                SaveLabel.Opacity = 0.35;
                 ChangePasswordLabel.Opacity = 1.0;
             }
-            UpdateQuickLoginUI();
         }
 
-        private string GetAvatarLetter(string? name)
+        private static string GetAvatarLetter(string? name)
         {
             var text = (name ?? string.Empty).Trim();
 
@@ -64,15 +71,39 @@ namespace E_Book.Pages
             }
 
             var currentName = NameEntry.Text?.Trim() ?? string.Empty;
-            bool changed = !string.Equals(currentName, _originalName, StringComparison.Ordinal);
+            var changed = !string.Equals(currentName, _originalName, StringComparison.Ordinal);
 
             SaveLabel.Opacity = changed ? 1.0 : 0.35;
             AvatarLetter.Text = GetAvatarLetter(currentName);
         }
 
-        private async Task PressAnim(VisualElement view)
+        private void UpdateQuickLoginUI()
         {
-            if (view == null) return;
+            if (UserSession.IsGuest)
+            {
+                QuickLoginValueLabel.Text = "Unavailable";
+                QuickLoginValueLabel.Opacity = 0.35;
+                return;
+            }
+
+            int remaining = UserSession.QuickLoginRemaining;
+
+            if (remaining <= 0)
+            {
+                QuickLoginValueLabel.Text = "Off";
+                QuickLoginValueLabel.Opacity = 0.75;
+            }
+            else
+            {
+                QuickLoginValueLabel.Text = $"{remaining} left";
+                QuickLoginValueLabel.Opacity = 1.0;
+            }
+        }
+
+        private static async Task PressAnim(VisualElement view)
+        {
+            if (view == null)
+                return;
 
             await view.ScaleTo(0.96, 80, Easing.CubicOut);
             await view.ScaleTo(1.0, 120, Easing.CubicOut);
@@ -83,43 +114,40 @@ namespace E_Book.Pages
             try
             {
                 await Shell.Current.GoToAsync("..");
-                return;
             }
             catch
             {
+                if (Navigation?.ModalStack?.Count > 0)
+                    await Navigation.PopModalAsync();
             }
-
-            try
-            {
-                await Navigation.PopAsync();
-                return;
-            }
-            catch
-            {
-            }
-
-            await Navigation.PopModalAsync();
         }
 
         private void OnNameChanged(object sender, TextChangedEventArgs e)
         {
-            if (UserSession.IsGuest) return;
+            if (UserSession.IsGuest)
+                return;
+
             UpdateSaveState();
         }
 
         private async void OnCancelTapped(object sender, TappedEventArgs e)
         {
-            if (sender is VisualElement v) await PressAnim(v);
+            if (sender is VisualElement v)
+                await PressAnim(v);
+
             await GoBackAsync();
         }
 
         private async void OnSaveTapped(object sender, TappedEventArgs e)
         {
-            if (sender is VisualElement v) await PressAnim(v);
+            if (sender is VisualElement v)
+                await PressAnim(v);
 
-            if (UserSession.IsGuest) return;
+            if (UserSession.IsGuest)
+                return;
 
             var name = NameEntry.Text?.Trim() ?? string.Empty;
+
             if (name.Length == 0)
             {
                 await DisplayAlert("Error", "Name cannot be empty.", "OK");
@@ -131,8 +159,9 @@ namespace E_Book.Pages
 
             Preferences.Set(ProfileKey, name);
             UserSession.UpdateDisplayName(name);
-            _originalName = name;
 
+            _originalName = name;
+            AvatarLetter.Text = GetAvatarLetter(name);
             UpdateSaveState();
 
             await DisplayAlert("Saved", "Profile updated.", "OK");
@@ -141,32 +170,19 @@ namespace E_Book.Pages
 
         private async void OnChangePasswordTapped(object sender, TappedEventArgs e)
         {
-            if (sender is VisualElement v) await PressAnim(v);
+            if (sender is VisualElement v)
+                await PressAnim(v);
 
-            if (UserSession.IsGuest) return;
+            if (UserSession.IsGuest)
+                return;
 
-            await Shell.Current.GoToAsync("password");
+            await Shell.Current.GoToAsync(AppShell.RoutePassword);
         }
 
-        private async void OnLogoutTapped(object sender, TappedEventArgs e)
-        {
-            if (sender is VisualElement v) await PressAnim(v);
-
-            bool ok = await DisplayAlert("Log Out", "Are you sure you want to log out?", "Log Out", "Cancel");
-            if (!ok) return;
-            if (UserSession.CanQuickLogin)
-            {
-                UserSession.LogoutKeepIdentity();
-            }
-            else
-            {
-                UserSession.Logout();
-            }
-            await Shell.Current.GoToAsync("//login");
-        }
         private async void OnQuickLoginTapped(object sender, TappedEventArgs e)
         {
-            if (sender is VisualElement v) await PressAnim(v);
+            if (sender is VisualElement v)
+                await PressAnim(v);
 
             if (UserSession.IsGuest)
             {
@@ -222,27 +238,22 @@ namespace E_Book.Pages
                 await DisplayAlert("Enabled", $"Quick Login is enabled for the next {count} app launch(es).", "OK");
             }
         }
-        private void UpdateQuickLoginUI()
+
+        private async void OnLogoutTapped(object sender, TappedEventArgs e)
         {
-            if (UserSession.IsGuest)
-            {
-                QuickLoginValueLabel.Text = "Unavailable";
-                QuickLoginValueLabel.Opacity = 0.35;
+            if (sender is VisualElement v)
+                await PressAnim(v);
+
+            bool ok = await DisplayAlert("Log Out", "Are you sure you want to log out?", "Log Out", "Cancel");
+            if (!ok)
                 return;
-            }
 
-            int remaining = UserSession.QuickLoginRemaining;
-
-            if (remaining <= 0)
-            {
-                QuickLoginValueLabel.Text = "Off";
-                QuickLoginValueLabel.Opacity = 0.6;
-            }
+            if (UserSession.CanQuickLogin)
+                UserSession.LogoutKeepIdentity();
             else
-            {
-                QuickLoginValueLabel.Text = $"{remaining} left";
-                QuickLoginValueLabel.Opacity = 1.0;
-            }
+                UserSession.Logout();
+
+            Application.Current!.MainPage = new AppShell();
         }
     }
 }

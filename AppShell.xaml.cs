@@ -16,6 +16,8 @@ namespace E_Book
         public const string RouteEditProfile = "edit-profile";
         public const string RouteAppearance = "appearance";
         public const string RouteHelp = "help";
+        public const string RouteHelpCenter = "help-center";
+        public const string RoutePrivacyPolicy = "privacy-policy";
         public const string RoutePassword = "password";
         public const string RouteReading = "reading";
 
@@ -40,6 +42,8 @@ namespace E_Book
             Routing.RegisterRoute(RouteEditProfile, typeof(EditProfilePage));
             Routing.RegisterRoute(RouteAppearance, typeof(AppearancePage));
             Routing.RegisterRoute(RouteHelp, typeof(HelpSupportPage));
+            Routing.RegisterRoute(RouteHelpCenter, typeof(HelpCenterPage));
+            Routing.RegisterRoute(RoutePrivacyPolicy, typeof(PrivacyPolicyPage));
             Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
             Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
         }
