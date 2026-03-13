@@ -26,7 +26,6 @@
                   Opacity="0"
                   TranslationY="-16">
 
-                <!-- Cancel -->
                 <Border x:Name="CancelChip"
                         Grid.Column="0"
                         Padding="12,7"
@@ -38,11 +37,9 @@
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="14" />
                     </Border.StrokeShape>
-
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnCancelMultiSelectClicked"/>
                     </Border.GestureRecognizers>
-
                     <Label Text="Cancel"
                            FontSize="13"
                            FontAttributes="Bold"
@@ -51,7 +48,6 @@
                            VerticalOptions="Center"/>
                 </Border>
 
-                <!-- Normal title -->
                 <Label x:Name="NormalTitleLabel"
                        Grid.Column="2"
                        Text="My Library"
@@ -61,8 +57,7 @@
                        VerticalTextAlignment="Center"
                        HorizontalOptions="Center"
                        Margin="0"
-                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
-                       IsVisible="True">
+                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
@@ -72,7 +67,6 @@
                     </Label.Triggers>
                 </Label>
 
-                <!-- Multi-select title -->
                 <Border x:Name="MultiSelectTitleChip"
                         Grid.Column="2"
                         Padding="12,6"
@@ -106,7 +100,6 @@
                     </Border.Triggers>
                 </Border>
 
-                <!-- Trash -->
                 <Border Grid.Column="4"
                         x:Name="TrashButton"
                         HeightRequest="44"
@@ -115,8 +108,7 @@
                         StrokeThickness="0"
                         HorizontalOptions="End"
                         VerticalOptions="Center"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
-                        IsVisible="True">
+                        BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="22" />
                     </Border.StrokeShape>
@@ -140,7 +132,6 @@
                     </Border.Triggers>
                 </Border>
 
-                <!-- Confirm -->
                 <Border Grid.Column="4"
                         x:Name="ConfirmButton"
                         HeightRequest="42"
@@ -181,7 +172,7 @@
             <Border x:Name="MainCard"
                     Grid.Row="1"
                     BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
-                    Padding="16"
+                    Padding="16,16,16,12"
                     Margin="0,0,0,10"
                     Opacity="0"
                     TranslationY="26"
@@ -231,7 +222,6 @@
                                 <VerticalStackLayout Spacing="10"
                                                      Padding="0,2,0,4">
 
-                                    <!-- Skeleton Card 1 -->
                                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                             StrokeThickness="1"
                                             Padding="10"
@@ -240,7 +230,6 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
@@ -252,28 +241,18 @@
                                                     <RoundRectangle CornerRadius="12" />
                                                 </Border.StrokeShape>
                                             </Border>
-
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
-                                                <BoxView HeightRequest="12"
-                                                         WidthRequest="170"
-                                                         CornerRadius="6"
+                                                <BoxView HeightRequest="12" WidthRequest="170" CornerRadius="6"
                                                          Color="{AppThemeBinding Light=#ECE8F5, Dark=#2F2F36}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="52"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="52" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="118"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="118" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="8"
-                                                         WidthRequest="86"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="8" WidthRequest="86" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#EEE8FF, Dark=#332B4A}" />
                                             </VerticalStackLayout>
-
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
                                                     WidthRequest="44"
@@ -287,7 +266,6 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- Skeleton Card 2 -->
                                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                             StrokeThickness="1"
                                             Padding="10"
@@ -296,7 +274,6 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
@@ -308,24 +285,16 @@
                                                     <RoundRectangle CornerRadius="12" />
                                                 </Border.StrokeShape>
                                             </Border>
-
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
-                                                <BoxView HeightRequest="12"
-                                                         WidthRequest="152"
-                                                         CornerRadius="6"
+                                                <BoxView HeightRequest="12" WidthRequest="152" CornerRadius="6"
                                                          Color="{AppThemeBinding Light=#ECE8F5, Dark=#2F2F36}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="48"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="48" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="128"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="128" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
                                             </VerticalStackLayout>
-
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
                                                     WidthRequest="44"
@@ -339,7 +308,6 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- Skeleton Card 3 -->
                                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                             StrokeThickness="1"
                                             Padding="10"
@@ -348,7 +316,6 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
@@ -360,28 +327,18 @@
                                                     <RoundRectangle CornerRadius="12" />
                                                 </Border.StrokeShape>
                                             </Border>
-
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
-                                                <BoxView HeightRequest="12"
-                                                         WidthRequest="182"
-                                                         CornerRadius="6"
+                                                <BoxView HeightRequest="12" WidthRequest="182" CornerRadius="6"
                                                          Color="{AppThemeBinding Light=#ECE8F5, Dark=#2F2F36}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="58"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="58" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="138"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="138" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="8"
-                                                         WidthRequest="72"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="8" WidthRequest="72" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#EEE8FF, Dark=#332B4A}" />
                                             </VerticalStackLayout>
-
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
                                                     WidthRequest="44"
@@ -395,7 +352,6 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- Skeleton Card 4 -->
                                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                             StrokeThickness="1"
                                             Padding="10"
@@ -404,7 +360,6 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
@@ -416,24 +371,16 @@
                                                     <RoundRectangle CornerRadius="12" />
                                                 </Border.StrokeShape>
                                             </Border>
-
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
-                                                <BoxView HeightRequest="12"
-                                                         WidthRequest="146"
-                                                         CornerRadius="6"
+                                                <BoxView HeightRequest="12" WidthRequest="146" CornerRadius="6"
                                                          Color="{AppThemeBinding Light=#ECE8F5, Dark=#2F2F36}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="54"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="54" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
-                                                <BoxView HeightRequest="9"
-                                                         WidthRequest="116"
-                                                         CornerRadius="5"
+                                                <BoxView HeightRequest="9" WidthRequest="116" CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
                                             </VerticalStackLayout>
-
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
                                                     WidthRequest="44"
@@ -450,7 +397,6 @@
                                 </VerticalStackLayout>
                             </ScrollView>
 
-                            <!-- Shimmer overlay -->
                             <BoxView x:Name="SkeletonShimmer"
                                      InputTransparent="True"
                                      Opacity="0.32"
@@ -493,7 +439,7 @@
                                       Opacity="0"
                                       TranslationY="20">
 
-                                    <VerticalStackLayout Spacing="16"
+                                    <VerticalStackLayout Spacing="14"
                                                          HorizontalOptions="Center"
                                                          VerticalOptions="Center">
 
@@ -506,7 +452,6 @@
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="30" />
                                             </Border.StrokeShape>
-
                                             <Grid>
                                                 <Label x:Name="EmptyIcon"
                                                        Text="📚"
@@ -522,30 +467,112 @@
                                                HorizontalTextAlignment="Center"
                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-                                        <Label Text="Import your first book to start reading."
+                                        <Label Text="Import your first book to start reading. On desktop you can also drag supported files into the app."
                                                FontSize="14"
                                                HorizontalTextAlignment="Center"
                                                LineBreakMode="WordWrap"
-                                               WidthRequest="260"
+                                               WidthRequest="300"
                                                TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
 
-                                        <Button Text="Add Your First Book"
+                                        <Label Text="Supported formats"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               HorizontalTextAlignment="Center"
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+
+                                        <FlexLayout Direction="Row"
+                                                    Wrap="Wrap"
+                                                    JustifyContent="Center"
+                                                    AlignItems="Center"
+                                                    WidthRequest="290">
+
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="TXT" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="EPUB" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="PDF" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="HTML" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="DOCX" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                            <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label Text="RTF" FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                            </Border>
+                                        </FlexLayout>
+
+                                        <Button Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=EmptyStatePrimaryButtonText}"
                                                 FontSize="14"
                                                 FontAttributes="Bold"
                                                 HeightRequest="46"
-                                                WidthRequest="200"
+                                                WidthRequest="220"
                                                 CornerRadius="16"
                                                 BackgroundColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
                                                 TextColor="White"
-                                                Clicked="OnAddFileClicked"/>
+                                                Clicked="OnAddFileClicked" />
 
+                                        <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=EmptyStateSecondaryHint}"
+                                               FontSize="11.5"
+                                               HorizontalTextAlignment="Center"
+                                               WidthRequest="290"
+                                               LineBreakMode="WordWrap"
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </CollectionView.EmptyView>
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <SwipeView>
+                                    <SwipeView x:Name="BookSwipe"
+                                               IsEnabled="True">
+                                        <SwipeView.Triggers>
+                                            <DataTrigger TargetType="SwipeView"
+                                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="SwipeView"
+                                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsImporting}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                        </SwipeView.Triggers>
+
                                         <SwipeView.LeftItems>
                                             <SwipeItems Mode="Reveal">
                                                 <SwipeItem Text="Delete"
@@ -558,17 +585,32 @@
                                         <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                                                 StrokeThickness="1"
                                                 Padding="10"
-                                                Margin="0,0,0,9"
-                                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                                Margin="0,0,0,8"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+                                                Loaded="OnBookCardLoaded">
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="16" />
                                             </Border.StrokeShape>
+                                            <Border.Shadow>
+                                                <Shadow Brush="#14000000"
+                                                        Offset="0,8"
+                                                        Radius="16"
+                                                        Opacity="0.32" />
+                                            </Border.Shadow>
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border"
+                                                             Binding="{Binding IsSelected}"
+                                                             Value="True">
+                                                    <Setter Property="Stroke" Value="#8C79FF" />
+                                                    <Setter Property="StrokeThickness" Value="1.6" />
+                                                    <Setter Property="BackgroundColor" Value="#FAF8FF" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
 
                                             <Grid ColumnDefinitions="Auto,56,*,48"
                                                   ColumnSpacing="8"
                                                   VerticalOptions="Center">
 
-                                                <!-- Checkbox -->
                                                 <CheckBox Grid.Column="0"
                                                           IsChecked="{Binding IsSelected}"
                                                           VerticalOptions="Center"
@@ -583,7 +625,6 @@
                                                     </CheckBox.Triggers>
                                                 </CheckBox>
 
-                                                <!-- Cover -->
                                                 <Border Grid.Column="1"
                                                         HeightRequest="56"
                                                         WidthRequest="56"
@@ -594,7 +635,6 @@
                                                     <Border.StrokeShape>
                                                         <RoundRectangle CornerRadius="12" />
                                                     </Border.StrokeShape>
-
                                                     <Grid>
                                                         <Label Text="{Binding CoverText}"
                                                                FontSize="12"
@@ -605,7 +645,6 @@
                                                     </Grid>
                                                 </Border>
 
-                                                <!-- Text content -->
                                                 <Grid Grid.Column="2"
                                                       VerticalOptions="Center">
                                                     <Grid.Behaviors>
@@ -619,30 +658,54 @@
                                                                               CommandParameter="{Binding .}" />
                                                     </Grid.GestureRecognizers>
 
-                                                    <VerticalStackLayout Spacing="2"
+                                                    <VerticalStackLayout Spacing="3"
                                                                          VerticalOptions="Center">
 
-                                                        <Label Text="{Binding FileName}"
-                                                               FontSize="12.5"
+                                                        <Label Text="{Binding DisplayFileName}"
+                                                               FontSize="13"
                                                                FontAttributes="Bold"
                                                                LineBreakMode="TailTruncation"
                                                                MaxLines="1"
                                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-                                                        <Border Padding="6,2"
-                                                                Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#444444}"
-                                                                StrokeThickness="1"
-                                                                HorizontalOptions="Start"
-                                                                BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#2B2B2F}">
-                                                            <Border.StrokeShape>
-                                                                <RoundRectangle CornerRadius="6" />
-                                                            </Border.StrokeShape>
+                                                        <HorizontalStackLayout Spacing="6">
+                                                            <Border Padding="6,2"
+                                                                    Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#444444}"
+                                                                    StrokeThickness="1"
+                                                                    HorizontalOptions="Start"
+                                                                    BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#2B2B2F}">
+                                                                <Border.StrokeShape>
+                                                                    <RoundRectangle CornerRadius="6" />
+                                                                </Border.StrokeShape>
 
-                                                            <Label Text="{Binding Format}"
-                                                                   FontSize="8.5"
-                                                                   FontAttributes="Bold"
-                                                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                                                        </Border>
+                                                                <Label Text="{Binding Format}"
+                                                                       FontSize="8.2"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                            </Border>
+
+                                                            <Border Padding="6,2"
+                                                                    StrokeThickness="0"
+                                                                    HorizontalOptions="Start"
+                                                                    BackgroundColor="{AppThemeBinding Light=#F4F2FB, Dark=#2A2A31}"
+                                                                    IsVisible="False">
+                                                                <Border.StrokeShape>
+                                                                    <RoundRectangle CornerRadius="6" />
+                                                                </Border.StrokeShape>
+                                                                <Border.Triggers>
+                                                                    <DataTrigger TargetType="Border"
+                                                                                 Binding="{Binding IsUnread}"
+                                                                                 Value="True">
+                                                                        <Setter Property="IsVisible" Value="True" />
+                                                                    </DataTrigger>
+                                                                </Border.Triggers>
+
+                                                                <Label Text="Ready to read"
+                                                                       FontSize="8.2"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                            </Border>
+                                                        </HorizontalStackLayout>
 
                                                         <Label Text="{Binding LastOpenedText}"
                                                                FontSize="9.3"
@@ -691,11 +754,9 @@
                                                                    VerticalOptions="Center"
                                                                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
                                                         </Grid>
-
                                                     </VerticalStackLayout>
                                                 </Grid>
 
-                                                <!-- Read -->
                                                 <Button Grid.Column="3"
                                                         Text="Read"
                                                         FontSize="11"
@@ -719,102 +780,139 @@
                                                         </DataTrigger>
                                                     </Button.Triggers>
                                                 </Button>
-
                                             </Grid>
                                         </Border>
                                     </SwipeView>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
-
                     </Grid>
 
-                    <!-- Add Book -->
-                    <Border Grid.Row="2"
-                            Padding="0"
-                            Margin="10,12,10,4"
-                            StrokeThickness="0"
-                            BackgroundColor="Transparent"
-                            IsVisible="True">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="26" />
-                        </Border.StrokeShape>
+                    <!-- Add Book Area -->
+                    <VerticalStackLayout Grid.Row="2"
+                                         x:Name="AddBookBottomArea"
+                                         Spacing="6"
+                                         Margin="10,2,10,0"
+                                         VerticalOptions="End"
+                                         IsVisible="True">
+                        <VerticalStackLayout.Triggers>
+                            <DataTrigger TargetType="VerticalStackLayout"
+                                         Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                         Value="True">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </VerticalStackLayout.Triggers>
 
-                        <Grid HeightRequest="62">
+                        <Border x:Name="AddBookCard"
+                                Padding="0"
+                                StrokeThickness="0"
+                                BackgroundColor="Transparent">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="26" />
+                            </Border.StrokeShape>
+                            <Border.Shadow>
+                                <Shadow Brush="#1A6F5DFF"
+                                        Offset="0,10"
+                                        Radius="18"
+                                        Opacity="0.34" />
+                            </Border.Shadow>
 
-                            <Grid.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="{AppThemeBinding Light=#7A63FF, Dark=#8A74FF}" Offset="0.0" />
-                                    <GradientStop Color="{AppThemeBinding Light=#9B8CFF, Dark=#6E58E8}" Offset="1.0" />
-                                </LinearGradientBrush>
-                            </Grid.Background>
+                            <Grid x:Name="AddBookTapSurface"
+                                  HeightRequest="66">
 
-                            <Grid ColumnDefinitions="Auto,*,Auto"
-                                  Padding="18,0">
+                                <Grid.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="{AppThemeBinding Light=#7A63FF, Dark=#8A74FF}" Offset="0.0" />
+                                        <GradientStop Color="{AppThemeBinding Light=#9B8CFF, Dark=#6E58E8}" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Grid.Background>
 
-                                <Border Grid.Column="0"
-                                        HeightRequest="34"
-                                        WidthRequest="34"
-                                        Padding="0"
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAddFileClicked" />
+                                </Grid.GestureRecognizers>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      Padding="18,0">
+
+                                    <Border Grid.Column="0"
+                                            HeightRequest="34"
+                                            WidthRequest="34"
+                                            Padding="0"
+                                            StrokeThickness="0"
+                                            VerticalOptions="Center"
+                                            BackgroundColor="#22FFFFFF">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="17" />
+                                        </Border.StrokeShape>
+
+                                        <Grid>
+                                            <Label Text="+"
+                                                   FontSize="22"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=ShowAddBookPlus}" />
+
+                                            <ActivityIndicator IsRunning="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsImporting}"
+                                                               IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsImporting}"
+                                                               Color="White"
+                                                               HeightRequest="18"
+                                                               WidthRequest="18"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="1"
+                                                         Padding="12,0,0,0"
+                                                         VerticalOptions="Center">
+
+                                        <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=AddBookButtonTitle}"
+                                               FontSize="17"
+                                               FontAttributes="Bold"
+                                               TextColor="White"
+                                               LineBreakMode="NoWrap" />
+
+                                        <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=AddBookButtonSubtitle}"
+                                               FontSize="10.5"
+                                               TextColor="#EDE9FF"
+                                               LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+
+                                    <Label Grid.Column="2"
+                                           Text="›"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="White"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="End"
+                                           Opacity="{Binding Source={x:Reference BookshelfPageRoot}, Path=AddBookArrowOpacity}" />
+                                </Grid>
+
+                                <Border IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsImporting}"
                                         StrokeThickness="0"
-                                        VerticalOptions="Center"
-                                        BackgroundColor="#22FFFFFF">
+                                        BackgroundColor="#16000000"
+                                        InputTransparent="False">
                                     <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="17" />
+                                        <RoundRectangle CornerRadius="26" />
                                     </Border.StrokeShape>
-
-                                    <Label Text="+"
-                                           FontSize="22"
-                                           FontAttributes="Bold"
-                                           TextColor="White"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center"/>
                                 </Border>
-
-                                <VerticalStackLayout Grid.Column="1"
-                                                     Spacing="0"
-                                                     Padding="12,0,0,0"
-                                                     VerticalOptions="Center">
-
-                                    <Label Text="Add Book"
-                                           FontSize="18"
-                                           FontAttributes="Bold"
-                                           TextColor="White"
-                                           LineBreakMode="NoWrap" />
-
-                                    <Label Text="Import a new file to your library"
-                                           FontSize="11"
-                                           TextColor="#EDE9FF"
-                                           LineBreakMode="TailTruncation" />
-                                </VerticalStackLayout>
-
-                                <Label Grid.Column="2"
-                                       Text="›"
-                                       FontSize="24"
-                                       FontAttributes="Bold"
-                                       TextColor="White"
-                                       VerticalOptions="Center"
-                                       HorizontalOptions="End" />
-
                             </Grid>
+                        </Border>
 
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnAddFileClicked" />
-                            </Grid.GestureRecognizers>
-
-                            <Grid.Triggers>
-                                <DataTrigger TargetType="Grid"
-                                             Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                                             Value="True">
-                                    <Setter Property="IsVisible" Value="False" />
-                                </DataTrigger>
-                            </Grid.Triggers>
-                        </Grid>
-                    </Border>
+                        <Label HorizontalTextAlignment="Center"
+                               FontSize="11.5"
+                               LineBreakMode="WordWrap"
+                               MaxLines="2"
+                               Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=AddBookHelperText}"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                               Margin="8,0,8,0" />
+                    </VerticalStackLayout>
 
                 </Grid>
             </Border>
-
         </Grid>
 
         <!-- Toast -->
@@ -921,7 +1019,6 @@
                                 Clicked="OnConfirmDeleteDialog"/>
 
                     </Grid>
-
                 </VerticalStackLayout>
             </Border>
         </Grid>

@@ -17,6 +17,13 @@ namespace E_Book.Pages
 {
     public partial class BookshelfPage : ContentPage, INotifyPropertyChanged
     {
+        private enum ImportFeedbackState
+        {
+            Idle,
+            Success,
+            Failure
+        }
+
         public ObservableCollection<BookItem> Books { get; set; } = new();
 
         private bool _isMultiSelectMode;
@@ -43,6 +50,19 @@ namespace E_Book.Pages
             }
         }
 
+        private bool _isImporting;
+        public bool IsImporting
+        {
+            get => _isImporting;
+            set
+            {
+                if (_isImporting == value) return;
+                _isImporting = value;
+                OnPropertyChanged();
+                RaiseImportUiProperties();
+            }
+        }
+
         public string SelectedCountText
         {
             get
@@ -52,10 +72,75 @@ namespace E_Book.Pages
             }
         }
 
+        public string AddBookButtonTitle
+        {
+            get
+            {
+                if (IsImporting) return "Importing...";
+                return _importFeedbackState switch
+                {
+                    ImportFeedbackState.Success => "Imported",
+                    ImportFeedbackState.Failure => "Import failed",
+                    _ => "Add Book"
+                };
+            }
+        }
+
+        public string AddBookButtonSubtitle
+        {
+            get
+            {
+                if (IsImporting) return "Please wait while we add your file";
+                return _importFeedbackState switch
+                {
+                    ImportFeedbackState.Success => "Your book is ready in the library",
+                    ImportFeedbackState.Failure => "Please check the file and try again",
+                    _ => "Import a new file to your library"
+                };
+            }
+        }
+
+        public string AddBookHelperText
+        {
+            get
+            {
+                if (IsImporting) return "Import in progress...";
+                return _importFeedbackState switch
+                {
+                    ImportFeedbackState.Success => "Book added successfully.",
+                    ImportFeedbackState.Failure => "Import failed. Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.",
+                    _ => "Supports TXT, EPUB, PDF, HTML, DOCX, and RTF."
+                };
+            }
+        }
+
+        public double AddBookArrowOpacity => IsImporting ? 0.35 : 1.0;
+
+        public bool ShowAddBookPlus => !IsImporting;
+
+        public string EmptyStatePrimaryButtonText => IsImporting ? "Importing..." : "Add Your First Book";
+
+        public string EmptyStateSecondaryHint
+        {
+            get
+            {
+                if (IsImporting)
+                    return "Please keep this page open while your book is being imported.";
+
+                return _importFeedbackState switch
+                {
+                    ImportFeedbackState.Success => "Nice — your first book has been added.",
+                    ImportFeedbackState.Failure => "Import failed. Try another supported file.",
+                    _ => "Tip: imported files stay in your local library for quick access."
+                };
+            }
+        }
+
         public ICommand LongPressCommand { get; }
 
         private List<BookItem> _pendingDeleteItems = new();
         private readonly HashSet<BookItem> _subscribedItems = new();
+        private readonly Dictionary<string, WeakReference<Border>> _bookCardMap = new(StringComparer.OrdinalIgnoreCase);
 
         private bool _isHeaderAnimating;
         private bool _isSelectionCountPulsing;
@@ -65,6 +150,10 @@ namespace E_Book.Pages
 
         private bool _refreshOnNextAppear = true;
         private bool _animateListOnNextAppear = true;
+
+        private ImportFeedbackState _importFeedbackState = ImportFeedbackState.Idle;
+        private int _importFeedbackVersion;
+        private string? _pendingHighlightBookPath;
 
         public BookshelfPage()
         {
@@ -80,6 +169,7 @@ namespace E_Book.Pages
             UpdateSelectAllText();
             UpdateConfirmState();
             OnPropertyChanged(nameof(SelectedCountText));
+            RaiseImportUiProperties();
         }
 
         protected override async void OnAppearing()
@@ -162,12 +252,40 @@ namespace E_Book.Pages
                     EmptyStateContainer.TranslationY = 0;
                 }
             }
+
+            await TryHighlightPendingBookAsync();
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
             _isEmptyIconBreathing = false;
+        }
+
+        private void RaiseImportUiProperties()
+        {
+            OnPropertyChanged(nameof(AddBookButtonTitle));
+            OnPropertyChanged(nameof(AddBookButtonSubtitle));
+            OnPropertyChanged(nameof(AddBookHelperText));
+            OnPropertyChanged(nameof(AddBookArrowOpacity));
+            OnPropertyChanged(nameof(ShowAddBookPlus));
+            OnPropertyChanged(nameof(EmptyStatePrimaryButtonText));
+            OnPropertyChanged(nameof(EmptyStateSecondaryHint));
+        }
+
+        private async Task SetTransientImportFeedbackAsync(ImportFeedbackState state)
+        {
+            _importFeedbackState = state;
+            int version = ++_importFeedbackVersion;
+            RaiseImportUiProperties();
+
+            await Task.Delay(1500);
+
+            if (version != _importFeedbackVersion || IsImporting)
+                return;
+
+            _importFeedbackState = ImportFeedbackState.Idle;
+            RaiseImportUiProperties();
         }
 
         private void EnsureBookListVisibleImmediately()
@@ -251,6 +369,7 @@ namespace E_Book.Pages
                         b.ReadingProgress = 0;
                         b.LastOpenedTicks = 0;
                     }
+
                     b.RefreshVisualMeta();
                 }
 
@@ -366,21 +485,21 @@ namespace E_Book.Pages
             Welcome to E_Book 📚
 
             E_Book is a modern cross-platform e-book reader built with .NET MAUI.
-            It provides a clean reading experience, a smart bookshelf system,
-            and intuitive mobile interactions designed for everyday reading.
+            It focuses on a clean reading experience, an intelligent bookshelf system,
+            and smooth mobile-style interactions.
 
             Current Version
             E_Book v1.07
 
             ────────────────────────────
-            📚 Smart Bookshelf
+            📚 Smart Library
             ────────────────────────────
-            Your library is designed to behave like a modern reading dashboard.
+            Your library acts as a reading dashboard where all imported books are organized automatically.
 
             Features include:
 
             • Automatically generated book covers
-            • File format labels for each book
+            • File format labels
             • Reading progress indicators
             • Continue Reading badges
             • Last opened time tracking
@@ -395,99 +514,125 @@ namespace E_Book.Pages
             DOCX
             RTF
 
-            All imported files are stored inside the app's local Library folder
-            to ensure stable access and fast loading.
+            All imported files are stored inside the app's private Library folder to ensure stable access.
 
             ────────────────────────────
             ➕ Importing Books
             ────────────────────────────
             Adding books to your library is simple.
 
-            1. Tap the Add Book button
-            2. Choose a supported file from your device
-            3. The file will be copied into your E_Book library
+            1. Tap the "Add Book" button
+            2. Select a supported file
+            3. The file will be copied into your library
+
+            During import you will see a loading indicator.
 
             Notes:
 
             • Duplicate files will not be imported again
             • Imported books remain available even if the original file is removed
+            • Large files may take a few seconds to import
 
             ────────────────────────────
-            📖 Reading Experience
+            📖 Reading Books
             ────────────────────────────
-            E_Book focuses on a distraction-free reading environment.
+            To start reading a book:
 
-            Reading controls:
+            1. Tap the "Read" button on a book card
+            2. The reading page will open instantly
 
-            • Tap Read to open a book
-            • Swipe left or right to change pages
-            • Tap the center of the screen to show or hide controls
-            • Use the back button to return to the bookshelf
+            Reader controls include:
 
-            Customization options include:
+            • Swipe left / right to change pages
+            • Tap the center to toggle reading controls
+            • Use the back button to return to the library
 
-            • Font size adjustment
-            • Light / Dark theme
-            • Reading layout preferences
+            The reading interface is designed to minimize distractions.
 
             ────────────────────────────
             🧠 Reading Progress
             ────────────────────────────
-            Your reading activity is automatically saved.
+            E_Book automatically tracks your reading activity.
 
-            E_Book will remember:
+            The system remembers:
 
-            ✓ Your last reading position
+            ✓ Last reading position
             ✓ Reading progress percentage
             ✓ Last opened time
-            ✓ Continue reading status
 
-            When reopening a book, you will continue from where you stopped.
+            Books you started reading will show:
+
+            • Continue Reading badge
+            • Progress bar
+            • Reading percentage
+
+            When reopening a book, you continue exactly where you stopped.
 
             ────────────────────────────
-            🗑️ Bookshelf Management
+            🗑️ Managing Books
             ────────────────────────────
             The bookshelf supports modern mobile interactions.
 
-            You can manage books using:
+            Delete a book by:
 
-            • Swipe left to reveal Delete
-            • Tap the trash icon to enter multi-select mode
-            • Long-press a book to quickly start selection
-            • Use Select All / Unselect All
-            • Confirm deletion with the ✓ button
+            • Swiping left on a book card
+            • Tapping Delete
 
-            A confirmation dialog will appear before files are deleted.
+            You can also delete multiple books:
+
+            1. Tap the trash icon to enter selection mode
+            2. Select multiple books
+            3. Press the ✓ confirm button
+
+            A confirmation dialog will appear before files are permanently removed.
 
             ────────────────────────────
             🔎 Search
             ────────────────────────────
-            The Search page helps you quickly find books in your library.
+            The Search page helps you quickly find books.
 
-            Features include:
+            Search features include:
 
-            • Keyword search by file name
-            • Search history
-            • Quick access to matching books
+            • Search by book title
+            • Instant results while typing
+            • Recently searched keywords
             • Reading progress shown in results
+
+            Search results update automatically as you type.
+
+            ────────────────────────────
+            ✨ Interface Features
+            ────────────────────────────
+            E_Book includes several interface improvements:
+
+            • Smooth page transitions
+            • Import success feedback
+            • Animated bookshelf updates
+            • Skeleton loading when the library loads
+            • Empty library guidance
+
+            These help create a smooth and responsive reading experience.
 
             ────────────────────────────
             💡 Tips
             ────────────────────────────
 
             • Recently opened books appear at the top of the library
-            • Books with reading progress show a Continue Reading badge
-            • Large books may take slightly longer to load the first time
-            • Deleting a book permanently removes it from the library
+            • Books with progress display a Continue Reading badge
+            • Long-press a book to quickly enter multi-select mode
+            • The library automatically refreshes after reading
 
             ────────────────────────────
 
             Thank you for using E_Book.
 
-            Enjoy your reading experience.
+            Enjoy your reading experience!
             """;
 
-            File.WriteAllText(guidePath, guideContent);
+            if (!File.Exists(guidePath))
+            {
+                File.WriteAllText(guidePath, guideContent);
+            }
         }
 
         private void SubscribeItem(BookItem item)
@@ -558,61 +703,263 @@ namespace E_Book.Pages
 
         private async void OnAddFileClicked(object sender, EventArgs e)
         {
-            var result = await FilePicker.PickAsync(new PickOptions
-            {
-                FileTypes = BuildPickerTypes(),
-                PickerTitle = "Select a file (TXT/EPUB/PDF/HTML/DOCX/RTF)"
-            });
-
-            if (result == null) return;
-
-            var ext = Path.GetExtension(result.FileName)?.ToLowerInvariant() ?? "";
-            if (!LibraryService.SupportedExtensions.Contains(ext))
-            {
-                await DisplayAlert("Not supported", $"Unsupported file type: {ext}", "OK");
+            if (IsImporting || IsMultiSelectMode)
                 return;
-            }
 
-            string targetPath = Path.Combine(LibraryService.LibraryPath, result.FileName);
+            await AnimateAddBookPressAsync();
 
-            if (File.Exists(targetPath))
+            try
             {
-                await DisplayAlert("Notice", "This file has already been imported!", "OK");
-                return;
+                var result = await FilePicker.PickAsync(new PickOptions
+                {
+                    FileTypes = BuildPickerTypes(),
+                    PickerTitle = "Select a file (TXT/EPUB/PDF/HTML/DOCX/RTF)"
+                });
+
+                if (result == null)
+                    return;
+
+                var ext = Path.GetExtension(result.FileName)?.ToLowerInvariant() ?? "";
+                if (!LibraryService.SupportedExtensions.Contains(ext))
+                {
+                    await DisplayAlert("Not supported", $"Unsupported file type: {ext}", "OK");
+                    _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Failure);
+                    return;
+                }
+
+                string targetPath = Path.Combine(LibraryService.LibraryPath, result.FileName);
+
+                if (File.Exists(targetPath))
+                {
+                    await DisplayAlert("Notice", "This file has already been imported!", "OK");
+                    _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Failure);
+                    return;
+                }
+
+                IsImporting = true;
+                _importFeedbackState = ImportFeedbackState.Idle;
+                RaiseImportUiProperties();
+
+                var importedBook = await SaveFileToLibraryAndCreateBookAsync(result, targetPath);
+                if (importedBook == null)
+                {
+                    _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Failure);
+                    return;
+                }
+
+                importedBook.IsFreshlyImported = true;
+                importedBook.RefreshVisualMeta();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    InsertImportedBookAtTop(importedBook);
+
+                    if (Books.Count == 1)
+                    {
+                        _isEmptyIconBreathing = false;
+
+                        if (EmptyStateContainer != null)
+                        {
+                            EmptyStateContainer.Opacity = 1;
+                            EmptyStateContainer.TranslationY = 0;
+                        }
+                    }
+
+                    EnsureBookListVisibleImmediately();
+                });
+
+                await ShowToast("Imported successfully");
+                _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Success);
+
+                _refreshOnNextAppear = false;
+                _animateListOnNextAppear = false;
             }
-
-            await SaveFileToLibrary(result, targetPath);
-
-            await RefreshBooksAsync();
-
-            if (Books.Count < 30)
-                await AnimateBookListAppearance();
-            else
-                EnsureBookListVisibleImmediately();
-
-            await ShowToast("Imported successfully");
-
-            _refreshOnNextAppear = false;
-            _animateListOnNextAppear = false;
+            finally
+            {
+                IsImporting = false;
+            }
         }
 
-        private async Task SaveFileToLibrary(FileResult file, string targetPath)
+        private async Task<BookItem?> SaveFileToLibraryAndCreateBookAsync(FileResult file, string targetPath)
         {
             try
             {
                 using var stream = await file.OpenReadAsync();
                 using var newFileStream = File.Create(targetPath);
                 await stream.CopyToAsync(newFileStream);
+
+                return new BookItem
+                {
+                    FileName = Path.GetFileName(targetPath),
+                    FullPath = targetPath,
+                    Format = LibraryService.GetFormatTag(targetPath),
+                    ReadingProgress = 0,
+                    LastOpenedTicks = 0,
+                    IsSelected = false
+                };
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Error", $"Failed to save file: {ex.Message}", "OK");
+                return null;
             }
+        }
+
+        private void InsertImportedBookAtTop(BookItem importedBook)
+        {
+            var existing = Books.FirstOrDefault(x =>
+                string.Equals(x.FullPath, importedBook.FullPath, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
+            {
+                existing.FileName = importedBook.FileName;
+                existing.Format = importedBook.Format;
+                existing.ReadingProgress = importedBook.ReadingProgress;
+                existing.LastOpenedTicks = importedBook.LastOpenedTicks;
+                existing.IsFreshlyImported = true;
+                existing.RefreshVisualMeta();
+
+                int existingIndex = Books.IndexOf(existing);
+                if (existingIndex > 0)
+                    Books.Move(existingIndex, 0);
+
+                return;
+            }
+
+            Books.Insert(0, importedBook);
+            SubscribeItem(importedBook);
+
+            UpdateSelectAllText();
+            UpdateConfirmState();
+            OnPropertyChanged(nameof(SelectedCountText));
+        }
+
+        private async Task AnimateAddBookPressAsync()
+        {
+            if (AddBookTapSurface == null)
+                return;
+
+            await AddBookTapSurface.ScaleTo(0.985, 70, Easing.CubicIn);
+            await AddBookTapSurface.ScaleTo(1.0, 90, Easing.CubicOut);
+        }
+
+        private async void OnBookCardLoaded(object sender, EventArgs e)
+        {
+            if (sender is not Border border)
+                return;
+
+            if (border.BindingContext is not BookItem book)
+                return;
+
+            _bookCardMap[book.FullPath] = new WeakReference<Border>(border);
+
+            if (book.IsFreshlyImported)
+            {
+                border.Opacity = 0;
+                border.Scale = 0.97;
+                border.TranslationY = 8;
+
+                await Task.WhenAll(
+                    border.FadeTo(1, 240, Easing.CubicOut),
+                    border.ScaleTo(1.0, 240, Easing.CubicOut),
+                    border.TranslateTo(0, 0, 240, Easing.CubicOut)
+                );
+
+                book.IsFreshlyImported = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_pendingHighlightBookPath) &&
+                string.Equals(_pendingHighlightBookPath, book.FullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                await PulseBookCardAsync(border);
+                _pendingHighlightBookPath = null;
+            }
+        }
+
+        private async Task TryHighlightPendingBookAsync()
+        {
+            if (string.IsNullOrWhiteSpace(_pendingHighlightBookPath))
+                return;
+
+            for (int i = 0; i < 6; i++)
+            {
+                var book = Books.FirstOrDefault(b =>
+                    string.Equals(b.FullPath, _pendingHighlightBookPath, StringComparison.OrdinalIgnoreCase));
+
+                if (book != null && TryGetLiveBookCard(book, out var card) && card != null)
+                {
+                    await PulseBookCardAsync(card);
+                    _pendingHighlightBookPath = null;
+                    return;
+                }
+
+                await Task.Delay(90);
+            }
+        }
+
+        private bool TryGetLiveBookCard(BookItem book, out Border? card)
+        {
+            card = null;
+
+            if (!_bookCardMap.TryGetValue(book.FullPath, out var weakRef))
+                return false;
+
+            if (!weakRef.TryGetTarget(out var candidate))
+            {
+                _bookCardMap.Remove(book.FullPath);
+                return false;
+            }
+
+            if (candidate.BindingContext is not BookItem ctxBook ||
+                !string.Equals(ctxBook.FullPath, book.FullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            card = candidate;
+            return true;
+        }
+
+        private async Task PulseBookCardAsync(Border card)
+        {
+            try
+            {
+                await card.ScaleTo(1.018, 110, Easing.CubicOut);
+                await card.ScaleTo(1.0, 130, Easing.CubicOut);
+            }
+            catch
+            {
+            }
+        }
+
+        private async Task AnimateBookRemovalAsync(BookItem book)
+        {
+            if (!TryGetLiveBookCard(book, out var card) || card == null)
+                return;
+
+            try
+            {
+                await Task.WhenAll(
+                    card.FadeTo(0, 180, Easing.CubicIn),
+                    card.ScaleTo(0.96, 180, Easing.CubicIn),
+                    card.TranslateTo(0, -8, 180, Easing.CubicIn)
+                );
+            }
+            catch
+            {
+            }
+        }
+
+        private async Task AnimateRemoveBooksAsync(List<BookItem> books)
+        {
+            var tasks = books.Select(AnimateBookRemovalAsync).ToList();
+            if (tasks.Count > 0)
+                await Task.WhenAll(tasks);
         }
 
         private async void OnFileClicked(object sender, EventArgs e)
         {
-            if (IsMultiSelectMode) return;
+            if (IsMultiSelectMode || IsImporting) return;
 
             if (sender is Button button && button.CommandParameter is BookItem book)
             {
@@ -632,7 +979,8 @@ namespace E_Book.Pages
                 int currentIndex = Books.IndexOf(book);
                 if (currentIndex > 0)
                     Books.Move(currentIndex, 0);
-                
+
+                _pendingHighlightBookPath = book.FullPath;
                 _refreshOnNextAppear = false;
                 _animateListOnNextAppear = false;
 
@@ -643,7 +991,7 @@ namespace E_Book.Pages
 
         private void OnItemTapped(object sender, TappedEventArgs e)
         {
-            if (!IsMultiSelectMode) return;
+            if (!IsMultiSelectMode || IsImporting) return;
 
             if (e.Parameter is BookItem book)
             {
@@ -655,7 +1003,7 @@ namespace E_Book.Pages
 
         private void OnItemLongPressed(BookItem? book)
         {
-            if (book == null) return;
+            if (book == null || IsImporting) return;
 
             if (!IsMultiSelectMode)
                 EnterMultiSelectMode();
@@ -669,6 +1017,9 @@ namespace E_Book.Pages
 
         private async void OnTrashTapped(object sender, EventArgs e)
         {
+            if (IsImporting)
+                return;
+
             await AnimatePress(TrashButton);
 
             if (Books.Count == 0)
@@ -688,6 +1039,9 @@ namespace E_Book.Pages
 
         private void OnSwipeDelete(object sender, EventArgs e)
         {
+            if (IsImporting || IsMultiSelectMode)
+                return;
+
             if (sender is SwipeItem swipe && swipe.CommandParameter is BookItem book)
             {
                 OpenDeleteDialog(new List<BookItem> { book }, single: true);
@@ -724,7 +1078,7 @@ namespace E_Book.Pages
 
         private void OnSelectAllClicked(object? sender, EventArgs e)
         {
-            if (!IsMultiSelectMode || Books.Count == 0) return;
+            if (!IsMultiSelectMode || Books.Count == 0 || IsImporting) return;
 
             bool allSelected = Books.All(b => b.IsSelected);
             foreach (var b in Books)
@@ -751,12 +1105,13 @@ namespace E_Book.Pages
 
         private void OnCancelMultiSelectClicked(object? sender, EventArgs e)
         {
+            if (IsImporting) return;
             ExitMultiSelectMode();
         }
 
         private async void OnConfirmTapped(object sender, EventArgs e)
         {
-            if (!IsMultiSelectMode) return;
+            if (!IsMultiSelectMode || IsImporting) return;
 
             var selected = Books.Where(b => b.IsSelected).ToList();
             if (selected.Count == 0) return;
@@ -774,12 +1129,17 @@ namespace E_Book.Pages
                 ConfirmButton.Opacity = 1;
                 ConfirmButton.InputTransparent = false;
                 ConfirmButton.Scale = 1;
+                ConfirmButton.BackgroundColor = Color.FromArgb("#8FD8A2");
                 return;
             }
 
             bool hasSelected = Books.Any(b => b.IsSelected);
-            ConfirmButton.Opacity = hasSelected ? 1.0 : 0.40;
+            ConfirmButton.Opacity = hasSelected ? 1.0 : 0.42;
             ConfirmButton.InputTransparent = !hasSelected;
+            ConfirmButton.Scale = hasSelected ? 1.0 : 0.97;
+            ConfirmButton.BackgroundColor = hasSelected
+                ? Color.FromArgb("#8FD8A2")
+                : Color.FromArgb("#BED7C5");
         }
 
         private async void OpenDeleteDialog(List<BookItem> items, bool single)
@@ -788,7 +1148,7 @@ namespace E_Book.Pages
 
             if (single)
             {
-                var name = items[0].FileName;
+                var name = items[0].DisplayFileName;
                 DeleteTitle.Text = "Delete this book?";
                 DeleteMessage.Text = $"Delete \"{name}\"?\nThis action cannot be undone.";
             }
@@ -833,6 +1193,8 @@ namespace E_Book.Pages
             var toDelete = _pendingDeleteItems?.ToList() ?? new List<BookItem>();
             _pendingDeleteItems = new List<BookItem>();
 
+            await AnimateRemoveBooksAsync(toDelete);
+
             foreach (var book in toDelete)
                 await DeleteBookFileAsync(book, reloadAfter: false);
 
@@ -871,6 +1233,7 @@ namespace E_Book.Pages
                     File.Delete(book.FullPath);
 
                 ReadingMetaStore.Remove(book.FullPath);
+                _bookCardMap.Remove(book.FullPath);
 
                 if (reloadAfter)
                     await RefreshBooksAsync();
@@ -900,7 +1263,7 @@ namespace E_Book.Pages
             if (ConfirmButton != null)
             {
                 ConfirmButton.Opacity = IsMultiSelectMode
-                    ? (Books.Any(b => b.IsSelected) ? 1.0 : 0.40)
+                    ? (Books.Any(b => b.IsSelected) ? 1.0 : 0.42)
                     : 1.0;
 
                 ConfirmButton.TranslationX = 0;
@@ -969,7 +1332,7 @@ namespace E_Book.Pages
 
                 if (ConfirmButton != null)
                 {
-                    double targetOpacity = Books.Any(b => b.IsSelected) ? 1.0 : 0.40;
+                    double targetOpacity = Books.Any(b => b.IsSelected) ? 1.0 : 0.42;
                     tasks.Add(ConfirmButton.FadeTo(targetOpacity, 180, Easing.CubicOut));
                     tasks.Add(ConfirmButton.TranslateTo(0, 0, 180, Easing.CubicOut));
                     tasks.Add(ConfirmButton.ScaleTo(1, 180, Easing.CubicOut));
@@ -1085,6 +1448,7 @@ namespace E_Book.Pages
                     EmptyIcon.Scale = 1.0;
             }
         }
+
         private void OnReadingMetaChanged(object? sender, ReadingMetaStore.ReadingMetaChangedEventArgs e)
         {
             MainThread.BeginInvokeOnMainThread(() =>
@@ -1102,6 +1466,7 @@ namespace E_Book.Pages
                 {
                     UnsubscribeItem(book);
                     Books.Remove(book);
+                    _bookCardMap.Remove(book.FullPath);
 
                     UpdateSelectAllText();
                     UpdateConfirmState();

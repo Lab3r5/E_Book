@@ -87,6 +87,7 @@ namespace E_Book.Models
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasLastOpened));
                 OnPropertyChanged(nameof(LastOpenedText));
+                OnPropertyChanged(nameof(IsUnread));
             }
         }
 
@@ -114,8 +115,21 @@ namespace E_Book.Models
             }
         }
 
+        private bool _isFreshlyImported;
+        public bool IsFreshlyImported
+        {
+            get => _isFreshlyImported;
+            set
+            {
+                if (_isFreshlyImported == value) return;
+                _isFreshlyImported = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool HasProgress => ReadingProgress > 0;
         public bool HasLastOpened => LastOpenedTicks > 0;
+        public bool IsUnread => LastOpenedTicks <= 0;
 
         public string ProgressPercentText => $"{Math.Round(ReadingProgress * 100)}%";
 
@@ -147,6 +161,7 @@ namespace E_Book.Models
             OnPropertyChanged(nameof(ProgressPercentText));
             OnPropertyChanged(nameof(HasLastOpened));
             OnPropertyChanged(nameof(LastOpenedText));
+            OnPropertyChanged(nameof(IsUnread));
         }
 
         private void UpdateCover()
