@@ -18,8 +18,9 @@
               Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
               Padding="16,10"
-              Opacity="1"
-              TranslationY="0"
+              Opacity="0"
+              TranslationY="-10"
+              IsVisible="False"
               BackgroundColor="Transparent"
               ZIndex="10">
 
@@ -104,7 +105,10 @@
               ColumnDefinitions="*,Auto"
               VerticalOptions="Center"
               BackgroundColor="#F7F6FB"
-              ZIndex="10">
+              ZIndex="10"
+              Opacity="0"
+              TranslationY="10"
+              IsVisible="False">
 
             <ProgressBar x:Name="ReadingProgressBar"
                          Progress="0"
@@ -155,7 +159,6 @@
                 <VerticalStackLayout Spacing="10"
                                      Padding="2,0">
 
-                    <!-- Handle -->
                     <Border x:Name="HandleBar"
                             HorizontalOptions="Center"
                             WidthRequest="38"
@@ -174,7 +177,6 @@
                            TextColor="#1F1F1F"
                            Margin="0,0,0,2"/>
 
-                    <!-- Size -->
                     <Grid ColumnDefinitions="42,*"
                           ColumnSpacing="8">
                         <Label Text="Size"
@@ -241,7 +243,6 @@
                         </Border>
                     </Grid>
 
-                    <!-- Space -->
                     <Grid ColumnDefinitions="42,*"
                           ColumnSpacing="8">
                         <Label Text="Space"
@@ -308,7 +309,6 @@
                         </Border>
                     </Grid>
 
-                    <!-- Theme -->
                     <Grid ColumnDefinitions="42,*"
                           ColumnSpacing="8">
                         <Label Text="Theme"
@@ -407,7 +407,10 @@
                 Margin="0,0,18,54"
                 StrokeThickness="0"
                 ZIndex="50"
-                BackgroundColor="#F1EEFF">
+                BackgroundColor="#F1EEFF"
+                Opacity="0"
+                TranslationY="10"
+                IsVisible="False">
 
             <Border.Shadow>
                 <Shadow Brush="#66000000"

@@ -99,6 +99,10 @@ namespace E_Book.Pages
         private double _pendingRestoreProgress = 0;
         private int _lastSavedPage = -1;
 
+        private DateTime _sessionStartUtc;
+        private bool _sessionOpened;
+        private bool _shouldRestoreImmersiveChrome = true;
+
         private sealed class TocItem
         {
             public string Title { get; set; } = "";
@@ -158,6 +162,7 @@ namespace E_Book.Pages
             try
             {
                 await SaveReadingProgress();
+                SaveReadingDuration();
                 await SaveCurrentReadingSettings();
             }
             catch { }
@@ -250,13 +255,12 @@ namespace E_Book.Pages
                 UpdateProgressUI();
                 TrimRenderedPageCache();
 
-                // 打开后立刻刷新“最后阅读时间”，但不要求 Bookshelf 全表刷新
                 ReadingMetaStore.UpdateLastOpened(FilePath);
+                _sessionStartUtc = DateTime.UtcNow;
+                _sessionOpened = true;
 
                 if (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial)
-                {
                     await StartBackgroundFullTxtPaginationAsync();
-                }
 
                 _readerInitialized = true;
 
@@ -265,6 +269,9 @@ namespace E_Book.Pages
                     _enterAnimationPlayed = true;
                     await PlayEnterAnimationAsync();
                 }
+
+                if (_shouldRestoreImmersiveChrome)
+                    EnterImmersiveModeImmediately();
             }
             catch (Exception ex)
             {
@@ -407,6 +414,53 @@ namespace E_Book.Pages
                 catch (TaskCanceledException) { }
                 catch { }
             });
+        }
+
+        private void EnterImmersiveModeImmediately()
+        {
+            chromeVisible = false;
+
+            if (TopBar != null)
+            {
+                TopBar.IsVisible = false;
+                TopBar.Opacity = 0;
+                TopBar.TranslationY = -10;
+            }
+
+            if (BottomBar != null)
+            {
+                BottomBar.IsVisible = false;
+                BottomBar.Opacity = 0;
+                BottomBar.TranslationY = 10;
+            }
+
+            if (TocButtonContainer != null)
+            {
+                TocButtonContainer.IsVisible = false;
+                TocButtonContainer.Opacity = 0;
+                TocButtonContainer.TranslationY = 10;
+            }
+        }
+
+        private void SaveReadingDuration()
+        {
+            if (!_sessionOpened || string.IsNullOrWhiteSpace(FilePath))
+                return;
+
+            try
+            {
+                long seconds = (long)Math.Floor((DateTime.UtcNow - _sessionStartUtc).TotalSeconds);
+                if (seconds > 0)
+                    ReadingMetaStore.AddReadingDuration(FilePath, seconds);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _sessionOpened = false;
+                _sessionStartUtc = DateTime.UtcNow;
+            }
         }
 
         private async void OnReadingAreaTapped(object sender, TappedEventArgs e)
@@ -692,14 +746,18 @@ namespace E_Book.Pages
             if (txtParagraphs.Count == 0)
                 return result;
 
-            double usableWidth = Math.Max(180, areaWidth - 44);
-            double usableHeight = Math.Max(180, areaHeight - 104);
-
             bool mostlyChinese = ContainsMostlyChinese(string.Join("", txtParagraphs.Take(80)));
 
-            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing;
-            double paragraphSpacingPx = 16;
-            double blankParagraphPx = 20;
+            double usableWidth = Math.Max(180, areaWidth - 52);
+
+            double usableHeight = mostlyChinese
+                ? Math.Max(180, areaHeight - 148)
+                : Math.Max(180, areaHeight - 96);
+
+            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing * 1.04;
+
+            double paragraphSpacingPx = mostlyChinese ? 18 : 8;
+            double blankParagraphPx = mostlyChinese ? 24 : 12;
 
             double currentHeight = 0;
             var currentPageParagraphs = new List<string>();
@@ -724,6 +782,8 @@ namespace E_Book.Pages
                     blankParagraphPx,
                     mostlyChinese);
 
+                bool isEnglishParagraph = LooksLikeEnglishText(paragraph);
+
                 if (estimatedHeight > usableHeight)
                 {
                     if (currentPageParagraphs.Count > 0)
@@ -745,20 +805,28 @@ namespace E_Book.Pages
                     result.ParagraphStartPageIndices.Add(result.Pages.Count);
 
                     foreach (var part in splitParagraphs)
-                    {
                         result.Pages.Add(new List<string> { part });
-                    }
 
                     currentPageStartParagraphIndex = i + 1;
                     continue;
                 }
 
-                if (currentPageParagraphs.Count > 0 && currentHeight + estimatedHeight > usableHeight)
+                if (currentPageParagraphs.Count > 0)
                 {
-                    result.Pages.Add(new List<string>(currentPageParagraphs));
-                    currentPageParagraphs.Clear();
-                    currentHeight = 0;
-                    currentPageStartParagraphIndex = i;
+                    double nextHeight = currentHeight + estimatedHeight;
+
+                    bool allowSoftFit =
+                        !mostlyChinese &&
+                        isEnglishParagraph &&
+                        nextHeight <= usableHeight + lineHeightPx * 1.2;
+
+                    if (nextHeight > usableHeight && !allowSoftFit)
+                    {
+                        result.Pages.Add(new List<string>(currentPageParagraphs));
+                        currentPageParagraphs.Clear();
+                        currentHeight = 0;
+                        currentPageStartParagraphIndex = i;
+                    }
                 }
 
                 if (currentPageParagraphs.Count == 0)
@@ -877,15 +945,14 @@ namespace E_Book.Pages
 
             bool isEnglish = LooksLikeEnglishText(paragraph);
 
-            double avgCharWidth = mostlyChinese
-                ? GetReaderCssFontSize() * 0.95
-                : GetReaderCssFontSize() * 0.36;
+            double fontPx = GetReaderCssFontSize();
+            double avgCharWidth = isEnglish ? fontPx * 0.38 : fontPx * 1.0;
+            double firstLineIndentWidth = isEnglish ? 0 : fontPx * 2.0;
 
-            double firstLineIndentWidth = isEnglish ? 0 : GetReaderCssFontSize() * 2.0;
-            int charsFirstLine = Math.Max(6, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
-            int charsOtherLines = Math.Max(8, (int)(usableWidth / avgCharWidth));
+            int charsFirstLine = Math.Max(4, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
+            int charsOtherLines = Math.Max(6, (int)(usableWidth / avgCharWidth));
 
-            int maxLinesPerPage = Math.Max(3, (int)Math.Floor((usableHeight - paragraphSpacingPx) / lineHeightPx));
+            int maxLinesPerPage = Math.Max(3, (int)Math.Floor((usableHeight - paragraphSpacingPx - 10) / lineHeightPx));
             int maxCharsFirstPage = charsFirstLine + Math.Max(0, maxLinesPerPage - 1) * charsOtherLines;
             int maxCharsNormalPage = Math.Max(charsOtherLines * maxLinesPerPage, charsOtherLines * 3);
 
@@ -895,35 +962,90 @@ namespace E_Book.Pages
                 return result;
             }
 
-            int start = 0;
+            var units = isEnglish
+                ? SplitEnglishUnits(paragraph)
+                : SplitChineseUnits(paragraph);
+
+            var current = new StringBuilder();
             bool firstChunk = true;
 
-            while (start < paragraph.Length)
+            foreach (var unit in units)
             {
-                int maxChars = firstChunk ? maxCharsFirstPage : maxCharsNormalPage;
-                int remaining = paragraph.Length - start;
-                int take = Math.Min(maxChars, remaining);
+                int limit = firstChunk ? maxCharsFirstPage : maxCharsNormalPage;
 
-                if (isEnglish && start + take < paragraph.Length)
+                if (current.Length > 0 && current.Length + unit.Length > limit)
                 {
-                    int lastSpace = paragraph.LastIndexOf(' ', start + take - 1, take);
-                    if (lastSpace > start + Math.Min(20, take / 3))
-                        take = lastSpace - start + 1;
+                    result.Add(current.ToString().Trim());
+                    current.Clear();
+                    firstChunk = false;
                 }
 
-                string chunk = paragraph.Substring(start, take).Trim();
-                if (!string.IsNullOrWhiteSpace(chunk))
-                    result.Add(chunk);
-
-                start += take;
-
-                while (start < paragraph.Length && paragraph[start] == ' ')
-                    start++;
-
-                firstChunk = false;
+                current.Append(unit);
             }
 
+            if (current.Length > 0)
+                result.Add(current.ToString().Trim());
+
             return result.Count > 0 ? result : new List<string> { paragraph };
+        }
+
+        private List<string> SplitChineseUnits(string text)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return result;
+
+            var parts = Regex.Split(text, @"(?<=[。！？；：])|(?<=[，、])");
+
+            foreach (var p in parts)
+            {
+                if (!string.IsNullOrWhiteSpace(p))
+                    result.Add(p);
+            }
+
+            if (result.Count == 0)
+                result.Add(text);
+
+            return result;
+        }
+
+        private List<string> SplitEnglishUnits(string text)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return result;
+
+            var sentences = Regex.Split(text, @"(?<=[\.!\?])\s+");
+
+            foreach (var sentence in sentences)
+            {
+                if (string.IsNullOrWhiteSpace(sentence))
+                    continue;
+
+                var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length == 0)
+                    continue;
+
+                var sb = new StringBuilder();
+                foreach (var word in words)
+                {
+                    if (sb.Length > 0)
+                        sb.Append(' ');
+                    sb.Append(word);
+
+                    if (word.EndsWith(",") || word.EndsWith(".") || word.EndsWith("!") || word.EndsWith("?") || word.EndsWith(";") || word.EndsWith(":"))
+                        sb.Append(' ');
+                }
+
+                result.Add(sb.ToString());
+            }
+
+            if (result.Count == 0)
+                result.Add(text);
+
+            return result;
         }
 
         private double EstimateParagraphHeightPx(
@@ -939,27 +1061,33 @@ namespace E_Book.Pages
 
             string trimmed = paragraph.Trim();
 
+            if (Regex.IsMatch(trimmed, @"^第.{1,12}章"))
+                return lineHeightPx * 2.0 + 26;
+
             if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
-                return lineHeightPx + 18;
+                return lineHeightPx + 12;
 
             var mdHeading = Regex.Match(trimmed, @"^\s*#{1,6}\s+(.*)$");
             if (mdHeading.Success)
             {
                 string headingText = mdHeading.Groups[1].Value.Trim();
-                int headingCharsPerLine = Math.Max(6, (int)(usableWidth / (GetReaderCssFontSize() * 1.0)));
+                int headingCharsPerLine = Math.Max(6, (int)(usableWidth / (GetReaderCssFontSize() * 0.92)));
                 int headingLinesNeeded = Math.Max(1, (int)Math.Ceiling(headingText.Length / (double)headingCharsPerLine));
-                return headingLinesNeeded * (lineHeightPx * 1.15) + 22;
+                return headingLinesNeeded * (lineHeightPx * 1.12) + 18;
             }
 
             bool isEnglish = LooksLikeEnglishText(paragraph);
 
-            double avgCharWidth = mostlyChinese
-                ? GetReaderCssFontSize() * 0.95
-                : GetReaderCssFontSize() * 0.43;
+            double fontPx = GetReaderCssFontSize();
 
-            double firstLineIndentWidth = isEnglish ? 0 : GetReaderCssFontSize() * 2.0;
-            int charsFirstLine = Math.Max(6, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
-            int charsOtherLines = Math.Max(8, (int)(usableWidth / avgCharWidth));
+            double avgCharWidth = isEnglish
+                ? fontPx * 0.38
+                : fontPx * 1.0;
+
+            double firstLineIndentWidth = isEnglish ? 0 : fontPx * 2.0;
+
+            int charsFirstLine = Math.Max(4, (int)((usableWidth - firstLineIndentWidth) / avgCharWidth));
+            int charsOtherLines = Math.Max(6, (int)(usableWidth / avgCharWidth));
 
             int textLength = paragraph.Length;
 
@@ -974,8 +1102,11 @@ namespace E_Book.Pages
                 paragraphLinesNeeded = 1 + (int)Math.Ceiling(remaining / (double)charsOtherLines);
             }
 
-            double extraSafety = isEnglish ? -4 : 8;
-            return paragraphLinesNeeded * lineHeightPx + paragraphSpacingPx + extraSafety;
+            double safetyExtra = isEnglish ? 0 : 12;
+
+            return paragraphLinesNeeded * lineHeightPx +
+                   paragraphSpacingPx +
+                   safetyExtra;
         }
 
         private string BuildTxtPageHtmlFromParagraphs(List<string> paragraphs)
@@ -996,6 +1127,12 @@ namespace E_Book.Pages
                 if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
                 {
                     sb.Append("<hr />");
+                    continue;
+                }
+
+                if (Regex.IsMatch(trimmed, @"^第.{1,12}章"))
+                {
+                    sb.Append($"<p class='chapter-title'>{WebUtility.HtmlEncode(trimmed)}</p>");
                     continue;
                 }
 
@@ -1141,64 +1278,328 @@ namespace E_Book.Pages
                 return pages;
             }
 
-            var blocks = Regex.Split(
-                html,
-                @"(?=<h1|<h2|<h3|<h4|<h5|<h6|<p|<div|<blockquote|<ul|<ol|<table|<hr|<img)",
-                RegexOptions.IgnoreCase);
+            var blocks = SplitHtmlIntoBlocks(html);
 
-            var cleanedBlocks = blocks
-                .Where(b => !string.IsNullOrWhiteSpace(b))
-                .Select(b => b.Trim())
-                .ToList();
-
-            if (cleanedBlocks.Count == 0)
+            if (blocks.Count == 0)
             {
                 pages.Add(html);
                 return pages;
             }
 
-            double areaHeight = ReadingArea.Height;
-            if (areaHeight <= 0)
-                areaHeight = 700;
+            double areaWidth = GetReaderAreaWidth();
+            double areaHeight = GetReaderAreaHeight();
 
-            double estimatedLineHeight = currentFontSize * currentLineSpacing * 1.18;
-            int estimatedLinesPerPage = Math.Max(5, (int)((areaHeight - 150) / estimatedLineHeight));
+            double usableWidth = Math.Max(180, areaWidth - 44);
+            double usableHeight = Math.Max(180, areaHeight - 104);
+
+            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing * 1.12;
+            int maxLinesPerPage = Math.Max(5, (int)Math.Floor(usableHeight / lineHeightPx));
 
             int currentLines = 0;
             var currentPageBlocks = new List<string>();
 
-            foreach (var block in cleanedBlocks)
+            foreach (var rawBlock in blocks)
             {
-                string plainText = StripHtmlTags(block);
-                plainText = HtmlEntityDecodeLite(plainText);
+                string block = rawBlock?.Trim() ?? "";
+                if (string.IsNullOrWhiteSpace(block))
+                    continue;
 
-                bool mostlyChinese = ContainsMostlyChinese(plainText);
+                int estimatedLines = EstimateHtmlBlockLines(block, usableWidth);
 
-                int estimatedLinesForBlock = mostlyChinese
-                    ? Math.Max(1, (int)Math.Ceiling(plainText.Length / 16.0))
-                    : Math.Max(1, (int)Math.Ceiling(plainText.Length / 28.0));
+                bool isAtomicBlock =
+                    Regex.IsMatch(block, @"^<h[1-6]\b", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(block, @"^<img\b", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(block, @"^<hr\b", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(block, @"^<table\b", RegexOptions.IgnoreCase);
 
-                if (Regex.IsMatch(block, @"^<h[1-6]", RegexOptions.IgnoreCase)) estimatedLinesForBlock += 2;
-                if (Regex.IsMatch(block, @"^<table", RegexOptions.IgnoreCase)) estimatedLinesForBlock += 6;
-                if (Regex.IsMatch(block, @"^<(ul|ol|blockquote)", RegexOptions.IgnoreCase)) estimatedLinesForBlock += 2;
-                if (Regex.IsMatch(block, @"^<img", RegexOptions.IgnoreCase)) estimatedLinesForBlock += 8;
-                if (Regex.IsMatch(block, @"^<hr", RegexOptions.IgnoreCase)) estimatedLinesForBlock += 1;
-
-                if (currentLines + estimatedLinesForBlock > estimatedLinesPerPage && currentPageBlocks.Count > 0)
+                if ((isAtomicBlock || estimatedLines <= maxLinesPerPage) &&
+                    currentLines + estimatedLines > maxLinesPerPage &&
+                    currentPageBlocks.Count > 0)
                 {
                     pages.Add(string.Join(Environment.NewLine, currentPageBlocks));
                     currentPageBlocks.Clear();
                     currentLines = 0;
                 }
 
+                if (!isAtomicBlock && estimatedLines > maxLinesPerPage)
+                {
+                    var splitParts = SplitHtmlParagraphBlockForPaging(block, usableWidth, maxLinesPerPage);
+
+                    foreach (var part in splitParts)
+                    {
+                        int partLines = EstimateHtmlBlockLines(part, usableWidth);
+
+                        if (currentLines + partLines > maxLinesPerPage && currentPageBlocks.Count > 0)
+                        {
+                            pages.Add(string.Join(Environment.NewLine, currentPageBlocks));
+                            currentPageBlocks.Clear();
+                            currentLines = 0;
+                        }
+
+                        currentPageBlocks.Add(part);
+                        currentLines += partLines;
+                    }
+
+                    continue;
+                }
+
                 currentPageBlocks.Add(block);
-                currentLines += estimatedLinesForBlock;
+                currentLines += estimatedLines;
             }
 
             if (currentPageBlocks.Count > 0)
                 pages.Add(string.Join(Environment.NewLine, currentPageBlocks));
 
             return pages.Count > 0 ? pages : new List<string> { html };
+        }
+
+        private List<string> SplitHtmlIntoBlocks(string html)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(html))
+                return result;
+
+            var matches = Regex.Matches(
+                html,
+                @"(<h[1-6][^>]*>.*?</h[1-6]>|<p[^>]*>.*?</p>|<div[^>]*>.*?</div>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<img[^>]*?/?>|<hr[^>]*?/?>)",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            foreach (Match match in matches)
+            {
+                var value = match.Value?.Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                    result.Add(value);
+            }
+
+            if (result.Count == 0)
+            {
+                string trimmed = html.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmed))
+                    result.Add(trimmed);
+            }
+
+            return result;
+        }
+
+        private int EstimateHtmlBlockLines(string htmlBlock, double usableWidth)
+        {
+            if (string.IsNullOrWhiteSpace(htmlBlock))
+                return 1;
+
+            string plainText = StripHtmlTags(htmlBlock);
+            plainText = HtmlEntityDecodeLite(plainText);
+
+            bool mostlyChinese = ContainsMostlyChinese(plainText);
+
+            double fontPx = GetReaderCssFontSize();
+            double avgCharWidth = mostlyChinese ? fontPx * 0.95 : fontPx * 0.48;
+            int charsPerLine = Math.Max(8, (int)(usableWidth / avgCharWidth));
+
+            int lines = Math.Max(1, (int)Math.Ceiling(Math.Max(1, plainText.Length) / (double)charsPerLine));
+
+            if (Regex.IsMatch(htmlBlock, @"^<h[1-6]\b", RegexOptions.IgnoreCase))
+                lines += 1;
+            else if (Regex.IsMatch(htmlBlock, @"^<blockquote\b", RegexOptions.IgnoreCase))
+                lines += 1;
+            else if (Regex.IsMatch(htmlBlock, @"^<(ul|ol)\b", RegexOptions.IgnoreCase))
+                lines += 2;
+            else if (Regex.IsMatch(htmlBlock, @"^<img\b", RegexOptions.IgnoreCase))
+                lines += 8;
+            else if (Regex.IsMatch(htmlBlock, @"^<table\b", RegexOptions.IgnoreCase))
+                lines += 10;
+            else if (Regex.IsMatch(htmlBlock, @"^<hr\b", RegexOptions.IgnoreCase))
+                lines = 1;
+
+            return Math.Max(1, lines);
+        }
+
+        private List<string> SplitHtmlParagraphBlockForPaging(string htmlBlock, double usableWidth, int maxLinesPerPage)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(htmlBlock))
+            {
+                result.Add(htmlBlock);
+                return result;
+            }
+
+            string tagName = GetHtmlOuterTagName(htmlBlock);
+
+            bool splittable =
+                tagName.Equals("p", StringComparison.OrdinalIgnoreCase) ||
+                tagName.Equals("div", StringComparison.OrdinalIgnoreCase) ||
+                tagName.Equals("blockquote", StringComparison.OrdinalIgnoreCase);
+
+            if (!splittable)
+            {
+                result.Add(htmlBlock);
+                return result;
+            }
+
+            string innerHtml = ExtractInnerHtml(htmlBlock);
+            string plainText = HtmlEntityDecodeLite(StripHtmlTags(innerHtml));
+
+            if (string.IsNullOrWhiteSpace(plainText))
+            {
+                result.Add(htmlBlock);
+                return result;
+            }
+
+            bool mostlyChinese = ContainsMostlyChinese(plainText);
+
+            var segments = mostlyChinese
+                ? SplitChineseTextForPaging(plainText)
+                : SplitEnglishTextForPaging(plainText);
+
+            double fontPx = GetReaderCssFontSize();
+            double avgCharWidth = mostlyChinese ? fontPx * 0.95 : fontPx * 0.46;
+            int charsPerLine = Math.Max(8, (int)(usableWidth / avgCharWidth));
+            int maxCharsPerPage = Math.Max(charsPerLine * maxLinesPerPage, charsPerLine * 3);
+
+            var current = new StringBuilder();
+
+            foreach (var seg in segments)
+            {
+                if (string.IsNullOrWhiteSpace(seg))
+                    continue;
+
+                string candidate = current.Length == 0
+                    ? seg.Trim()
+                    : current.ToString() + seg;
+
+                if (candidate.Length > maxCharsPerPage && current.Length > 0)
+                {
+                    string wrapped = WrapTextBackIntoHtmlBlock(tagName, current.ToString().Trim(), htmlBlock);
+                    result.Add(wrapped);
+                    current.Clear();
+                    current.Append(seg.Trim());
+                }
+                else
+                {
+                    current.Append(seg);
+                }
+            }
+
+            if (current.Length > 0)
+            {
+                string wrapped = WrapTextBackIntoHtmlBlock(tagName, current.ToString().Trim(), htmlBlock);
+                result.Add(wrapped);
+            }
+
+            return result.Count > 0 ? result : new List<string> { htmlBlock };
+        }
+
+        private List<string> SplitChineseTextForPaging(string text)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return result;
+
+            var parts = Regex.Split(text, @"(?<=[。！？；：])|(?<=[，、])");
+
+            foreach (var part in parts)
+            {
+                if (!string.IsNullOrWhiteSpace(part))
+                    result.Add(part);
+            }
+
+            if (result.Count == 0)
+                result.Add(text);
+
+            return result;
+        }
+
+        private List<string> SplitEnglishTextForPaging(string text)
+        {
+            var result = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return result;
+
+            var sentenceParts = Regex.Split(text, @"(?<=[\.!\?])\s+");
+
+            foreach (var sentence in sentenceParts)
+            {
+                if (string.IsNullOrWhiteSpace(sentence))
+                    continue;
+
+                if (sentence.Length <= 160)
+                {
+                    result.Add(sentence.Trim() + " ");
+                }
+                else
+                {
+                    var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var sb = new StringBuilder();
+
+                    foreach (var word in words)
+                    {
+                        string candidate = sb.Length == 0 ? word : sb + " " + word;
+
+                        if (candidate.Length > 140 && sb.Length > 0)
+                        {
+                            result.Add(sb.ToString().Trim() + " ");
+                            sb.Clear();
+                            sb.Append(word);
+                        }
+                        else
+                        {
+                            if (sb.Length > 0)
+                                sb.Append(' ');
+                            sb.Append(word);
+                        }
+                    }
+
+                    if (sb.Length > 0)
+                        result.Add(sb.ToString().Trim() + " ");
+                }
+            }
+
+            if (result.Count == 0)
+                result.Add(text);
+
+            return result;
+        }
+
+        private string GetHtmlOuterTagName(string htmlBlock)
+        {
+            var match = Regex.Match(htmlBlock, @"^<\s*(\w+)", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value : "p";
+        }
+
+        private string ExtractInnerHtml(string htmlBlock)
+        {
+            var match = Regex.Match(
+                htmlBlock,
+                @"^<\s*(\w+)[^>]*>(.*)</\s*\1\s*>$",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            if (match.Success)
+                return match.Groups[2].Value;
+
+            return StripOuterTagFallback(htmlBlock);
+        }
+
+        private string StripOuterTagFallback(string htmlBlock)
+        {
+            string s = Regex.Replace(htmlBlock, @"^<[^>]+>", "", RegexOptions.Singleline);
+            s = Regex.Replace(s, @"</[^>]+>$", "", RegexOptions.Singleline);
+            return s;
+        }
+
+        private string WrapTextBackIntoHtmlBlock(string tagName, string plainText, string originalBlock)
+        {
+            string encoded = WebUtility.HtmlEncode(plainText);
+
+            if (tagName.Equals("blockquote", StringComparison.OrdinalIgnoreCase))
+                return $"<blockquote>{encoded}</blockquote>";
+
+            if (tagName.Equals("div", StringComparison.OrdinalIgnoreCase))
+                return $"<div><p>{encoded}</p></div>";
+
+            return $"<p>{encoded}</p>";
         }
 
         private static bool ContainsMostlyChinese(string text)
@@ -1282,6 +1683,13 @@ namespace E_Book.Pages
         {
             ClampCurrentPage();
 
+            bool isLastPage = mode switch
+            {
+                ReaderMode.TxtPaged => txtPages.Count > 0 && currentPage == txtPages.Count - 1,
+                ReaderMode.HtmlPaged => htmlPages.Count > 0 && currentPage == htmlPages.Count - 1,
+                _ => false
+            };
+
             if (_renderedPageCache.TryGetValue(currentPage, out var cachedHtml))
             {
                 ShowWebView();
@@ -1308,7 +1716,7 @@ namespace E_Book.Pages
                 return;
             }
 
-            string wrapped = WrapHtml(pageHtml);
+            string wrapped = WrapHtml(pageHtml, isLastPage);
             _renderedPageCache[currentPage] = wrapped;
 
             ShowWebView();
@@ -1346,14 +1754,21 @@ namespace E_Book.Pages
                     pageHtml = BuildHtmlPageHtml();
                 }
 
-                _renderedPageCache[index] = WrapHtml(pageHtml);
+                bool isLastPage = mode switch
+                {
+                    ReaderMode.TxtPaged => txtPages.Count > 0 && index == txtPages.Count - 1,
+                    ReaderMode.HtmlPaged => htmlPages.Count > 0 && index == htmlPages.Count - 1,
+                    _ => false
+                };
+
+                _renderedPageCache[index] = WrapHtml(pageHtml, isLastPage);
             }
 
             currentPage = original;
             TrimRenderedPageCache();
         }
 
-        private string WrapHtml(string bodyHtml)
+        private string WrapHtml(string bodyHtml, bool isLastPage = false)
         {
             string bg = ToCssColor(PageBgColor);
             string fg = ToCssColor(TextColorReader);
@@ -1363,6 +1778,7 @@ namespace E_Book.Pages
 
             int px = GetReaderCssFontSize();
             string lineHeightCss = currentLineSpacing.ToString(CultureInfo.InvariantCulture);
+            string wrapClass = isLastPage ? "wrap last-page" : "wrap";
 
             return $@"
 <!doctype html>
@@ -1383,19 +1799,30 @@ namespace E_Book.Pages
         word-break: normal;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
+        min-height: 100%;
     }}
 
     body {{
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
     }}
 
     .wrap {{
-        padding: 12px 14px 20px 14px;
+        padding: 12px 14px 42px 14px;
         max-width: 900px;
         margin: auto;
         box-sizing: border-box;
         background: {bg};
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }}
+
+    .wrap.last-page {{
+        justify-content: center;
     }}
 
     p {{
@@ -1417,13 +1844,20 @@ namespace E_Book.Pages
     }}
 
     p.txt-en {{
-        margin: 0 0 2px 0;
+        margin: 0 0 0 0;
         text-indent: 0;
         text-align: left;
         word-break: normal;
         overflow-wrap: break-word;
         line-break: auto;
-        line-height: 1.18;
+        line-height: 1.00;
+    }}
+
+    p.chapter-title {{
+        font-weight: 600;
+        text-align: center;
+        font-size: 1.2em;
+        margin: 18px 0 12px 0;
     }}
 
     h1, h2, h3, h4, h5, h6 {{
@@ -1446,6 +1880,7 @@ namespace E_Book.Pages
         max-width: 100%;
         height: auto;
         display: block;
+        margin: 12px auto;
     }}
 
     a {{
@@ -1483,7 +1918,7 @@ namespace E_Book.Pages
 </style>
 </head>
 <body>
-<div class='wrap'>
+<div class='{wrapClass}'>
 {bodyHtml}
 </div>
 </body>
@@ -1621,9 +2056,15 @@ namespace E_Book.Pages
 
                 string? title = null;
 
-                var m1 = rxMd.Match(paragraph);
-                if (m1.Success)
-                    title = m1.Groups["t"].Value.Trim();
+                if (Regex.IsMatch(paragraph, @"^第.{1,12}章"))
+                    title = paragraph;
+
+                if (title == null)
+                {
+                    var m1 = rxMd.Match(paragraph);
+                    if (m1.Success)
+                        title = m1.Groups["t"].Value.Trim();
+                }
 
                 if (title == null)
                 {
@@ -1937,7 +2378,6 @@ namespace E_Book.Pages
                 currentPage,
                 totalPages);
 
-            // 这里会直接推送到 Bookshelf，对应那一本立即更新
             ReadingMetaStore.UpdateProgress(
                 FilePath,
                 currentPage + 1,
@@ -1992,7 +2432,11 @@ namespace E_Book.Pages
 
             currentPage++;
             await AnimatePageChangeAsync(+1);
-            ScheduleSaveReadingProgress();
+
+            if (currentPage >= total - 1)
+                await SaveReadingProgress();
+            else
+                ScheduleSaveReadingProgress();
         }
 
         private async Task PrevPageAsync()
@@ -2013,6 +2457,7 @@ namespace E_Book.Pages
             try
             {
                 await SaveReadingProgress();
+                SaveReadingDuration();
                 await SaveCurrentReadingSettings();
             }
             catch { }
@@ -2270,7 +2715,7 @@ namespace E_Book.Pages
             UpdateAllButtonStyles();
             ClearRenderedPageCache();
 
-            if (this.mode == ReaderMode.HtmlPaged || this.mode == ReaderMode.TxtPaged)
+            if (mode == ReaderMode.HtmlPaged || mode == ReaderMode.TxtPaged)
                 DisplayPage();
         }
 

@@ -183,33 +183,89 @@
 
                 <Grid RowDefinitions="Auto,*,Auto">
 
-                    <!-- Bulk action row -->
-                    <Grid Grid.Row="0"
-                          IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
-                          Margin="0,0,0,8">
+                    <!-- Top utility area -->
+                    <VerticalStackLayout Grid.Row="0"
+                                         Spacing="10"
+                                         Margin="0,0,0,10">
 
-                        <Border x:Name="SelectAllChip"
-                                Padding="11,6"
+                        <!-- Bulk action row -->
+                        <Grid IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}">
+                            <Border x:Name="SelectAllChip"
+                                    Padding="11,6"
+                                    StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A2340}"
+                                    HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="13" />
+                                </Border.StrokeShape>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSelectAllClicked"/>
+                                </Border.GestureRecognizers>
+
+                                <Label x:Name="SelectAllButton"
+                                       Text="Select All"
+                                       FontSize="12.5"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Reading summary -->
+                        <Border Padding="12,10"
                                 StrokeThickness="0"
-                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A2340}"
-                                HorizontalOptions="Start">
+                                BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#221D34}">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="13" />
+                                <RoundRectangle CornerRadius="16" />
                             </Border.StrokeShape>
 
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnSelectAllClicked"/>
-                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border"
+                                             Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
+                                             Value="True">
+                                    <Setter Property="IsVisible" Value="False"/>
+                                </DataTrigger>
+                            </Border.Triggers>
 
-                            <Label x:Name="SelectAllButton"
-                                   Text="Select All"
-                                   FontSize="12.5"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center" />
+                            <Grid ColumnDefinitions="*,*,*"
+                                  ColumnSpacing="8">
+
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=InProgressCountText}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+                                    <Label Text="In progress"
+                                           FontSize="10.5"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=CompletedCountText}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+                                    <Label Text="Completed"
+                                           FontSize="10.5"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="2"
+                                                     Spacing="2">
+                                    <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=TotalReadingTimeText}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+                                    <Label Text="Reading time"
+                                           FontSize="10.5"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                                </VerticalStackLayout>
+                            </Grid>
                         </Border>
-                    </Grid>
+                    </VerticalStackLayout>
 
                     <!-- Content Area -->
                     <Grid Grid.Row="1">
@@ -230,7 +286,7 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-                                        <Grid ColumnDefinitions="56,*,48"
+                                        <Grid ColumnDefinitions="56,*,68"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
                                                     WidthRequest="56"
@@ -255,7 +311,7 @@
                                             </VerticalStackLayout>
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
-                                                    WidthRequest="44"
+                                                    WidthRequest="66"
                                                     Padding="0"
                                                     StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
@@ -274,7 +330,7 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-                                        <Grid ColumnDefinitions="56,*,48"
+                                        <Grid ColumnDefinitions="56,*,68"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
                                                     WidthRequest="56"
@@ -297,7 +353,7 @@
                                             </VerticalStackLayout>
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
-                                                    WidthRequest="44"
+                                                    WidthRequest="66"
                                                     Padding="0"
                                                     StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
@@ -316,7 +372,7 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-                                        <Grid ColumnDefinitions="56,*,48"
+                                        <Grid ColumnDefinitions="56,*,68"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
                                                     WidthRequest="56"
@@ -341,7 +397,7 @@
                                             </VerticalStackLayout>
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
-                                                    WidthRequest="44"
+                                                    WidthRequest="66"
                                                     Padding="0"
                                                     StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
@@ -360,7 +416,7 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="16" />
                                         </Border.StrokeShape>
-                                        <Grid ColumnDefinitions="56,*,48"
+                                        <Grid ColumnDefinitions="56,*,68"
                                               ColumnSpacing="10">
                                             <Border HeightRequest="56"
                                                     WidthRequest="56"
@@ -383,7 +439,7 @@
                                             </VerticalStackLayout>
                                             <Border Grid.Column="2"
                                                     HeightRequest="36"
-                                                    WidthRequest="44"
+                                                    WidthRequest="66"
                                                     Padding="0"
                                                     StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
@@ -494,6 +550,7 @@
                                                 <Label Text="TXT" FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
                                             </Border>
+
                                             <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
                                                 <Border.StrokeShape>
@@ -502,6 +559,7 @@
                                                 <Label Text="EPUB" FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
                                             </Border>
+
                                             <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
                                                 <Border.StrokeShape>
@@ -510,6 +568,7 @@
                                                 <Label Text="PDF" FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
                                             </Border>
+
                                             <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
                                                 <Border.StrokeShape>
@@ -518,6 +577,7 @@
                                                 <Label Text="HTML" FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
                                             </Border>
+
                                             <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
                                                 <Border.StrokeShape>
@@ -526,6 +586,7 @@
                                                 <Label Text="DOCX" FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
                                             </Border>
+
                                             <Border Padding="10,5" Margin="4,4,4,0" StrokeThickness="0"
                                                     BackgroundColor="{AppThemeBinding Light=#F3F0FF, Dark=#26213C}">
                                                 <Border.StrokeShape>
@@ -597,6 +658,7 @@
                                                         Radius="16"
                                                         Opacity="0.32" />
                                             </Border.Shadow>
+
                                             <Border.Triggers>
                                                 <DataTrigger TargetType="Border"
                                                              Binding="{Binding IsSelected}"
@@ -607,7 +669,7 @@
                                                 </DataTrigger>
                                             </Border.Triggers>
 
-                                            <Grid ColumnDefinitions="Auto,56,*,48"
+                                            <Grid ColumnDefinitions="Auto,56,*,74"
                                                   ColumnSpacing="8"
                                                   VerticalOptions="Center">
 
@@ -688,17 +750,10 @@
                                                                     StrokeThickness="0"
                                                                     HorizontalOptions="Start"
                                                                     BackgroundColor="{AppThemeBinding Light=#F4F2FB, Dark=#2A2A31}"
-                                                                    IsVisible="False">
+                                                                    IsVisible="{Binding IsUnread}">
                                                                 <Border.StrokeShape>
                                                                     <RoundRectangle CornerRadius="6" />
                                                                 </Border.StrokeShape>
-                                                                <Border.Triggers>
-                                                                    <DataTrigger TargetType="Border"
-                                                                                 Binding="{Binding IsUnread}"
-                                                                                 Value="True">
-                                                                        <Setter Property="IsVisible" Value="True" />
-                                                                    </DataTrigger>
-                                                                </Border.Triggers>
 
                                                                 <Label Text="Ready to read"
                                                                        FontSize="8.2"
@@ -713,32 +768,83 @@
                                                                LineBreakMode="TailTruncation"
                                                                MaxLines="1" />
 
-                                                        <Border Padding="5,1"
+                                                        <Label Text="{Binding LastReadPageText}"
+                                                               FontSize="9.1"
+                                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                               LineBreakMode="TailTruncation"
+                                                               MaxLines="1"
+                                                               IsVisible="{Binding HasLastReadPage}" />
+
+                                                        <Label Text="{Binding ReadingTimeText}"
+                                                               FontSize="9.1"
+                                                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                               LineBreakMode="TailTruncation"
+                                                               MaxLines="1"
+                                                               IsVisible="{Binding HasReadingTime}" />
+
+                                                        <Border Padding="6,2"
                                                                 StrokeThickness="0"
                                                                 HorizontalOptions="Start"
-                                                                BackgroundColor="{AppThemeBinding Light=#EFE9FF, Dark=#2A2340}"
-                                                                IsVisible="{Binding HasProgress}">
+                                                                IsVisible="{Binding ShowReadingBadge}">
                                                             <Border.StrokeShape>
                                                                 <RoundRectangle CornerRadius="6" />
                                                             </Border.StrokeShape>
 
+                                                            <Border.Triggers>
+                                                                <DataTrigger TargetType="Border"
+                                                                             Binding="{Binding IsCompleted}"
+                                                                             Value="True">
+                                                                    <Setter Property="BackgroundColor" Value="#E8F7EC" />
+                                                                </DataTrigger>
+                                                                <DataTrigger TargetType="Border"
+                                                                             Binding="{Binding IsCompleted}"
+                                                                             Value="False">
+                                                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#EFE9FF, Dark=#2A2340}" />
+                                                                </DataTrigger>
+                                                            </Border.Triggers>
+
                                                             <HorizontalStackLayout Spacing="4">
                                                                 <Label Text="●"
                                                                        FontSize="7.5"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
-                                                                       VerticalOptions="Center" />
-                                                                <Label Text="Continue reading"
+                                                                       VerticalOptions="Center">
+                                                                    <Label.Triggers>
+                                                                        <DataTrigger TargetType="Label"
+                                                                                     Binding="{Binding IsCompleted}"
+                                                                                     Value="True">
+                                                                            <Setter Property="TextColor" Value="#2E9B57" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger TargetType="Label"
+                                                                                     Binding="{Binding IsCompleted}"
+                                                                                     Value="False">
+                                                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                                                        </DataTrigger>
+                                                                    </Label.Triggers>
+                                                                </Label>
+
+                                                                <Label Text="{Binding ReadingStatusText}"
                                                                        FontSize="8"
                                                                        FontAttributes="Bold"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
-                                                                       VerticalOptions="Center" />
+                                                                       VerticalOptions="Center">
+                                                                    <Label.Triggers>
+                                                                        <DataTrigger TargetType="Label"
+                                                                                     Binding="{Binding IsCompleted}"
+                                                                                     Value="True">
+                                                                            <Setter Property="TextColor" Value="#2E9B57" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger TargetType="Label"
+                                                                                     Binding="{Binding IsCompleted}"
+                                                                                     Value="False">
+                                                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+                                                                        </DataTrigger>
+                                                                    </Label.Triggers>
+                                                                </Label>
                                                             </HorizontalStackLayout>
                                                         </Border>
 
                                                         <Grid ColumnDefinitions="*,Auto"
                                                               ColumnSpacing="6"
                                                               VerticalOptions="Center"
-                                                              IsVisible="{Binding HasProgress}">
+                                                              IsVisible="{Binding ShowProgressBar}">
 
                                                             <ProgressBar Grid.Column="0"
                                                                          Progress="{Binding ReadingProgress}"
@@ -758,12 +864,12 @@
                                                 </Grid>
 
                                                 <Button Grid.Column="3"
-                                                        Text="Read"
-                                                        FontSize="11"
+                                                        Text="{Binding ReadButtonText}"
+                                                        FontSize="10.5"
                                                         Padding="0"
                                                         HeightRequest="36"
-                                                        WidthRequest="44"
-                                                        MinimumWidthRequest="44"
+                                                        WidthRequest="66"
+                                                        MinimumWidthRequest="66"
                                                         CornerRadius="10"
                                                         TextColor="White"
                                                         BackgroundColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
@@ -771,12 +877,18 @@
                                                         CommandParameter="{Binding .}"
                                                         VerticalOptions="Center"
                                                         HorizontalOptions="End"
+                                                        LineBreakMode="NoWrap"
                                                         IsVisible="True">
                                                     <Button.Triggers>
                                                         <DataTrigger TargetType="Button"
                                                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                                                                      Value="True">
                                                             <Setter Property="IsVisible" Value="False" />
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Button"
+                                                                     Binding="{Binding IsCompleted}"
+                                                                     Value="True">
+                                                            <Setter Property="BackgroundColor" Value="#58B776" />
                                                         </DataTrigger>
                                                     </Button.Triggers>
                                                 </Button>
@@ -1017,7 +1129,6 @@
                                 BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
                                 TextColor="White"
                                 Clicked="OnConfirmDeleteDialog"/>
-
                     </Grid>
                 </VerticalStackLayout>
             </Border>

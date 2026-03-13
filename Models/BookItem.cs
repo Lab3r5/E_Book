@@ -69,10 +69,22 @@ namespace E_Book.Models
             {
                 double normalized = Math.Max(0, Math.Min(1, value));
                 if (Math.Abs(_readingProgress - normalized) < 0.0001) return;
+
                 _readingProgress = normalized;
+
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasProgress));
+                OnPropertyChanged(nameof(ShowProgressBar));
                 OnPropertyChanged(nameof(ProgressPercentText));
+                OnPropertyChanged(nameof(IsCompleted));
+                OnPropertyChanged(nameof(IsAlmostFinished));
+                OnPropertyChanged(nameof(ShowReadingBadge));
+                OnPropertyChanged(nameof(ReadingStatusText));
+                OnPropertyChanged(nameof(ReadButtonText));
+                OnPropertyChanged(nameof(HasLastReadPage));
+                OnPropertyChanged(nameof(LastReadPageText));
+                OnPropertyChanged(nameof(HasReadingTime));
+                OnPropertyChanged(nameof(ReadingTimeText));
             }
         }
 
@@ -84,10 +96,62 @@ namespace E_Book.Models
             {
                 if (_lastOpenedTicks == value) return;
                 _lastOpenedTicks = value;
+
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasLastOpened));
                 OnPropertyChanged(nameof(LastOpenedText));
                 OnPropertyChanged(nameof(IsUnread));
+            }
+        }
+
+        private int _lastReadPage;
+        public int LastReadPage
+        {
+            get => _lastReadPage;
+            set
+            {
+                int normalized = Math.Max(0, value);
+                if (_lastReadPage == normalized) return;
+
+                _lastReadPage = normalized;
+
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasLastReadPage));
+                OnPropertyChanged(nameof(LastReadPageText));
+            }
+        }
+
+        private int _totalPages;
+        public int TotalPages
+        {
+            get => _totalPages;
+            set
+            {
+                int normalized = Math.Max(0, value);
+                if (_totalPages == normalized) return;
+
+                _totalPages = normalized;
+
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasLastReadPage));
+                OnPropertyChanged(nameof(LastReadPageText));
+            }
+        }
+
+        private long _totalReadingSeconds;
+        public long TotalReadingSeconds
+        {
+            get => _totalReadingSeconds;
+            set
+            {
+                long normalized = Math.Max(0, value);
+                if (_totalReadingSeconds == normalized) return;
+
+                _totalReadingSeconds = normalized;
+
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasReadingTime));
+                OnPropertyChanged(nameof(ReadingTimeText));
             }
         }
 
@@ -128,10 +192,46 @@ namespace E_Book.Models
         }
 
         public bool HasProgress => ReadingProgress > 0;
+
+        public bool ShowProgressBar => ReadingProgress > 0 && ReadingProgress < 0.999;
+
         public bool HasLastOpened => LastOpenedTicks > 0;
+
         public bool IsUnread => LastOpenedTicks <= 0;
 
-        public string ProgressPercentText => $"{Math.Round(ReadingProgress * 100)}%";
+        public bool IsCompleted => ReadingProgress >= 0.999;
+
+        public bool IsAlmostFinished => ReadingProgress >= 0.90 && ReadingProgress < 0.999;
+
+        public bool ShowReadingBadge => ReadingProgress > 0 || IsCompleted;
+
+        public bool HasLastReadPage => LastReadPage > 0 || IsCompleted;
+
+        public bool HasReadingTime => TotalReadingSeconds > 0 || IsCompleted;
+
+        public string ProgressPercentText =>
+            $"{Math.Round(ReadingProgress * 100)}%";
+
+        public string ReadingStatusText
+        {
+            get
+            {
+                if (IsCompleted) return "Completed";
+                if (IsAlmostFinished) return "Almost finished";
+                if (ReadingProgress > 0) return "Continue reading";
+                return string.Empty;
+            }
+        }
+
+        public string ReadButtonText
+        {
+            get
+            {
+                if (IsCompleted) return "Read again";
+                if (ReadingProgress > 0) return "Resume";
+                return "Read";
+            }
+        }
 
         public string LastOpenedText
         {
@@ -153,15 +253,73 @@ namespace E_Book.Models
             }
         }
 
+        public string LastReadPageText
+        {
+            get
+            {
+                if (LastReadPage > 0)
+                {
+                    if (TotalPages > 0)
+                        return $"Last read: page {LastReadPage} / {TotalPages}";
+
+                    return $"Last read: page {LastReadPage}";
+                }
+
+                if (IsCompleted)
+                {
+                    if (TotalPages > 0)
+                        return $"Finished: page {TotalPages} / {TotalPages}";
+
+                    return "Finished reading";
+                }
+
+                return string.Empty;
+            }
+        }
+
+        public string ReadingTimeText
+        {
+            get
+            {
+                if (TotalReadingSeconds <= 0)
+                {
+                    if (IsCompleted)
+                        return "Reading completed";
+                    return string.Empty;
+                }
+
+                var ts = TimeSpan.FromSeconds(TotalReadingSeconds);
+
+                if (ts.TotalHours >= 1)
+                    return $"Reading time: {(int)ts.TotalHours}h {ts.Minutes}m";
+
+                if (ts.TotalMinutes >= 1)
+                    return $"Reading time: {Math.Max(1, (int)ts.TotalMinutes)}m";
+
+                return "Reading time: <1m";
+            }
+        }
+
         public void RefreshVisualMeta()
         {
             UpdateCover();
+
             OnPropertyChanged(nameof(DisplayFileName));
             OnPropertyChanged(nameof(HasProgress));
+            OnPropertyChanged(nameof(ShowProgressBar));
             OnPropertyChanged(nameof(ProgressPercentText));
             OnPropertyChanged(nameof(HasLastOpened));
             OnPropertyChanged(nameof(LastOpenedText));
             OnPropertyChanged(nameof(IsUnread));
+            OnPropertyChanged(nameof(IsCompleted));
+            OnPropertyChanged(nameof(IsAlmostFinished));
+            OnPropertyChanged(nameof(ShowReadingBadge));
+            OnPropertyChanged(nameof(ReadingStatusText));
+            OnPropertyChanged(nameof(ReadButtonText));
+            OnPropertyChanged(nameof(HasLastReadPage));
+            OnPropertyChanged(nameof(LastReadPageText));
+            OnPropertyChanged(nameof(HasReadingTime));
+            OnPropertyChanged(nameof(ReadingTimeText));
         }
 
         private void UpdateCover()

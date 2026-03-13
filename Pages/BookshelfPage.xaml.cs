@@ -136,6 +136,27 @@ namespace E_Book.Pages
             }
         }
 
+        public string InProgressCountText => Books.Count(b => b.ReadingProgress > 0 && b.ReadingProgress < 0.999).ToString();
+
+        public string CompletedCountText => Books.Count(b => b.ReadingProgress >= 0.999).ToString();
+
+        public string TotalReadingTimeText
+        {
+            get
+            {
+                long totalSeconds = Books.Sum(b => b.TotalReadingSeconds);
+                var ts = TimeSpan.FromSeconds(totalSeconds);
+
+                if (ts.TotalHours >= 1)
+                    return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+
+                if (ts.TotalMinutes >= 1)
+                    return $"{Math.Max(1, (int)ts.TotalMinutes)}m";
+
+                return "0m";
+            }
+        }
+
         public ICommand LongPressCommand { get; }
 
         private List<BookItem> _pendingDeleteItems = new();
@@ -168,6 +189,7 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            RaiseSummaryProperties();
             OnPropertyChanged(nameof(SelectedCountText));
             RaiseImportUiProperties();
         }
@@ -273,6 +295,13 @@ namespace E_Book.Pages
             OnPropertyChanged(nameof(EmptyStateSecondaryHint));
         }
 
+        private void RaiseSummaryProperties()
+        {
+            OnPropertyChanged(nameof(InProgressCountText));
+            OnPropertyChanged(nameof(CompletedCountText));
+            OnPropertyChanged(nameof(TotalReadingTimeText));
+        }
+
         private async Task SetTransientImportFeedbackAsync(ImportFeedbackState state)
         {
             _importFeedbackState = state;
@@ -363,11 +392,17 @@ namespace E_Book.Pages
                     {
                         b.ReadingProgress = meta.Progress;
                         b.LastOpenedTicks = meta.LastOpenedTicks;
+                        b.LastReadPage = meta.LastReadPage;
+                        b.TotalPages = meta.TotalPages;
+                        b.TotalReadingSeconds = meta.TotalReadingSeconds;
                     }
                     else
                     {
                         b.ReadingProgress = 0;
                         b.LastOpenedTicks = 0;
+                        b.LastReadPage = 0;
+                        b.TotalPages = 0;
+                        b.TotalReadingSeconds = 0;
                     }
 
                     b.RefreshVisualMeta();
@@ -376,7 +411,7 @@ namespace E_Book.Pages
                 return loaded
                     .OrderByDescending(b => b.LastOpenedTicks > 0)
                     .ThenByDescending(b => b.LastOpenedTicks)
-                    .ThenBy(b => b.FileName)
+                    .ThenBy(b => b.FileName, StringComparer.OrdinalIgnoreCase)
                     .ToList();
             });
 
@@ -389,6 +424,7 @@ namespace E_Book.Pages
 
                 UpdateSelectAllText();
                 UpdateConfirmState();
+                RaiseSummaryProperties();
                 OnPropertyChanged(nameof(SelectedCountText));
 
                 IsLoadingBooks = false;
@@ -409,6 +445,9 @@ namespace E_Book.Pages
                     existing.Format = incoming.Format;
                     existing.ReadingProgress = incoming.ReadingProgress;
                     existing.LastOpenedTicks = incoming.LastOpenedTicks;
+                    existing.LastReadPage = incoming.LastReadPage;
+                    existing.TotalPages = incoming.TotalPages;
+                    existing.TotalReadingSeconds = incoming.TotalReadingSeconds;
                     existing.IsSelected = false;
                     existing.RefreshVisualMeta();
 
@@ -630,9 +669,7 @@ namespace E_Book.Pages
             """;
 
             if (!File.Exists(guidePath))
-            {
                 File.WriteAllText(guidePath, guideContent);
-            }
         }
 
         private void SubscribeItem(BookItem item)
@@ -766,6 +803,7 @@ namespace E_Book.Pages
                     }
 
                     EnsureBookListVisibleImmediately();
+                    RaiseSummaryProperties();
                 });
 
                 await ShowToast("Imported successfully");
@@ -795,6 +833,9 @@ namespace E_Book.Pages
                     Format = LibraryService.GetFormatTag(targetPath),
                     ReadingProgress = 0,
                     LastOpenedTicks = 0,
+                    LastReadPage = 0,
+                    TotalPages = 0,
+                    TotalReadingSeconds = 0,
                     IsSelected = false
                 };
             }
@@ -816,6 +857,9 @@ namespace E_Book.Pages
                 existing.Format = importedBook.Format;
                 existing.ReadingProgress = importedBook.ReadingProgress;
                 existing.LastOpenedTicks = importedBook.LastOpenedTicks;
+                existing.LastReadPage = importedBook.LastReadPage;
+                existing.TotalPages = importedBook.TotalPages;
+                existing.TotalReadingSeconds = importedBook.TotalReadingSeconds;
                 existing.IsFreshlyImported = true;
                 existing.RefreshVisualMeta();
 
@@ -823,6 +867,7 @@ namespace E_Book.Pages
                 if (existingIndex > 0)
                     Books.Move(existingIndex, 0);
 
+                RaiseSummaryProperties();
                 return;
             }
 
@@ -831,6 +876,7 @@ namespace E_Book.Pages
 
             UpdateSelectAllText();
             UpdateConfirmState();
+            RaiseSummaryProperties();
             OnPropertyChanged(nameof(SelectedCountText));
         }
 
@@ -881,13 +927,23 @@ namespace E_Book.Pages
             if (string.IsNullOrWhiteSpace(_pendingHighlightBookPath))
                 return;
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 8; i++)
             {
                 var book = Books.FirstOrDefault(b =>
                     string.Equals(b.FullPath, _pendingHighlightBookPath, StringComparison.OrdinalIgnoreCase));
 
                 if (book != null && TryGetLiveBookCard(book, out var card) && card != null)
                 {
+                    try
+                    {
+                        if (BookCollectionView != null)
+                            BookCollectionView.ScrollTo(book, position: ScrollToPosition.Start, animate: true);
+                    }
+                    catch
+                    {
+                    }
+
+                    await Task.Delay(100);
                     await PulseBookCardAsync(card);
                     _pendingHighlightBookPath = null;
                     return;
@@ -972,19 +1028,12 @@ namespace E_Book.Pages
                     return;
                 }
 
-                ReadingMetaStore.UpdateLastOpened(book.FullPath);
-                book.LastOpenedTicks = DateTime.UtcNow.Ticks;
-                book.RefreshVisualMeta();
-
-                int currentIndex = Books.IndexOf(book);
-                if (currentIndex > 0)
-                    Books.Move(currentIndex, 0);
-
                 _pendingHighlightBookPath = book.FullPath;
                 _refreshOnNextAppear = false;
                 _animateListOnNextAppear = false;
 
-                var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
+                bool restart = book.IsCompleted;
+                var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
                 await Shell.Current.GoToAsync(route);
             }
         }
@@ -1210,6 +1259,7 @@ namespace E_Book.Pages
             else
                 EnsureBookListVisibleImmediately();
 
+            RaiseSummaryProperties();
             await ShowToast("Deleted successfully");
 
             _refreshOnNextAppear = false;
@@ -1234,6 +1284,8 @@ namespace E_Book.Pages
 
                 ReadingMetaStore.Remove(book.FullPath);
                 _bookCardMap.Remove(book.FullPath);
+
+                RaiseSummaryProperties();
 
                 if (reloadAfter)
                     await RefreshBooksAsync();
@@ -1451,7 +1503,7 @@ namespace E_Book.Pages
 
         private void OnReadingMetaChanged(object? sender, ReadingMetaStore.ReadingMetaChangedEventArgs e)
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
                 if (string.IsNullOrWhiteSpace(e.FullPath))
                     return;
@@ -1470,17 +1522,36 @@ namespace E_Book.Pages
 
                     UpdateSelectAllText();
                     UpdateConfirmState();
+                    RaiseSummaryProperties();
                     OnPropertyChanged(nameof(SelectedCountText));
                     return;
                 }
 
                 book.ReadingProgress = e.Progress;
                 book.LastOpenedTicks = e.LastOpenedTicks;
+                book.LastReadPage = e.LastReadPage;
+                book.TotalPages = e.TotalPages;
+                book.TotalReadingSeconds = e.TotalReadingSeconds;
                 book.RefreshVisualMeta();
 
                 int oldIndex = Books.IndexOf(book);
                 if (oldIndex > 0)
                     Books.Move(oldIndex, 0);
+
+                _pendingHighlightBookPath = book.FullPath;
+
+                try
+                {
+                    if (BookCollectionView != null)
+                        BookCollectionView.ScrollTo(book, position: ScrollToPosition.Start, animate: true);
+                }
+                catch
+                {
+                }
+
+                RaiseSummaryProperties();
+                await Task.Delay(120);
+                await TryHighlightPendingBookAsync();
             });
         }
 
