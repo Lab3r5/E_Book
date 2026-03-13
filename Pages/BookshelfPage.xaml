@@ -27,19 +27,21 @@
                   TranslationY="-16">
 
                 <!-- Cancel -->
-                <Frame x:Name="CancelChip"
-                       Grid.Column="0"
-                       Padding="12,7"
-                       CornerRadius="14"
-                       HasShadow="False"
-                       BackgroundColor="{AppThemeBinding Light=#F3F1FA, Dark=#24242C}"
-                       HorizontalOptions="Start"
-                       VerticalOptions="Center"
-                       IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}">
+                <Border x:Name="CancelChip"
+                        Grid.Column="0"
+                        Padding="12,7"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F3F1FA, Dark=#24242C}"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
 
-                    <Frame.GestureRecognizers>
+                    <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnCancelMultiSelectClicked"/>
-                    </Frame.GestureRecognizers>
+                    </Border.GestureRecognizers>
 
                     <Label Text="Cancel"
                            FontSize="13"
@@ -47,7 +49,7 @@
                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
-                </Frame>
+                </Border>
 
                 <!-- Normal title -->
                 <Label x:Name="NormalTitleLabel"
@@ -61,7 +63,6 @@
                        Margin="0"
                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
                        IsVisible="True">
-
                     <Label.Triggers>
                         <DataTrigger TargetType="Label"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
@@ -72,15 +73,17 @@
                 </Label>
 
                 <!-- Multi-select title -->
-                <Frame x:Name="MultiSelectTitleChip"
-                       Grid.Column="2"
-                       Padding="12,6"
-                       CornerRadius="15"
-                       HasShadow="False"
-                       BackgroundColor="{AppThemeBinding Light=#F4F1FF, Dark=#24242C}"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       IsVisible="False">
+                <Border x:Name="MultiSelectTitleChip"
+                        Grid.Column="2"
+                        Padding="12,6"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F4F1FF, Dark=#24242C}"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        IsVisible="False">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15" />
+                    </Border.StrokeShape>
 
                     <Label Text="{Binding Source={x:Reference BookshelfPageRoot}, Path=SelectedCountText}"
                            FontSize="15"
@@ -89,32 +92,34 @@
                            VerticalTextAlignment="Center"
                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-                    <Frame.Triggers>
-                        <DataTrigger TargetType="Frame"
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                                      Value="True">
                             <Setter Property="IsVisible" Value="True"/>
                         </DataTrigger>
-                        <DataTrigger TargetType="Frame"
+                        <DataTrigger TargetType="Border"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                                      Value="False">
                             <Setter Property="IsVisible" Value="False"/>
                         </DataTrigger>
-                    </Frame.Triggers>
-                </Frame>
+                    </Border.Triggers>
+                </Border>
 
                 <!-- Trash -->
-                <Frame Grid.Column="4"
-                       x:Name="TrashButton"
-                       HeightRequest="44"
-                       WidthRequest="44"
-                       CornerRadius="22"
-                       Padding="0"
-                       HasShadow="False"
-                       HorizontalOptions="End"
-                       VerticalOptions="Center"
-                       BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
-                       IsVisible="True">
+                <Border Grid.Column="4"
+                        x:Name="TrashButton"
+                        HeightRequest="44"
+                        WidthRequest="44"
+                        Padding="0"
+                        StrokeThickness="0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
+                        IsVisible="True">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="22" />
+                    </Border.StrokeShape>
 
                     <Label Text="🗑"
                            FontSize="18"
@@ -126,28 +131,30 @@
                         </Label.GestureRecognizers>
                     </Label>
 
-                    <Frame.Triggers>
-                        <DataTrigger TargetType="Frame"
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                                      Value="True">
                             <Setter Property="IsVisible" Value="False"/>
                         </DataTrigger>
-                    </Frame.Triggers>
-                </Frame>
+                    </Border.Triggers>
+                </Border>
 
                 <!-- Confirm -->
-                <Frame Grid.Column="4"
-                       x:Name="ConfirmButton"
-                       HeightRequest="42"
-                       WidthRequest="42"
-                       CornerRadius="21"
-                       Padding="0"
-                       HasShadow="False"
-                       HorizontalOptions="End"
-                       VerticalOptions="Center"
-                       BackgroundColor="#8FD8A2"
-                       IsVisible="False"
-                       Opacity="1">
+                <Border Grid.Column="4"
+                        x:Name="ConfirmButton"
+                        HeightRequest="42"
+                        WidthRequest="42"
+                        Padding="0"
+                        StrokeThickness="0"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center"
+                        BackgroundColor="#8FD8A2"
+                        IsVisible="False"
+                        Opacity="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="21" />
+                    </Border.StrokeShape>
 
                     <Label Text="✓"
                            FontSize="22"
@@ -160,34 +167,28 @@
                         </Label.GestureRecognizers>
                     </Label>
 
-                    <Frame.Triggers>
-                        <DataTrigger TargetType="Frame"
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
                                      Binding="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                                      Value="True">
                             <Setter Property="IsVisible" Value="True"/>
                         </DataTrigger>
-                    </Frame.Triggers>
-                </Frame>
-
+                    </Border.Triggers>
+                </Border>
             </Grid>
 
             <!-- Main container -->
-            <Frame x:Name="MainCard"
-                   Grid.Row="1"
-                   BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
-                   CornerRadius="28"
-                   Padding="16"
-                   HasShadow="True"
-                   Margin="0,0,0,10"
-                   Opacity="0"
-                   TranslationY="26">
-
-                <Frame.Shadow>
-                    <Shadow Brush="#18000000"
-                            Offset="0,8"
-                            Radius="22"
-                            Opacity="0.18" />
-                </Frame.Shadow>
+            <Border x:Name="MainCard"
+                    Grid.Row="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+                    Padding="16"
+                    Margin="0,0,0,10"
+                    Opacity="0"
+                    TranslationY="26"
+                    StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="28" />
+                </Border.StrokeShape>
 
                 <Grid RowDefinitions="Auto,*,Auto">
 
@@ -196,15 +197,18 @@
                           IsVisible="{Binding Source={x:Reference BookshelfPageRoot}, Path=IsMultiSelectMode}"
                           Margin="0,0,0,8">
 
-                        <Frame x:Name="SelectAllChip"
-                               Padding="11,6"
-                               CornerRadius="13"
-                               HasShadow="False"
-                               BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A2340}"
-                               HorizontalOptions="Start">
-                            <Frame.GestureRecognizers>
+                        <Border x:Name="SelectAllChip"
+                                Padding="11,6"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A2340}"
+                                HorizontalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="13" />
+                            </Border.StrokeShape>
+
+                            <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnSelectAllClicked"/>
-                            </Frame.GestureRecognizers>
+                            </Border.GestureRecognizers>
 
                             <Label x:Name="SelectAllButton"
                                    Text="Select All"
@@ -213,7 +217,7 @@
                                    TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center" />
-                        </Frame>
+                        </Border>
                     </Grid>
 
                     <!-- Content Area -->
@@ -228,20 +232,27 @@
                                                      Padding="0,2,0,4">
 
                                     <!-- Skeleton Card 1 -->
-                                    <Frame CornerRadius="16"
-                                           Padding="10"
-                                           Margin="0,0,0,4"
-                                           HasShadow="True"
-                                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                    <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                            StrokeThickness="1"
+                                            Padding="10"
+                                            Margin="0,0,0,4"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="16" />
+                                        </Border.StrokeShape>
+
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
-                                            <Frame HeightRequest="56"
-                                                   WidthRequest="56"
-                                                   Padding="0"
-                                                   CornerRadius="12"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
+                                            <Border HeightRequest="56"
+                                                    WidthRequest="56"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="12" />
+                                                </Border.StrokeShape>
+                                            </Border>
+
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
@@ -262,31 +273,42 @@
                                                          CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#EEE8FF, Dark=#332B4A}" />
                                             </VerticalStackLayout>
-                                            <Frame Grid.Column="2"
-                                                   HeightRequest="36"
-                                                   WidthRequest="44"
-                                                   Padding="0"
-                                                   CornerRadius="10"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}" />
+
+                                            <Border Grid.Column="2"
+                                                    HeightRequest="36"
+                                                    WidthRequest="44"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                            </Border>
                                         </Grid>
-                                    </Frame>
+                                    </Border>
 
                                     <!-- Skeleton Card 2 -->
-                                    <Frame CornerRadius="16"
-                                           Padding="10"
-                                           Margin="0,0,0,4"
-                                           HasShadow="True"
-                                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                    <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                            StrokeThickness="1"
+                                            Padding="10"
+                                            Margin="0,0,0,4"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="16" />
+                                        </Border.StrokeShape>
+
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
-                                            <Frame HeightRequest="56"
-                                                   WidthRequest="56"
-                                                   Padding="0"
-                                                   CornerRadius="12"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
+                                            <Border HeightRequest="56"
+                                                    WidthRequest="56"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="12" />
+                                                </Border.StrokeShape>
+                                            </Border>
+
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
@@ -303,31 +325,42 @@
                                                          CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
                                             </VerticalStackLayout>
-                                            <Frame Grid.Column="2"
-                                                   HeightRequest="36"
-                                                   WidthRequest="44"
-                                                   Padding="0"
-                                                   CornerRadius="10"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}" />
+
+                                            <Border Grid.Column="2"
+                                                    HeightRequest="36"
+                                                    WidthRequest="44"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                            </Border>
                                         </Grid>
-                                    </Frame>
+                                    </Border>
 
                                     <!-- Skeleton Card 3 -->
-                                    <Frame CornerRadius="16"
-                                           Padding="10"
-                                           Margin="0,0,0,4"
-                                           HasShadow="True"
-                                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                    <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                            StrokeThickness="1"
+                                            Padding="10"
+                                            Margin="0,0,0,4"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="16" />
+                                        </Border.StrokeShape>
+
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
-                                            <Frame HeightRequest="56"
-                                                   WidthRequest="56"
-                                                   Padding="0"
-                                                   CornerRadius="12"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
+                                            <Border HeightRequest="56"
+                                                    WidthRequest="56"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="12" />
+                                                </Border.StrokeShape>
+                                            </Border>
+
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
@@ -348,31 +381,42 @@
                                                          CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#EEE8FF, Dark=#332B4A}" />
                                             </VerticalStackLayout>
-                                            <Frame Grid.Column="2"
-                                                   HeightRequest="36"
-                                                   WidthRequest="44"
-                                                   Padding="0"
-                                                   CornerRadius="10"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}" />
+
+                                            <Border Grid.Column="2"
+                                                    HeightRequest="36"
+                                                    WidthRequest="44"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                            </Border>
                                         </Grid>
-                                    </Frame>
+                                    </Border>
 
                                     <!-- Skeleton Card 4 -->
-                                    <Frame CornerRadius="16"
-                                           Padding="10"
-                                           Margin="0,0,0,4"
-                                           HasShadow="True"
-                                           BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                    <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                            StrokeThickness="1"
+                                            Padding="10"
+                                            Margin="0,0,0,4"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="16" />
+                                        </Border.StrokeShape>
+
                                         <Grid ColumnDefinitions="56,*,48"
                                               ColumnSpacing="10">
-                                            <Frame HeightRequest="56"
-                                                   WidthRequest="56"
-                                                   Padding="0"
-                                                   CornerRadius="12"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
+                                            <Border HeightRequest="56"
+                                                    WidthRequest="56"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="12" />
+                                                </Border.StrokeShape>
+                                            </Border>
+
                                             <VerticalStackLayout Grid.Column="1"
                                                                  Spacing="6"
                                                                  VerticalOptions="Center">
@@ -389,15 +433,19 @@
                                                          CornerRadius="5"
                                                          Color="{AppThemeBinding Light=#F1EDF8, Dark=#34343B}" />
                                             </VerticalStackLayout>
-                                            <Frame Grid.Column="2"
-                                                   HeightRequest="36"
-                                                   WidthRequest="44"
-                                                   Padding="0"
-                                                   CornerRadius="10"
-                                                   HasShadow="False"
-                                                   BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}" />
+
+                                            <Border Grid.Column="2"
+                                                    HeightRequest="36"
+                                                    WidthRequest="44"
+                                                    Padding="0"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2E2850}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                            </Border>
                                         </Grid>
-                                    </Frame>
+                                    </Border>
 
                                 </VerticalStackLayout>
                             </ScrollView>
@@ -421,6 +469,7 @@
                         <CollectionView x:Name="BookCollectionView"
                                         ItemsSource="{Binding Books}"
                                         SelectionMode="None"
+                                        ItemSizingStrategy="MeasureFirstItem"
                                         Opacity="1">
 
                             <CollectionView.Triggers>
@@ -448,13 +497,15 @@
                                                          HorizontalOptions="Center"
                                                          VerticalOptions="Center">
 
-                                        <Frame HeightRequest="96"
-                                               WidthRequest="96"
-                                               Padding="0"
-                                               CornerRadius="30"
-                                               HasShadow="False"
-                                               BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
-                                               HorizontalOptions="Center">
+                                        <Border HeightRequest="96"
+                                                WidthRequest="96"
+                                                Padding="0"
+                                                StrokeThickness="0"
+                                                BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                                                HorizontalOptions="Center">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="30" />
+                                            </Border.StrokeShape>
 
                                             <Grid>
                                                 <Label x:Name="EmptyIcon"
@@ -463,7 +514,7 @@
                                                        HorizontalOptions="Center"
                                                        VerticalOptions="Center"/>
                                             </Grid>
-                                        </Frame>
+                                        </Border>
 
                                         <Label Text="Your Library is Empty"
                                                FontSize="20"
@@ -489,13 +540,11 @@
                                                 Clicked="OnAddFileClicked"/>
 
                                     </VerticalStackLayout>
-
                                 </Grid>
                             </CollectionView.EmptyView>
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-
                                     <SwipeView>
                                         <SwipeView.LeftItems>
                                             <SwipeItems Mode="Reveal">
@@ -506,19 +555,14 @@
                                             </SwipeItems>
                                         </SwipeView.LeftItems>
 
-                                        <Frame CornerRadius="16"
-                                               Padding="10"
-                                               Margin="0,0,0,9"
-                                               HasShadow="True"
-                                               BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                                               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
-
-                                            <Frame.Shadow>
-                                                <Shadow Brush="#12000000"
-                                                        Offset="0,3"
-                                                        Radius="11"
-                                                        Opacity="0.11" />
-                                            </Frame.Shadow>
+                                        <Border Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                                StrokeThickness="1"
+                                                Padding="10"
+                                                Margin="0,0,0,9"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="16" />
+                                            </Border.StrokeShape>
 
                                             <Grid ColumnDefinitions="Auto,56,*,48"
                                                   ColumnSpacing="8"
@@ -540,14 +584,16 @@
                                                 </CheckBox>
 
                                                 <!-- Cover -->
-                                                <Frame Grid.Column="1"
-                                                       HeightRequest="56"
-                                                       WidthRequest="56"
-                                                       Padding="0"
-                                                       CornerRadius="12"
-                                                       HasShadow="False"
-                                                       BackgroundColor="{Binding CoverColor}"
-                                                       VerticalOptions="Center">
+                                                <Border Grid.Column="1"
+                                                        HeightRequest="56"
+                                                        WidthRequest="56"
+                                                        Padding="0"
+                                                        StrokeThickness="0"
+                                                        BackgroundColor="{Binding CoverColor}"
+                                                        VerticalOptions="Center">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="12" />
+                                                    </Border.StrokeShape>
 
                                                     <Grid>
                                                         <Label Text="{Binding CoverText}"
@@ -557,12 +603,11 @@
                                                                HorizontalOptions="Center"
                                                                VerticalOptions="Center" />
                                                     </Grid>
-                                                </Frame>
+                                                </Border>
 
                                                 <!-- Text content -->
                                                 <Grid Grid.Column="2"
                                                       VerticalOptions="Center">
-
                                                     <Grid.Behaviors>
                                                         <toolkit:TouchBehavior LongPressCommand="{Binding Source={x:Reference BookshelfPageRoot}, Path=LongPressCommand}"
                                                                                LongPressCommandParameter="{Binding .}"
@@ -584,17 +629,20 @@
                                                                MaxLines="1"
                                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-                                                        <Frame Padding="6,2"
-                                                               CornerRadius="6"
-                                                               HasShadow="False"
-                                                               HorizontalOptions="Start"
-                                                               BorderColor="{AppThemeBinding Light=#E5E1F3, Dark=#444444}"
-                                                               BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#2B2B2F}">
+                                                        <Border Padding="6,2"
+                                                                Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#444444}"
+                                                                StrokeThickness="1"
+                                                                HorizontalOptions="Start"
+                                                                BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#2B2B2F}">
+                                                            <Border.StrokeShape>
+                                                                <RoundRectangle CornerRadius="6" />
+                                                            </Border.StrokeShape>
+
                                                             <Label Text="{Binding Format}"
                                                                    FontSize="8.5"
                                                                    FontAttributes="Bold"
                                                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                                                        </Frame>
+                                                        </Border>
 
                                                         <Label Text="{Binding LastOpenedText}"
                                                                FontSize="9.3"
@@ -602,12 +650,15 @@
                                                                LineBreakMode="TailTruncation"
                                                                MaxLines="1" />
 
-                                                        <Frame Padding="5,1"
-                                                               CornerRadius="6"
-                                                               HasShadow="False"
-                                                               HorizontalOptions="Start"
-                                                               BackgroundColor="{AppThemeBinding Light=#EFE9FF, Dark=#2A2340}"
-                                                               IsVisible="{Binding HasProgress}">
+                                                        <Border Padding="5,1"
+                                                                StrokeThickness="0"
+                                                                HorizontalOptions="Start"
+                                                                BackgroundColor="{AppThemeBinding Light=#EFE9FF, Dark=#2A2340}"
+                                                                IsVisible="{Binding HasProgress}">
+                                                            <Border.StrokeShape>
+                                                                <RoundRectangle CornerRadius="6" />
+                                                            </Border.StrokeShape>
+
                                                             <HorizontalStackLayout Spacing="4">
                                                                 <Label Text="●"
                                                                        FontSize="7.5"
@@ -619,7 +670,7 @@
                                                                        TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
                                                                        VerticalOptions="Center" />
                                                             </HorizontalStackLayout>
-                                                        </Frame>
+                                                        </Border>
 
                                                         <Grid ColumnDefinitions="*,Auto"
                                                               ColumnSpacing="6"
@@ -670,9 +721,8 @@
                                                 </Button>
 
                                             </Grid>
-                                        </Frame>
+                                        </Border>
                                     </SwipeView>
-
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
@@ -680,20 +730,15 @@
                     </Grid>
 
                     <!-- Add Book -->
-                    <Frame Grid.Row="2"
-                           Padding="0"
-                           Margin="10,12,10,4"
-                           CornerRadius="26"
-                           HasShadow="True"
-                           BackgroundColor="Transparent"
-                           IsVisible="True">
-
-                        <Frame.Shadow>
-                            <Shadow Brush="#22000000"
-                                    Offset="0,8"
-                                    Radius="20"
-                                    Opacity="0.18" />
-                        </Frame.Shadow>
+                    <Border Grid.Row="2"
+                            Padding="0"
+                            Margin="10,12,10,4"
+                            StrokeThickness="0"
+                            BackgroundColor="Transparent"
+                            IsVisible="True">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="26" />
+                        </Border.StrokeShape>
 
                         <Grid HeightRequest="62">
 
@@ -707,14 +752,16 @@
                             <Grid ColumnDefinitions="Auto,*,Auto"
                                   Padding="18,0">
 
-                                <Frame Grid.Column="0"
-                                       HeightRequest="34"
-                                       WidthRequest="34"
-                                       Padding="0"
-                                       CornerRadius="17"
-                                       HasShadow="False"
-                                       VerticalOptions="Center"
-                                       BackgroundColor="#22FFFFFF">
+                                <Border Grid.Column="0"
+                                        HeightRequest="34"
+                                        WidthRequest="34"
+                                        Padding="0"
+                                        StrokeThickness="0"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="#22FFFFFF">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="17" />
+                                    </Border.StrokeShape>
 
                                     <Label Text="+"
                                            FontSize="22"
@@ -722,7 +769,7 @@
                                            TextColor="White"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"/>
-                                </Frame>
+                                </Border>
 
                                 <VerticalStackLayout Grid.Column="1"
                                                      Spacing="0"
@@ -763,31 +810,34 @@
                                 </DataTrigger>
                             </Grid.Triggers>
                         </Grid>
-                    </Frame>
+                    </Border>
 
                 </Grid>
-            </Frame>
+            </Border>
 
         </Grid>
 
         <!-- Toast -->
-        <Frame x:Name="ToastFrame"
-               ZIndex="900"
-               IsVisible="False"
-               Opacity="0"
-               CornerRadius="14"
-               Padding="12,10"
-               HasShadow="True"
-               BackgroundColor="#1F1F1F"
-               HorizontalOptions="Center"
-               VerticalOptions="End"
-               Margin="0,0,0,28">
+        <Border x:Name="ToastFrame"
+                ZIndex="900"
+                IsVisible="False"
+                Opacity="0"
+                Padding="12,10"
+                StrokeThickness="0"
+                BackgroundColor="#1F1F1F"
+                HorizontalOptions="Center"
+                VerticalOptions="End"
+                Margin="0,0,0,28">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+
             <Label x:Name="ToastLabel"
                    Text=""
                    TextColor="White"
                    FontSize="13"
                    HorizontalTextAlignment="Center" />
-        </Frame>
+        </Border>
 
         <!-- Delete Overlay -->
         <Grid x:Name="DeleteOverlay"
@@ -805,35 +855,40 @@
                 </BoxView.GestureRecognizers>
             </BoxView>
 
-            <Frame x:Name="DeleteDialog"
-                   WidthRequest="320"
-                   CornerRadius="26"
-                   Padding="28"
-                   BackgroundColor="{AppThemeBinding Light=White, Dark=#1C1C1E}"
-                   HasShadow="True"
-                   Opacity="0"
-                   Scale="0.85"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   TranslationY="18"
-                   TranslationX="12"
-                   InputTransparent="False">
+            <Border x:Name="DeleteDialog"
+                    WidthRequest="320"
+                    Padding="28"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1C1C1E}"
+                    StrokeThickness="0"
+                    Opacity="0"
+                    Scale="0.85"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    TranslationY="18"
+                    TranslationX="12"
+                    InputTransparent="False">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="26" />
+                </Border.StrokeShape>
 
                 <VerticalStackLayout Spacing="18">
 
-                    <Frame HeightRequest="56"
-                           WidthRequest="56"
-                           CornerRadius="28"
-                           Padding="0"
-                           HorizontalOptions="Center"
-                           BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
-                           HasShadow="False">
+                    <Border HeightRequest="56"
+                            WidthRequest="56"
+                            Padding="0"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="28" />
+                        </Border.StrokeShape>
+
                         <Label Text="🗑"
                                FontSize="24"
                                TextColor="White"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
-                    </Frame>
+                    </Border>
 
                     <Label x:Name="DeleteTitle"
                            Text="Delete?"
@@ -868,7 +923,7 @@
                     </Grid>
 
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
         </Grid>
 
     </Grid>

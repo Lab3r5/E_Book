@@ -189,7 +189,6 @@ namespace E_Book.Pages
         private async Task InitializeReaderAsync()
         {
             TitleLabel.Text = Path.GetFileNameWithoutExtension(FilePath);
-            ReadingMetaStore.UpdateLastOpened(FilePath);
 
             try
             {
@@ -251,7 +250,9 @@ namespace E_Book.Pages
                 UpdateProgressUI();
                 TrimRenderedPageCache();
 
-                // 为了打开时尽量回到准确页码（如 556 页），这里直接等待完整分页
+                // 打开后立刻刷新“最后阅读时间”，但不要求 Bookshelf 全表刷新
+                ReadingMetaStore.UpdateLastOpened(FilePath);
+
                 if (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial)
                 {
                     await StartBackgroundFullTxtPaginationAsync();
@@ -1936,6 +1937,7 @@ namespace E_Book.Pages
                 currentPage,
                 totalPages);
 
+            // 这里会直接推送到 Bookshelf，对应那一本立即更新
             ReadingMetaStore.UpdateProgress(
                 FilePath,
                 currentPage + 1,

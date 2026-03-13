@@ -9,6 +9,7 @@ using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
 
+using Google.Android.Material.BottomNavigation;
 using Google.Android.Material.Navigation;
 
 using System;
@@ -47,7 +48,6 @@ namespace E_Book
 
         private const string PillTag = "__EBOOK_PILL__";
 
-        // 胶囊 padding
         private const int PillPadH = 18;
         private const int PillPadV = 11;
         private const int EdgeExtra = 14;
@@ -55,6 +55,12 @@ namespace E_Book
         private const long MoveDuration = 280L;
         private const long ResizeDuration = 240L;
         private const float AnimationOvershoot = 0.9f;
+
+        private bool? _lastNightMode;
+
+        private readonly Android.Graphics.Color _selectedColor = Android.Graphics.Color.White;
+        private readonly Android.Graphics.Color _lightUnselectedColor = Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
+        private readonly Android.Graphics.Color _darkUnselectedColor = Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E);
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
@@ -119,6 +125,17 @@ namespace E_Book
             }
         }
 
+        private bool IsNightMode()
+        {
+            return (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
+                   == Android.Content.Res.UiMode.NightYes;
+        }
+
+        private Android.Graphics.Color GetUnselectedColor()
+        {
+            return IsNightMode() ? _darkUnselectedColor : _lightUnselectedColor;
+        }
+
         private void StartEnsureLoop()
         {
             if (_ensureLoopRunning)
@@ -150,9 +167,9 @@ namespace E_Book
                 return;
             }
 
-            if (_ensureTries < 30)
+            if (_ensureTries < 40)
             {
-                Window.DecorView?.PostDelayed(EnsureOnce, 150);
+                Window.DecorView?.PostDelayed(EnsureOnce, 120);
             }
             else
             {
@@ -194,7 +211,8 @@ namespace E_Book
 
             _lastIndex = idx;
 
-            ApplyItemVisualState(idx);
+            ApplyBaseColors(_bar);
+            ForceApplyVisualsToAllItems(idx);
             SnapTo(idx);
 
             StartPump();
@@ -252,6 +270,9 @@ namespace E_Book
 
         private void PrepareBar(NavigationBarView best)
         {
+            bool night = IsNightMode();
+            bool themeChanged = _lastNightMode == null || _lastNightMode.Value != night;
+
             if (_bar == null || !ReferenceEquals(_bar, best))
             {
                 RemovePillIfExists();
@@ -263,10 +284,12 @@ namespace E_Book
 
                 ApplyBaseColors(_bar);
                 RemoveOtherPillsFromBar(_bar, keep: null);
+                _lastNightMode = night;
             }
-            else
+            else if (themeChanged)
             {
                 ApplyBaseColors(_bar);
+                _lastNightMode = night;
             }
         }
 
@@ -312,6 +335,7 @@ namespace E_Book
             _pumpStarted = false;
             _ensureLoopRunning = false;
             _ensureTries = 0;
+            _lastNightMode = null;
         }
 
         private void StartPump()
@@ -341,12 +365,24 @@ namespace E_Book
                     return;
                 }
 
-                ApplyBaseColors(_bar);
+                bool currentNight = IsNightMode();
+                if (_lastNightMode == null || _lastNightMode.Value != currentNight)
+                {
+                    ApplyBaseColors(_bar);
+
+                    if (_itemViews.Count == 0)
+                        TryCollectTabItems(_bar, _itemViews);
+
+                    if (_lastIndex >= 0)
+                        ForceApplyVisualsToAllItems(_lastIndex);
+
+                    _lastNightMode = currentNight;
+                }
 
                 if (_itemViews.Count == 0 && !TryCollectTabItems(_bar, _itemViews))
                 {
                     if (IsBarAlive())
-                        _bar.PostDelayed(PumpOnce, 150);
+                        _bar.PostDelayed(PumpOnce, 120);
 
                     return;
                 }
@@ -355,33 +391,34 @@ namespace E_Book
                 EnsurePillOnBar(_bar);
 
                 int idx = GetCheckedIndex(_bar);
+                if (idx < 0 || idx >= _itemViews.Count)
+                    idx = 0;
 
-                if (idx >= 0 && idx < _itemViews.Count && _pill != null)
+                // 锁死样式：每一轮都统一所有 tab 的 icon/text
+                ForceApplyVisualsToAllItems(idx);
+
+                if (_lastIndex == -1)
                 {
-                    ApplyItemVisualState(idx);
+                    _lastIndex = idx;
+                    SnapTo(idx);
+                }
+                else if (idx != _lastIndex)
+                {
+                    _lastIndex = idx;
 
-                    if (_lastIndex == -1)
-                    {
-                        _lastIndex = idx;
+                    if (_pill.Width == 0 || _pill.Height == 0)
                         SnapTo(idx);
-                    }
-                    else if (idx != _lastIndex)
-                    {
-                        _lastIndex = idx;
-
-                        if (_pill.Width == 0 || _pill.Height == 0)
-                            SnapTo(idx);
-                        else
-                            AnimateTo(idx);
-                    }
-                    else if (_pill.Width == 0 || _pill.Height == 0)
-                    {
-                        SnapTo(idx);
-                    }
+                    else
+                        AnimateTo(idx);
+                }
+                else if (_pill.Width == 0 || _pill.Height == 0)
+                {
+                    SnapTo(idx);
                 }
 
+                // 频率稍微保守一点，既稳又不会太吃性能
                 if (IsBarAlive())
-                    _bar.PostDelayed(PumpOnce, 220);
+                    _bar.PostDelayed(PumpOnce, 180);
             }
             catch
             {
@@ -393,9 +430,7 @@ namespace E_Book
 
         private void ApplyBaseColors(NavigationBarView bar)
         {
-            bool isNight =
-                (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
-                == Android.Content.Res.UiMode.NightYes;
+            bool isNight = IsNightMode();
 
             var bgColor = isNight
                 ? Android.Graphics.Color.Rgb(0x19, 0x13, 0x30)
@@ -410,40 +445,62 @@ namespace E_Book
             try { bar.ItemActiveIndicatorColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
             try { bar.ItemRippleColor = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); } catch { }
 
+            try
+            {
+                if (bar is BottomNavigationView bottomBar)
+                    bottomBar.LabelVisibilityMode = LabelVisibilityMode.LabelVisibilityLabeled;
+            }
+            catch
+            {
+            }
+
             var states = new int[][]
             {
                 new int[] { Android.Resource.Attribute.StateChecked },
                 new int[] { -Android.Resource.Attribute.StateChecked }
             };
 
-            var selectedColor = Android.Graphics.Color.White;
+            var colors = new int[]
+            {
+                _selectedColor.ToArgb(),
+                GetUnselectedColor().ToArgb()
+            };
 
-            var unselectedColor = isNight
-                ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
-                : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
-
-            var colors = new int[] { selectedColor, unselectedColor };
             var csl = new Android.Content.Res.ColorStateList(states, colors);
 
-            bar.ItemIconTintList = csl;
-            bar.ItemTextColor = csl;
+            try
+            {
+                bar.ItemIconTintList = null;
+                bar.ItemTextColor = null;
+            }
+            catch
+            {
+            }
+
+            try { bar.ItemIconTintList = csl; } catch { }
+            try { bar.ItemTextColor = csl; } catch { }
         }
 
-        private void ApplyItemVisualState(int selectedIndex)
+        private void ForceApplyVisualsToAllItems(int selectedIndex)
         {
             if (_itemViews.Count == 0)
                 return;
 
             for (int i = 0; i < _itemViews.Count; i++)
             {
+                bool isSelected = i == selectedIndex;
                 var item = _itemViews[i];
                 if (item == null) continue;
 
-                bool isSelected = i == selectedIndex;
-
-                TryAdjustIconInsideItem(item, isSelected);
-                TryAdjustLabelInsideItem(item, isSelected);
+                ForceApplyVisualsToSingleItem(item, isSelected);
             }
+        }
+
+        private void ForceApplyVisualsToSingleItem(AView item, bool isSelected)
+        {
+            TryAdjustIconInsideItem(item, isSelected);
+            TryAdjustAllLabelsInsideItem(item, isSelected);
+            TryForceSelectedStateFlags(item, isSelected);
         }
 
         private void TryAdjustIconInsideItem(AView item, bool isSelected)
@@ -453,20 +510,14 @@ namespace E_Book
                 if (item is not AViewGroup vg)
                     return;
 
-                var iconView = FindImageView(vg);
-                if (iconView == null)
+                var iconViews = FindAllImageViews(vg);
+                if (iconViews.Count == 0)
                     return;
 
-                bool isNight =
-                    (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
-                    == Android.Content.Res.UiMode.NightYes;
+                var selectedColor = _selectedColor;
+                var unselectedColor = GetUnselectedColor();
 
-                var selectedColor = Android.Graphics.Color.White;
-                var unselectedColor = isNight
-                    ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
-                    : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
-
-                iconView.Post(() =>
+                foreach (var iconView in iconViews)
                 {
                     try
                     {
@@ -475,89 +526,157 @@ namespace E_Book
 
                         iconView.ScaleX = isSelected ? 1.22f : 1.10f;
                         iconView.ScaleY = isSelected ? 1.22f : 1.10f;
-
                         iconView.TranslationY = isSelected ? 2f : 1f;
-
+                        iconView.Alpha = 1f;
                         iconView.SetColorFilter(isSelected ? selectedColor : unselectedColor);
+                        iconView.Selected = isSelected;
+                        iconView.Activated = isSelected;
+                        iconView.Enabled = true;
                     }
                     catch
                     {
                     }
-                });
+                }
             }
             catch
             {
             }
         }
 
-        private void TryAdjustLabelInsideItem(AView item, bool isSelected)
+        private void TryAdjustAllLabelsInsideItem(AView item, bool isSelected)
         {
             try
             {
                 if (item is not AViewGroup vg)
                     return;
 
-                var label = FindTextView(vg);
-                if (label == null)
+                var labels = FindAllTextViews(vg);
+                if (labels.Count == 0)
                     return;
 
-                bool isNight =
-                    (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask)
-                    == Android.Content.Res.UiMode.NightYes;
+                var selectedColor = _selectedColor;
+                var unselectedColor = GetUnselectedColor();
 
-                var selectedColor = Android.Graphics.Color.White;
-                var unselectedColor = isNight
-                    ? Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E)
-                    : Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
-
-                label.SetSingleLine(true);
-                label.SetIncludeFontPadding(false);
-                label.SetTextSize(ComplexUnitType.Sp, 10.5f);
-                label.TranslationY = isSelected ? -1f : -2.5f;
-                label.SetTypeface(label.Typeface, isSelected ? TypefaceStyle.Bold : TypefaceStyle.Normal);
-                label.SetTextColor(isSelected ? selectedColor : unselectedColor);
+                foreach (var label in labels)
+                {
+                    try
+                    {
+                        label.SetSingleLine(true);
+                        label.SetIncludeFontPadding(false);
+                        label.SetTextSize(ComplexUnitType.Sp, 10.5f);
+                        label.TranslationY = isSelected ? -1f : -2.5f;
+                        label.SetTypeface(label.Typeface, isSelected ? TypefaceStyle.Bold : TypefaceStyle.Normal);
+                        label.SetTextColor(isSelected ? selectedColor : unselectedColor);
+                        label.Alpha = 1f;
+                        label.Selected = isSelected;
+                        label.Activated = isSelected;
+                        label.Enabled = true;
+                    }
+                    catch
+                    {
+                    }
+                }
             }
             catch
             {
             }
         }
 
-        private ImageView? FindImageView(AViewGroup root)
+        private void TryForceSelectedStateFlags(AView item, bool isSelected)
         {
-            for (int i = 0; i < root.ChildCount; i++)
+            try
             {
-                var child = root.GetChildAt(i);
+                item.Selected = isSelected;
+                item.Activated = isSelected;
+                item.Enabled = true;
+                item.Alpha = 1f;
 
-                if (child is ImageView iv)
-                    return iv;
-
-                if (child is AViewGroup childGroup)
+                if (item is AViewGroup vg)
                 {
-                    var found = FindImageView(childGroup);
-                    if (found != null) return found;
+                    ForceFlagsRecursively(vg, isSelected);
                 }
             }
-
-            return null;
+            catch
+            {
+            }
         }
 
-        private TextView? FindTextView(AViewGroup root)
+        private void ForceFlagsRecursively(AViewGroup root, bool isSelected)
         {
             for (int i = 0; i < root.ChildCount; i++)
             {
                 var child = root.GetChildAt(i);
+                if (child == null) continue;
 
-                if (child is TextView tv)
-                    return tv;
+                try
+                {
+                    child.Selected = isSelected;
+                    child.Activated = isSelected;
+                    child.Enabled = true;
+
+                    if (child is TextView tv)
+                        tv.Alpha = 1f;
+
+                    if (child is ImageView iv)
+                        iv.Alpha = 1f;
+                }
+                catch
+                {
+                }
 
                 if (child is AViewGroup childGroup)
+                    ForceFlagsRecursively(childGroup, isSelected);
+            }
+        }
+
+        private List<ImageView> FindAllImageViews(AViewGroup root)
+        {
+            var result = new List<ImageView>();
+
+            void Collect(AViewGroup group)
+            {
+                for (int i = 0; i < group.ChildCount; i++)
                 {
-                    var found = FindTextView(childGroup);
-                    if (found != null) return found;
+                    var child = group.GetChildAt(i);
+
+                    if (child is ImageView iv)
+                    {
+                        result.Add(iv);
+                    }
+                    else if (child is AViewGroup childGroup)
+                    {
+                        Collect(childGroup);
+                    }
                 }
             }
 
-            return null;
+            Collect(root);
+            return result;
+        }
+
+        private List<TextView> FindAllTextViews(AViewGroup root)
+        {
+            var result = new List<TextView>();
+
+            void Collect(AViewGroup group)
+            {
+                for (int i = 0; i < group.ChildCount; i++)
+                {
+                    var child = group.GetChildAt(i);
+
+                    if (child is TextView tv)
+                    {
+                        result.Add(tv);
+                    }
+                    else if (child is AViewGroup childGroup)
+                    {
+                        Collect(childGroup);
+                    }
+                }
+            }
+
+            Collect(root);
+            return result;
         }
 
         private void StopCurrentAnimation()
