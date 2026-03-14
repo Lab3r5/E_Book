@@ -309,5 +309,4 @@ Mobile Application Development
 # 📜 License | 许可
 
 This project is developed for **educational purposes**.
-这样你的项目看起来 **像真正开源项目，而不是作业项目**，对 **GitHub portfolio 很加分**。
 ```
