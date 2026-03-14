@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using E_Book.Services;
 
 namespace E_Book.Controls
 {
@@ -10,9 +11,12 @@ namespace E_Book.Controls
             ApplyState();
         }
 
-        // Title
         public static readonly BindableProperty TitleProperty =
-            BindableProperty.Create(nameof(Title), typeof(string), typeof(AppHeader), "Title",
+            BindableProperty.Create(
+                nameof(Title),
+                typeof(string),
+                typeof(AppHeader),
+                "Title",
                 propertyChanged: (b, o, n) =>
                 {
                     if (b is AppHeader h && n is string s)
@@ -25,9 +29,12 @@ namespace E_Book.Controls
             set => SetValue(TitleProperty, value);
         }
 
-        // ShowBack
         public static readonly BindableProperty ShowBackProperty =
-            BindableProperty.Create(nameof(ShowBack), typeof(bool), typeof(AppHeader), true,
+            BindableProperty.Create(
+                nameof(ShowBack),
+                typeof(bool),
+                typeof(AppHeader),
+                true,
                 propertyChanged: (b, o, n) =>
                 {
                     if (b is AppHeader h && n is bool v)
@@ -40,7 +47,6 @@ namespace E_Book.Controls
             set => SetValue(ShowBackProperty, value);
         }
 
-        // BackCommand
         public static readonly BindableProperty BackCommandProperty =
             BindableProperty.Create(nameof(BackCommand), typeof(ICommand), typeof(AppHeader), null);
 
@@ -50,9 +56,12 @@ namespace E_Book.Controls
             set => SetValue(BackCommandProperty, value);
         }
 
-        // RightContent
         public static readonly BindableProperty RightContentProperty =
-            BindableProperty.Create(nameof(RightContent), typeof(View), typeof(AppHeader), null,
+            BindableProperty.Create(
+                nameof(RightContent),
+                typeof(View),
+                typeof(AppHeader),
+                null,
                 propertyChanged: (b, o, n) =>
                 {
                     if (b is AppHeader h)
@@ -70,18 +79,10 @@ namespace E_Book.Controls
             BackContainer.IsVisible = ShowBack;
         }
 
-        private async Task PressAnim(VisualElement view)
-        {
-            if (view == null) return;
-
-            await view.ScaleTo(0.94, 80, Easing.CubicOut);
-            await view.ScaleTo(1.00, 120, Easing.CubicOut);
-        }
-
         private async void OnBackTapped(object sender, TappedEventArgs e)
         {
             if (sender is VisualElement v)
-                await PressAnim(v);
+                await UIAnimationService.PressAsync(v, 0.94, 0.95, 70, 120);
 
             if (BackCommand?.CanExecute(null) == true)
                 BackCommand.Execute(null);

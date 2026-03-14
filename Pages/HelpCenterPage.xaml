@@ -13,20 +13,39 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Header -->
         <controls:AppHeader Title="Help Center"
                             BackCommand="{Binding BackCommand}" />
 
-        <!-- Content -->
-        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Never">
-            <VerticalStackLayout Padding="18,10,18,24" Spacing="18">
+        <ScrollView Grid.Row="1"
+                    VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Padding="18,10,18,24"
+                                 Spacing="18">
 
                 <!-- Intro -->
+                <VerticalStackLayout Spacing="4"
+                                     Padding="2,0,2,0">
+                    <Label Text="Support"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <Label Text="Frequently asked questions"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                    <Label Text="Find quick answers and simple guides for using E_Book."
+                           FontSize="12.5"
+                           LineBreakMode="WordWrap"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                </VerticalStackLayout>
+
+                <!-- Intro Card -->
                 <Border StrokeThickness="0"
                         BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
                         StrokeShape="RoundRectangle 20"
                         Padding="16">
-                    <Label Text="Find quick answers and learn how to use the app more effectively."
+                    <Label Text="You can browse common questions below or use the guide section to learn the main features of the app."
                            FontSize="13"
                            LineBreakMode="WordWrap"
                            TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
@@ -63,7 +82,7 @@
                             <Label x:Name="Answer1"
                                    IsVisible="False"
                                    Opacity="0"
-                                   Text="Go to your library and use the import or add-book feature to upload a supported file into the app."
+                                   Text="Go to your library and use the add-book option to import a supported file into the app."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -97,7 +116,7 @@
                             <Label x:Name="Answer2"
                                    IsVisible="False"
                                    Opacity="0"
-                                   Text="Yes. The app can store your reading progress locally so you can continue from the page where you stopped."
+                                   Text="Yes. E_Book can save your reading progress locally so you can continue from where you stopped."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -131,7 +150,7 @@
                             <Label x:Name="Answer3"
                                    IsVisible="False"
                                    Opacity="0"
-                                   Text="Yes. You can change the appearance in the Settings section of the app."
+                                   Text="Yes. You can change the app appearance from the Appearance section in Settings."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -165,7 +184,7 @@
                             <Label x:Name="Answer4"
                                    IsVisible="False"
                                    Opacity="0"
-                                   Text="Supported formats depend on your current implementation, such as TXT and other enabled reading formats."
+                                   Text="Supported formats include TXT, EPUB, PDF, HTML, DOCX, and RTF in the current version of the app."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -194,7 +213,7 @@
                                    FontSize="16"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="Import supported files into your library to start reading."
+                            <Label Text="Import supported files into your library to begin reading."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -210,7 +229,7 @@
                                    FontSize="16"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="Adjust font size, spacing, and theme for a more comfortable reading experience."
+                            <Label Text="Adjust font size, theme, and display preferences for a better reading experience."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -226,7 +245,7 @@
                                    FontSize="16"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="Use the search feature to quickly find books in your library."
+                            <Label Text="Use the Search page to quickly find imported books in your library."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -242,7 +261,7 @@
                                    FontSize="16"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
-                            <Label Text="Your last reading position can be saved automatically so you can continue later."
+                            <Label Text="Your last reading position can be stored automatically so you can continue later."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />

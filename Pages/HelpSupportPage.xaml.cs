@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
+using E_Book.Services;
 
 namespace E_Book.Pages
 {
@@ -26,18 +27,10 @@ namespace E_Book.Pages
             BindingContext = this;
         }
 
-        private async Task PressAnim(VisualElement view)
-        {
-            if (view == null) return;
-
-            await view.ScaleTo(0.97, 70, Easing.CubicOut);
-            await view.ScaleTo(1.00, 110, Easing.CubicOut);
-        }
-
         private async void OnHelpCenterTapped(object sender, TappedEventArgs e)
         {
             if (sender is VisualElement v)
-                await PressAnim(v);
+                await UIAnimationService.PressAsync(v, 0.975, 0.98, 70, 110);
 
             try
             {
@@ -52,7 +45,7 @@ namespace E_Book.Pages
         private async void OnContactTapped(object sender, TappedEventArgs e)
         {
             if (sender is VisualElement v)
-                await PressAnim(v);
+                await UIAnimationService.PressAsync(v, 0.975, 0.98, 70, 110);
 
             try
             {
@@ -79,7 +72,7 @@ namespace E_Book.Pages
         private async void OnPrivacyTapped(object sender, TappedEventArgs e)
         {
             if (sender is VisualElement v)
-                await PressAnim(v);
+                await UIAnimationService.PressAsync(v, 0.975, 0.98, 70, 110);
 
             try
             {

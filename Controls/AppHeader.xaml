@@ -5,31 +5,31 @@
     x:Class="E_Book.Controls.AppHeader"
     Padding="0">
 
-    <Grid RowDefinitions="10,56">
+    <Grid RowDefinitions="8,60">
 
-        <!-- Top gradient strip -->
-        <Grid Grid.Row="0">
-            <Grid.Background>
+        <!-- Top brand strip -->
+        <Border Grid.Row="0"
+                StrokeThickness="0">
+            <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#7A63FF" Offset="0" />
+                    <GradientStop Color="#8E72FF" Offset="0" />
                     <GradientStop Color="#221551" Offset="1" />
                 </LinearGradientBrush>
-            </Grid.Background>
-        </Grid>
+            </Border.Background>
+        </Border>
 
         <!-- Header bar -->
         <Grid Grid.Row="1"
               ColumnDefinitions="56,*,56"
-              Padding="12,8"
+              Padding="12,8,12,6"
               BackgroundColor="Transparent">
 
-            <!-- Back button -->
             <Border x:Name="BackContainer"
                     Grid.Column="0"
                     WidthRequest="44"
                     HeightRequest="44"
                     StrokeThickness="0"
-                    BackgroundColor="{AppThemeBinding Light=#EDE7FF, Dark=#2A214F}"
+                    BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
                     StrokeShape="RoundRectangle 22"
                     HorizontalOptions="Start"
                     VerticalOptions="Center">
@@ -48,25 +48,24 @@
                        TranslationY="-1" />
             </Border>
 
-            <!-- Title -->
-            <Label x:Name="TitleLabel"
-                   Grid.Column="1"
-                   Text="Title"
-                   FontSize="20"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   HorizontalTextAlignment="Center"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+            <VerticalStackLayout Grid.Column="1"
+                                 Spacing="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+                <Label x:Name="TitleLabel"
+                       Text="Title"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+            </VerticalStackLayout>
 
-            <!-- Right slot -->
             <ContentView x:Name="RightSlot"
                          Grid.Column="2"
                          WidthRequest="44"
                          HeightRequest="44"
                          HorizontalOptions="End"
                          VerticalOptions="Center"/>
-
         </Grid>
 
     </Grid>

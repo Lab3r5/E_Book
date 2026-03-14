@@ -14,7 +14,7 @@ namespace E_Book.Pages
         {
             InitializeComponent();
 
-            BackCommand = new Command(async () => await Navigation.PopAsync());
+            BackCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
             BindingContext = this;
 
             UpdateValidationState();

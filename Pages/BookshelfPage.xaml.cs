@@ -332,33 +332,8 @@ namespace E_Book.Pages
             if (RootHost != null)
                 RootHost.Opacity = 1;
 
-            if (HeaderSection != null)
-            {
-                HeaderSection.Opacity = 0;
-                HeaderSection.TranslationY = -16;
-            }
-
-            if (MainCard != null)
-            {
-                MainCard.Opacity = 0;
-                MainCard.TranslationY = 26;
-            }
-
-            var tasks = new List<Task>();
-
-            if (HeaderSection != null)
-            {
-                tasks.Add(HeaderSection.FadeTo(1, 320, Easing.CubicOut));
-                tasks.Add(HeaderSection.TranslateTo(0, 0, 320, Easing.CubicOut));
-            }
-
-            if (MainCard != null)
-            {
-                tasks.Add(MainCard.FadeTo(1, 420, Easing.CubicOut));
-                tasks.Add(MainCard.TranslateTo(0, 0, 420, Easing.CubicOut));
-            }
-
-            await Task.WhenAll(tasks);
+            await UIAnimationService.FadeSlideInAsync(HeaderSection, 10, 200);
+            await UIAnimationService.FadeScaleCardInAsync(MainCard, 18, 0.995, 250, 20);
         }
 
         private async Task RefreshBooksAsync(bool showLoadingPlaceholder = false)
@@ -505,13 +480,7 @@ namespace E_Book.Pages
             if (BookCollectionView == null)
                 return;
 
-            BookCollectionView.Opacity = 0;
-            BookCollectionView.TranslationY = 10;
-
-            await Task.WhenAll(
-                BookCollectionView.FadeTo(1, 220, Easing.CubicOut),
-                BookCollectionView.TranslateTo(0, 0, 240, Easing.CubicOut)
-            );
+            await UIAnimationService.FadeListInAsync(BookCollectionView, 18, 220, 10);
         }
 
         private void EnsureLibraryExists()
@@ -885,8 +854,7 @@ namespace E_Book.Pages
             if (AddBookTapSurface == null)
                 return;
 
-            await AddBookTapSurface.ScaleTo(0.985, 70, Easing.CubicIn);
-            await AddBookTapSurface.ScaleTo(1.0, 90, Easing.CubicOut);
+            await UIAnimationService.PressAsync(AddBookTapSurface, 0.985, 0.98, 70, 110);
         }
 
         private async void OnBookCardLoaded(object sender, EventArgs e)
@@ -902,13 +870,13 @@ namespace E_Book.Pages
             if (book.IsFreshlyImported)
             {
                 border.Opacity = 0;
-                border.Scale = 0.97;
-                border.TranslationY = 8;
+                border.Scale = 0.985;
+                border.TranslationY = 10;
 
                 await Task.WhenAll(
-                    border.FadeTo(1, 240, Easing.CubicOut),
-                    border.ScaleTo(1.0, 240, Easing.CubicOut),
-                    border.TranslateTo(0, 0, 240, Easing.CubicOut)
+                    border.FadeTo(1, 220, Easing.CubicOut),
+                    border.ScaleTo(1.0, 220, Easing.CubicOut),
+                    border.TranslateTo(0, 0, 220, Easing.CubicOut)
                 );
 
                 book.IsFreshlyImported = false;
@@ -980,8 +948,7 @@ namespace E_Book.Pages
         {
             try
             {
-                await card.ScaleTo(1.018, 110, Easing.CubicOut);
-                await card.ScaleTo(1.0, 130, Easing.CubicOut);
+                await UIAnimationService.PopAsync(card);
             }
             catch
             {
@@ -1432,8 +1399,7 @@ namespace E_Book.Pages
         private async Task AnimatePress(VisualElement view)
         {
             if (view == null) return;
-            await view.ScaleTo(0.88, 80, Easing.CubicIn);
-            await view.ScaleTo(1.00, 90, Easing.CubicOut);
+            await UIAnimationService.PressAsync(view, 0.94, 0.96, 70, 110);
         }
 
         private async Task ShowToast(string message)
@@ -1465,13 +1431,7 @@ namespace E_Book.Pages
             if (EmptyStateContainer == null)
                 return;
 
-            EmptyStateContainer.Opacity = 0;
-            EmptyStateContainer.TranslationY = 20;
-
-            await Task.WhenAll(
-                EmptyStateContainer.FadeTo(1, 400, Easing.CubicOut),
-                EmptyStateContainer.TranslateTo(0, 0, 420, Easing.CubicOut)
-            );
+            await UIAnimationService.FadeListInAsync(EmptyStateContainer, 20, 240, 10);
         }
 
         private async Task StartEmptyIconBreathing()

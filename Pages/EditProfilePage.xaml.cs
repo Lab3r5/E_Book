@@ -1,13 +1,11 @@
 using E_Book.Services;
 using E_Book.Data;
-using Microsoft.Maui.Storage;
 
 namespace E_Book.Pages
 {
     public partial class EditProfilePage : ContentPage
     {
         private readonly Database _database = new();
-
         private string _originalName = string.Empty;
 
         public EditProfilePage()

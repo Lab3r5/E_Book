@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using E_Book.Services;
 
 namespace E_Book.Pages
 {
@@ -65,10 +66,7 @@ namespace E_Book.Pages
         private async Task ToggleAnswer(Label answerLabel, Label arrowLabel, VisualElement? card = null)
         {
             if (card != null)
-            {
-                await card.ScaleTo(0.985, 60, Easing.CubicOut);
-                await card.ScaleTo(1.0, 90, Easing.CubicOut);
-            }
+                await UIAnimationService.PressAsync(card, 0.985, 0.99, 60, 90);
 
             if (answerLabel.IsVisible)
             {

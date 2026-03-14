@@ -257,7 +257,6 @@
                           ColumnSpacing="12"
                           VerticalOptions="Center">
 
-                        <!-- Info Icon -->
                         <Border WidthRequest="20"
                                 HeightRequest="20"
                                 StrokeThickness="0"
@@ -274,7 +273,6 @@
                                    TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
                         </Border>
 
-                        <!-- Notice Text -->
                         <Label Grid.Column="1"
                                Text="Guest mode cannot edit profile or password."
                                FontSize="12"

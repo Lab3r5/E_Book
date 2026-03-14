@@ -226,7 +226,7 @@
                 </Border>
 
                 <!-- Version -->
-                <Label Text="Last updated · Version 1.06"
+                <Label Text="Last updated · Version 1.07"
                        FontSize="12"
                        HorizontalOptions="Center"
                        Margin="0,2,0,0"

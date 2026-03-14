@@ -13,7 +13,7 @@
         <!-- Header -->
         <VerticalStackLayout Grid.Row="0"
                              Spacing="4"
-                             Margin="0,4,0,16">
+                             Margin="0,4,0,8">
 
             <Label x:Name="TitleLabel"
                    Text="Settings"
@@ -44,7 +44,7 @@
                    CornerRadius="30"
                    Padding="20"
                    HasShadow="True"
-                   Margin="0,0,0,16"
+                   Margin="0,-6,0,16"
                    Opacity="0"
                    TranslationY="14"
                    Scale="0.995">
@@ -58,7 +58,6 @@
 
                 <VerticalStackLayout Spacing="16">
 
-                    <!-- Top content -->
                     <Grid ColumnDefinitions="64,*,Auto"
                           ColumnSpacing="14">
 
@@ -148,12 +147,10 @@
                         </Frame>
                     </Grid>
 
-                    <!-- Divider -->
                     <BoxView HeightRequest="1"
                              Opacity="0.05"
                              BackgroundColor="{AppThemeBinding Light=#6E6688, Dark=#FFFFFF}" />
 
-                    <!-- Bottom action -->
                     <Grid ColumnDefinitions="*,Auto"
                           VerticalOptions="Center">
 
@@ -193,7 +190,7 @@
                    CornerRadius="30"
                    Padding="0"
                    HasShadow="True"
-                   Margin="0,0,0,10"
+                   Margin="0,6,0,14"
                    Opacity="0"
                    TranslationY="14"
                    Scale="0.995">
@@ -217,7 +214,6 @@
                                TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}"
                                Opacity="0"
                                TranslationY="8" />
-
                     </Grid>
 
                     <!-- Appearance -->
@@ -240,7 +236,6 @@
                               ColumnSpacing="14"
                               MinimumHeightRequest="88">
 
-                            <!-- Icon -->
                             <Frame x:Name="AppearanceBubble"
                                    Grid.Column="0"
                                    HeightRequest="44"
@@ -265,7 +260,6 @@
                                 </Image>
                             </Frame>
 
-                            <!-- Text -->
                             <VerticalStackLayout Grid.Column="1"
                                                  Spacing="3"
                                                  VerticalOptions="Center">
@@ -283,7 +277,6 @@
 
                             </VerticalStackLayout>
 
-                            <!-- Arrow -->
                             <Image x:Name="AppearanceChevron"
                                    Grid.Column="2"
                                    WidthRequest="18"
@@ -400,11 +393,11 @@
             <!-- Footer -->
             <Label x:Name="FooterLabel"
                    Grid.Row="2"
-                   Text="Version 1.06"
+                   Text="Version 1.07"
                    FontSize="12"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="End"
-                   Margin="0,18,0,8"
+                   Margin="0,6,0,4"
                    TextColor="{AppThemeBinding Light=#AAA6B9, Dark=#7F7A90}"
                    Opacity="0" />
 

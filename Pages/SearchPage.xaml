@@ -11,17 +11,20 @@
           RowDefinitions="Auto,*">
 
         <!-- Header -->
-        <VerticalStackLayout Grid.Row="0"
+        <VerticalStackLayout x:Name="HeaderBlock"
+                             Grid.Row="0"
                              Spacing="12"
                              Margin="0,2,0,10">
 
-            <Label Text="Search"
+            <Label x:Name="TitleLabel"
+                   Text="Search"
                    FontFamily="Pacifico"
                    FontSize="34"
                    HorizontalTextAlignment="Center"
                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
 
-            <Border Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#3A3A42}"
+            <Border x:Name="SearchBarCard"
+                    Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#3A3A42}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 22"
                     BackgroundColor="{AppThemeBinding Light=#FBFAFE, Dark=#1D1D22}"
@@ -83,7 +86,8 @@
         </VerticalStackLayout>
 
         <!-- Main card -->
-        <Frame Grid.Row="1"
+        <Frame x:Name="MainCard"
+               Grid.Row="1"
                BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
                CornerRadius="28"
                Padding="18,18,18,12"

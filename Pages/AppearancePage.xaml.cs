@@ -145,16 +145,10 @@ namespace E_Book.Pages
             UpdateSegmentTextColors(idx);
         }
 
-        private async Task AnimateCardTap(VisualElement? view)
-        {
-            if (view == null) return;
-
-            await view.ScaleTo(0.985, 70, Easing.CubicOut);
-            await view.ScaleTo(1.0, 100, Easing.CubicOut);
-        }
-
         private async void OnAutoTapped(object sender, TappedEventArgs e)
         {
+            await UIAnimationService.PressAsync(AutoLabel, 0.97, 0.98, 60, 100);
+
             ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Auto;
             AutoThemeSettings.IsVisible = true;
 
@@ -168,6 +162,8 @@ namespace E_Book.Pages
 
         private async void OnLightTapped(object sender, TappedEventArgs e)
         {
+            await UIAnimationService.PressAsync(LightLabel, 0.97, 0.98, 60, 100);
+
             ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Light;
             AutoThemeSettings.IsVisible = false;
 
@@ -183,6 +179,8 @@ namespace E_Book.Pages
 
         private async void OnDarkTapped(object sender, TappedEventArgs e)
         {
+            await UIAnimationService.PressAsync(DarkLabel, 0.97, 0.98, 60, 100);
+
             ThemeScheduler.Mode = ThemeScheduler.ThemeMode.Dark;
             AutoThemeSettings.IsVisible = false;
 
@@ -220,7 +218,7 @@ namespace E_Book.Pages
         private async void OnResetTapped(object sender, TappedEventArgs e)
         {
             if (sender is VisualElement v)
-                await AnimateCardTap(v);
+                await UIAnimationService.PressAsync(v, 0.985, 0.98, 70, 110);
 
             bool confirm = await DisplayAlert(
                 "Reset Appearance",

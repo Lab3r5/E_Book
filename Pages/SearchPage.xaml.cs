@@ -16,6 +16,7 @@ namespace E_Book.Pages
 
         private readonly List<BookItem> _allBooks = new();
         private bool _isLoaded;
+        private bool _hasPlayedEntrance;
 
         public SearchPage()
         {
@@ -30,6 +31,13 @@ namespace E_Book.Pages
             LoadBooksToCache();
             RenderHistory();
             RestoreStateFromCurrentInput();
+
+            if (!_hasPlayedEntrance)
+            {
+                _hasPlayedEntrance = true;
+                await RunEntranceAsync();
+            }
+
             FocusSearchLater();
 
             if (string.IsNullOrWhiteSpace(SearchEntry?.Text))
@@ -200,19 +208,19 @@ namespace E_Book.Pages
 
             ResetEmptyVisualState();
 
-            await Task.Delay(120);
+            await Task.Delay(90);
 
             if (!EmptyStateLayout.IsVisible)
                 return;
 
             await Task.WhenAll(
-                EmptyImage.FadeTo(1, 260, Easing.CubicOut),
-                EmptyImage.ScaleTo(1, 320, Easing.SpringOut)
+                EmptyImage.FadeTo(1, 250, Easing.CubicOut),
+                EmptyImage.ScaleTo(1, 300, Easing.SpringOut)
             );
 
             await Task.WhenAll(
-                EmptyTitleLabel.FadeTo(1, 200, Easing.CubicOut),
-                EmptySubLabel.FadeTo(1, 220, Easing.CubicOut)
+                EmptyTitleLabel.FadeTo(1, 190, Easing.CubicOut),
+                EmptySubLabel.FadeTo(1, 210, Easing.CubicOut)
             );
         }
 
@@ -382,15 +390,34 @@ namespace E_Book.Pages
             if (ResultList == null || !ResultList.IsVisible)
                 return;
 
-            ResultList.Opacity = 0;
-            ResultList.TranslationY = 18;
-
-            await Task.Delay(40);
-
-            await Task.WhenAll(
-                ResultList.FadeTo(1, 220, Easing.CubicOut),
-                ResultList.TranslateTo(0, 0, 220, Easing.CubicOut)
-            );
+            await UIAnimationService.FadeListInAsync(ResultList, 18, 220, 30);
         }
+        private async Task RunEntranceAsync()
+        {
+            if (HeaderBlock != null)
+            {
+                HeaderBlock.Opacity = 0;
+                HeaderBlock.TranslationY = 8;
+            }
+
+            if (SearchBarCard != null)
+            {
+                SearchBarCard.Opacity = 0;
+                SearchBarCard.TranslationY = 14;
+                SearchBarCard.Scale = 0.995;
+            }
+
+            if (MainCard != null)
+            {
+                MainCard.Opacity = 0;
+                MainCard.TranslationY = 14;
+                MainCard.Scale = 0.995;
+            }
+
+            await UIAnimationService.FadeSlideInAsync(HeaderBlock, 8, 180);
+            await UIAnimationService.FadeScaleCardInAsync(SearchBarCard, 14, 0.995, 230, 10);
+            await UIAnimationService.FadeScaleCardInAsync(MainCard, 14, 0.995, 240, 10);
+        }
+
     }
 }

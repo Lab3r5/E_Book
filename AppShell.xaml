@@ -30,7 +30,7 @@
             ContentTemplate="{DataTemplate pages:SearchPage}" />
 
         <ShellContent
-            Title="Setting"
+            Title="Settings"
             Route="settings"
             Icon="tab_settings.png"
             Shell.NavBarIsVisible="False"
