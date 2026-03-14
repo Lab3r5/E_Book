@@ -7,13 +7,13 @@
 
 # 🏷 Version | 版本信息
 
-![Version](https://img.shields.io/badge/version-v1.07-purple)
+![Version](https://img.shields.io/badge/version-v1.08-purple)
 ![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-**Current Version:** `v1.07 – Multi-User Data Isolation & Performance Upgrade`  
-**当前版本：** `v1.07 – 多用户数据隔离与性能优化`
+**Current Version:** `v1.08 – Settings UI Refinement & Page Style Unification`  
+**当前版本：** `v1.08 – 设置模块界面优化与页面风格统一`
 
 ---
 
@@ -23,17 +23,17 @@
 
 The goal of the project is to build a **modern mobile reading experience** with:
 
-- Clean UI design
-- Structured application architecture
-- Lightweight local storage
-- Smooth reading interactions
+- Clean UI design  
+- Structured application architecture  
+- Lightweight local storage  
+- Smooth reading interactions  
 
 E_Book 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是打造：
 
-- 现代化阅读界面
-- 清晰结构化架构
-- 轻量级本地数据存储
-- 流畅阅读体验
+- 现代化阅读界面  
+- 清晰结构化架构  
+- 轻量级本地数据存储  
+- 流畅阅读体验  
 
 Developed for:
 
@@ -42,12 +42,24 @@ University of Newcastle
 
 ---
 
-# 🚀 Latest Release – v1.07
-# 最新版本 – v1.07
+# 🚀 Latest Release – v1.08
+# 最新版本 – v1.08
 
-Version **v1.07** introduces a **major system upgrade** focusing on **multi-user data isolation** and **performance improvements**.
+Version **v1.08** focuses on refining the **Settings module UI** and improving the visual consistency of several application pages.
 
-v1.07 版本重点升级 **多用户数据隔离系统** 与 **整体性能优化**。
+The update introduces a cleaner layout structure and more unified styling across settings-related pages.
+
+v1.08 版本重点优化 **设置模块 UI**，并统一多个页面的界面风格，使整体界面更加一致、清晰。
+
+Key improvements include:
+
+• Refined **Settings page layout and spacing**  
+• Improved **Edit Profile page styling**  
+• Unified **Settings subpage structure**  
+• Updated **Help Center page layout**  
+• Minor UI adjustments and navigation fixes  
+
+这些优化使设置模块更加统一，同时提升了整体界面体验。
 
 ---
 
@@ -62,32 +74,32 @@ The bookshelf works like a modern commercial reading app dashboard.
 
 Features:
 
-- Reading progress display
-- Continue reading indicators
-- Recently opened sorting
-- Automatic book cover generation
+- Reading progress display  
+- Continue reading indicators  
+- Recently opened sorting  
+- Automatic book cover generation  
 
 功能包括：
 
-- 阅读进度显示
-- Continue Reading 提示
-- 最近阅读排序
-- 自动生成书籍封面
+- 阅读进度显示  
+- Continue Reading 提示  
+- 最近阅读排序  
+- 自动生成书籍封面  
 
 ---
 
 ## 👤 Multi-User Account System
 ## 多用户账号系统
 
-E_Book now supports **independent user environments**.
+E_Book supports **independent user environments**.
 
 每个账号拥有独立数据环境：
 
-- Personal book library
-- Independent reading progress
-- Independent reading settings
-- Independent search history
-- Independent theme preferences
+- Personal book library  
+- Independent reading progress  
+- Independent reading settings  
+- Independent search history  
+- Independent theme preferences  
 
 账号之间 **不会共享数据**。
 
@@ -100,9 +112,9 @@ Guest users run in a **separate storage profile**.
 
 Guest 用户拥有独立存储空间：
 
-- Guest library
-- Guest reading history
-- Guest preferences
+- Guest library  
+- Guest reading history  
+- Guest preferences  
 
 不会影响注册用户数据。
 
@@ -117,48 +129,64 @@ The reading engine supports multiple formats.
 
 Supported formats:
 
-- TXT
-- EPUB
-- DOCX
-- RTF
-- PDF (external reader)
+- TXT  
+- EPUB  
+- DOCX  
+- RTF  
+- PDF (external reader)  
 
 Features:
 
-- Adjustable font size
-- Light / Dark reading themes
-- Reading progress persistence
-- Resume reading position
+- Adjustable font size  
+- Light / Dark reading themes  
+- Reading progress persistence  
+- Resume reading position  
 
 功能：
 
-- 字体大小调整
-- 深色 / 浅色主题
-- 阅读进度自动保存
-- 自动恢复阅读位置
+- 字体大小调整  
+- 深色 / 浅色主题  
+- 阅读进度自动保存  
+- 自动恢复阅读位置  
+
+---
+
+# 🎨 Interface Improvements | 界面优化
+
+Version **v1.08** introduces several UI refinements to improve the overall visual consistency of the application.
+
+v1.08 版本对应用界面进行了多项优化，使整体视觉风格更加统一。
+
+Improvements include:
+
+- Cleaner **Settings page layout**
+- Improved **Edit Profile interface**
+- Unified **Help Center page structure**
+- Better spacing and layout hierarchy
+- More consistent page animations
+
+这些优化使应用界面更加接近完整产品设计。
 
 ---
 
 # ⚡ Performance Optimization
 # 性能优化
 
-Version **v1.07** improves the responsiveness of the application.
+Recent versions introduced multiple performance improvements.
 
-v1.07 提升了整体应用流畅度。
+近期版本包含多项性能优化：
 
-Optimizations include:
-
-- Smarter bookshelf refresh logic
-- Reduced unnecessary page reloads
-- Faster tab switching
-- Improved navigation animations
+- Smarter bookshelf refresh logic  
+- Reduced unnecessary page reloads  
+- Faster tab switching  
+- Improved navigation animations  
 
 优化包括：
 
-- 智能书架刷新机制
-- 减少页面重复加载
-- 更快 Tab 切换
-- 更流畅导航动画
+- 智能书架刷新机制  
+- 减少页面重复加载  
+- 更快 Tab 切换  
+- 更流畅页面动画  
 
 ---
 
@@ -168,11 +196,11 @@ E_Book uses a modular architecture based on **.NET MAUI**.
 
 架构特点：
 
-- MAUI Shell navigation
-- Service layer abstraction
-- SQLite local database
-- Preferences API storage
-- User-based data isolation
+- MAUI Shell navigation  
+- Service layer abstraction  
+- SQLite local database  
+- Preferences API storage  
+- User-based data isolation  
 
 ---
 
@@ -246,15 +274,16 @@ Run on:
 
 # 📊 Version Evolution | 版本演进
 
-| Version   | Description                  |
-| --------- | ---------------------------- |
-| v1.01     | Base reading system          |
-| v1.02     | UI layout refinement         |
-| v1.03     | Animated TabBar              |
-| v1.04     | Settings redesign            |
-| v1.05     | Smart bookshelf              |
-| v1.06     | UI & navigation improvements |
-| **v1.07** | Multi-user data isolation    |
+| Version   | Description                               |
+| --------- | ----------------------------------------- |
+| v1.01     | Base reading system                       |
+| v1.02     | UI layout refinement                      |
+| v1.03     | Animated TabBar                           |
+| v1.04     | Settings redesign                         |
+| v1.05     | Smart bookshelf                           |
+| v1.06     | UI & navigation improvements              |
+| v1.07     | Multi-user data isolation                 |
+| **v1.08** | Settings UI refinement & page consistency |
 
 ---
 
@@ -285,7 +314,7 @@ Planned features:
 * Reading analytics dashboard
 * Smart book recommendations
 * MVVM architecture refactor
-* Further performance optimization
+* Reader engine improvements
 * iOS support
 
 未来计划：
@@ -293,7 +322,7 @@ Planned features:
 * 阅读统计系统
 * 智能书籍推荐
 * MVVM 架构升级
-* 性能优化
+* 阅读系统优化
 * iOS 支持
 
 ---
@@ -309,5 +338,3 @@ Mobile Application Development
 # 📜 License | 许可
 
 This project is developed for **educational purposes**.
-这样你的项目看起来 **像真正开源项目，而不是作业项目**，对 **GitHub portfolio 很加分**。
-```
