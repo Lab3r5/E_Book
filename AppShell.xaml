@@ -1,5 +1,40 @@
-<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:local="clr-namespace:EZ_Read.Pages"
-       x:Class="EZ_Read.AppShell">
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:E_Book.Pages"
+    x:Class="E_Book.AppShell"
+    Shell.FlyoutBehavior="Disabled">
+
+    <!-- LOGIN -->
+    <ShellContent
+        Route="login"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False"
+        ContentTemplate="{DataTemplate pages:LoginPage}" />
+
+    <!-- MAIN TABS -->
+    <TabBar Route="tabs">
+        <ShellContent
+            Title="My Library"
+            Route="bookshelf"
+            Icon="tab_bookshelf.png"
+            Shell.NavBarIsVisible="False"
+            ContentTemplate="{DataTemplate pages:BookshelfPage}" />
+
+        <ShellContent
+            Title="Search"
+            Route="search"
+            Icon="tab_search.png"
+            Shell.NavBarIsVisible="False"
+            ContentTemplate="{DataTemplate pages:SearchPage}" />
+
+        <ShellContent
+            Title="Setting"
+            Route="settings"
+            Icon="tab_settings.png"
+            Shell.NavBarIsVisible="False"
+            ContentTemplate="{DataTemplate pages:SettingsHomePage}" />
+    </TabBar>
+
 </Shell>

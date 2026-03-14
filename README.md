@@ -1,226 +1,398 @@
-> 🎓 **课程作业说明**  
-> 本项目为 University of Newcastle 的 **INFT2051 – Mobile Application Development (.NET MAUI)** 课程作业示例，  
-> 主要用于展示 .NET MAUI 跨平台应用的基础架构设计、本地数据存储（SQLite）、页面导航以及用户设置与状态持久化等核心概念。
+# 📚 E_Book
 
-# E-Book 📚
-
-E-Book 是一个基于 **.NET MAUI** 的跨平台电子书阅读应用，支持 Android / iOS / macOS / Windows（受平台与目标框架支持限制）。  
-项目提供基础而完整的电子书阅读能力，包括 **阅读设置、阅读进度保存、应用级设置以及 SQLite 本地数据存储**，适合课程项目、学习 .NET MAUI 或作为二次开发的起点。
-
-E-Book is a cross-platform e-book reader built with **.NET MAUI**, targeting Android / iOS / macOS / Windows (subject to platform and target framework support).  
-It provides essential e-book reading features such as **reading preferences, progress tracking, app-level settings, and SQLite-based local storage**, making it suitable for coursework, learning, and further extension.
+> A modern cross-platform e-book reader built with **.NET MAUI**  
+> 基于 **.NET MAUI** 构建的现代跨平台电子书阅读应用
 
 ---
 
-## ✨ 功能概览 | Features
+# 🏷 Version | 版本信息
 
-### 📖 阅读体验 | Reading Experience
-- 字体大小设置并可持久化保存  
-- 阅读背景颜色设置并自动恢复  
-- 简洁阅读界面，专注内容本身  
+![Version](https://img.shields.io/badge/version-v1.06-purple)
+![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
+![Status](https://img.shields.io/badge/status-active-success)
+![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-- Adjustable font size with persistence  
-- Customizable background color with auto-restore  
-- Clean and distraction-free reading interface  
-
-### ⏱ 阅读进度 | Reading Progress
-- 按书籍/文件记录上次阅读位置  
-- 再次打开时自动跳转至上次阅读位置  
-
-- Per-book/file reading progress tracking  
-- Automatically resumes from last reading position  
-
-### ⚙️ 应用设置 | App Settings
-- 启动密码（可选）  
-- 退出锁定（可选）  
-- 保持屏幕常亮（可选）  
-
-- Optional startup passcode  
-- Optional exit lock  
-- Optional keep-screen-on setting  
-
-### 💾 数据与样式 | Data & Styling
-- SQLite 本地数据库存储用户设置与阅读进度  
-- 使用 ResourceDictionary 统一管理颜色与控件样式  
-
-- SQLite local database for settings and progress  
-- Centralized theming via ResourceDictionary  
+**Current Version:** `v1.06 – UI & Navigation Enhancement`  
+**当前版本：** `v1.06 – UI 与导航体验升级`
 
 ---
 
-## 🧱 技术栈 | Tech Stack
-- **.NET MAUI**
+# 📱 App Preview | 应用预览
+
+### Bookshelf Interface
+
+The redesigned bookshelf now includes a smarter layout and improved reading indicators.
+
+重新设计的书架界面现在包含更加智能的布局以及阅读状态提示。
+
+Main improvements:
+
+- Reading progress indicator
+- Continue reading status
+- Automatically generated book covers
+- Modern empty-state onboarding interface
+
+*(Preview screenshots can be added here)*
+
+---
+
+# ✨ Project Overview | 项目简介
+
+**E_Book** is a cross-platform mobile reading application developed using **.NET MAUI**.
+
+The project aims to build a **modern mobile reading experience** with:
+
+- Clean UI design
+- Structured architecture
+- Lightweight data storage
+- Smooth reading interactions
+
+E_Book 是一个基于 **.NET MAUI** 构建的跨平台电子书阅读应用，目标是打造：
+
+- 现代化阅读界面
+- 清晰结构化架构
+- 轻量级数据存储
+- 流畅阅读体验
+
+Developed for:
+
+**INFT2051 – Mobile Application Development**  
+University of Newcastle
+
+---
+
+# 🚀 Latest Release – v1.06
+# 最新版本 – v1.06
+
+Version **v1.06** focuses on improving the **user interface, navigation experience, and visual consistency**.
+
+v1.06 版本重点优化 **UI 设计、导航体验以及视觉一致性**。
+
+---
+
+# 🎨 UI & UX Improvements (v1.06)
+# UI 与用户体验优化
+
+## Redesigned "Add Book" Button
+## Add Book 按钮重新设计
+
+The bottom action button has been redesigned into a **modern card-style CTA**.
+
+底部按钮升级为 **卡片式操作按钮**。
+
+New improvements include:
+
+- Gradient background design
+- Action icon (+)
+- Title + subtitle layout
+- Improved visual hierarchy
+- Clearer call-to-action guidance
+
+新的设计包括：
+
+- 渐变背景
+- + 操作图标
+- 主标题 + 副标题结构
+- 更清晰视觉层级
+- 更直观操作引导
+
+---
+
+## Empty Library Experience
+## 空书架引导界面
+
+When no books exist in the library, users now see a friendly onboarding interface.
+
+当书架为空时，系统会显示引导界面。
+
+Features:
+
+- Empty state illustration
+- Instruction text
+- Import book button
+
+功能包括：
+
+- 空书架图标
+- 引导说明
+- 添加书籍按钮
+
+This improves the **first-time user experience**.
+
+---
+
+# 📚 Smart Bookshelf System
+# 智能书架系统
+
+The bookshelf behaves like a **modern commercial reading app dashboard**.
+
+书架系统模拟真实阅读应用。
+
+Features:
+
+- Reading progress display
+- Continue reading indicators
+- Recently opened sorting
+- Smart book cover generation
+
+主要功能：
+
+- 阅读进度显示
+- Continue reading 提示
+- 最近阅读排序
+- 自动书籍封面
+
+---
+
+## 📖 Automatic Book Cover Generation
+## 自动书籍封面生成
+
+Each imported book automatically generates a cover.
+
+每本导入书籍都会自动生成封面。
+
+Example:
+
+```
+
+Cyberpunk2077 → CY
+Usage Guidelines → UG
+中国小说 → 中国
+
+```
+
+Each cover also receives a unique color palette.
+
+每本书都会生成独立颜色主题。
+
+---
+
+## 📊 Reading Progress Tracking
+## 阅读进度显示
+
+The bookshelf now displays:
+
+- Reading progress bar
+- Reading percentage
+- Continue reading indicator
+
+书架可以显示：
+
+- 阅读进度条
+- 阅读百分比
+- Continue reading 提示
+
+Users can easily resume unfinished books.
+
+---
+
+# 📖 Reading System | 阅读系统
+
+The reading engine supports multiple document formats.
+
+阅读系统支持多种文档格式。
+
+Supported features:
+
+- TXT reading
+- EPUB support
+- PDF external reader support
+- DOCX / RTF support
+- Adjustable font size
+- Light / Dark reading themes
+- Reading progress persistence
+- Resume from last reading position
+
+支持功能：
+
+- TXT 阅读
+- EPUB 支持
+- PDF 外部阅读
+- DOCX / RTF 文档
+- 字体大小调整
+- 深色 / 浅色主题
+- 阅读进度自动保存
+- 自动恢复阅读位置
+
+---
+
+# ⚙ Interaction System
+# 交互系统
+
+The bookshelf includes modern mobile interaction patterns.
+
+书架支持现代移动应用交互。
+
+Supported interactions:
+
+- Swipe to delete
+- Multi-select delete
+- Select all / cancel
+- Animated delete confirmation dialog
+- Toast notification system
+
+支持：
+
+- 左滑删除
+- 多选删除
+- 全选 / 取消
+- 删除确认弹窗
+- Toast 提示
+
+---
+
+# 📱 Navigation System (v1.06)
+# 导航系统升级
+
+The bottom navigation bar has been redesigned.
+
+底部导航栏进行了升级。
+
+Improvements include:
+
+- Custom tab icons
+- Selected / unselected icon states
+- Improved icon scaling
+- Smoother highlight animation
+
+优化包括：
+
+- 自定义 Tab 图标
+- 选中 / 未选中状态
+- 图标比例优化
+- 更流畅选中动画
+
+---
+
+# 🏗 Architecture | 技术架构
+
+E_Book uses a modular architecture based on **.NET MAUI**.
+
+E_Book 采用模块化架构。
+
+Architecture highlights:
+
+- MAUI Shell navigation
+- Modular page system
+- Service layer abstraction
+- Local metadata storage
+- Cross-platform UI design
+
+架构特点：
+
+- MAUI Shell 路由导航
+- 模块化页面结构
+- Service 层解耦
+- 本地数据存储
+- 跨平台 UI
+
+---
+
+# 📂 Project Structure | 项目结构
+
+```
+
+E_Book
+│
+├── Models
+│   └── BookItem.cs
+│
+├── Pages
+│   ├── BookshelfPage
+│   ├── ReadingPage
+│   ├── SearchPage
+│   └── SettingsPage
+│
+├── Services
+│   ├── LibraryService.cs
+│   └── ReadingMetaStore.cs
+│
+├── Resources
+│   ├── Styles
+│   ├── Images
+│   └── TabIcons
+│
+└── AppShell.xaml
+
+```
+
+---
+
+# 🔧 Tech Stack | 技术栈
+
 - **C#**
+- **.NET MAUI**
 - **SQLite**
+- **Shell Navigation**
+- **Android Material Components**
+- **Preferences API**
 
 ---
 
-## 📂 项目结构 | Project Structure
+# 📊 Version Evolution | 版本演进
 
+| Version | Description | 说明 |
+|------|-------------|------|
+| v1.01 | Base reading system | 阅读基础功能 |
+| v1.02 | UI layout refinement | UI 优化 |
+| v1.03 | Animated TabBar | 动画 TabBar |
+| v1.04 | Settings redesign | Settings 页面 |
+| v1.05 | Smart bookshelf system | 智能书架 |
+| **v1.06** | UI & navigation improvement | UI 与导航优化 |
+
+---
+
+# 🎯 Design Philosophy | 设计理念
+
+E_Book emphasizes:
+
+- Clean UI design
+- Motion-driven interaction
+- Structured architecture
+- Minimalist purple theme
+- Mobile-first experience
+
+E_Book 强调：
+
+- 清晰 UI
+- 动效交互
+- 结构化架构
+- 紫色极简主题
+- 移动优先体验
+
+---
+
+# 🛣 Future Roadmap | 后续规划
+
+Planned features:
+
+- Reading analytics dashboard
+- Smart book recommendations
+- MVVM architecture refactor
+- Performance optimization
+- iOS UI improvements
+
+未来计划：
+
+- 阅读统计
+- 智能推荐
+- MVVM 架构
+- 性能优化
+- iOS UI
+
+---
+
+# 👨‍💻 Developer | 开发者
+
+**Shen Jiawei**  
+University of Newcastle  
+Mobile Application Development
+
+---
+
+# 📜 License | 许可
+
+This project is developed for **educational purposes**.
+
+本项目用于 **教学与学习用途**。
 ```
-
-E-Book/
-├─ Data/                # SQLite 数据库、数据模型、初始化逻辑
-├─ Pages/               # 应用页面（阅读页、设置页等）
-├─ Resources/
-│  ├─ Styles/           # 颜色与控件样式资源
-│  └─ Fonts/            # 字体资源
-├─ Platforms/           # 平台相关代码（Android / iOS / Windows / macOS）
-├─ AppShell.xaml        # 路由与页面注册
-└─ MauiProgram.cs       # 应用启动与依赖注册
-
-````
-
----
-
-## ✅ 环境要求 | Requirements
-
-> ⚠️ 项目使用 .NET 9 目标框架。若仅安装 .NET 8 或缺少 MAUI 工作负载，将无法成功构建。
-
-- **.NET SDK 9.x**
-- **.NET MAUI workload** (`maui`)
-- Android 运行：Android SDK + Emulator / 真实设备  
-- iOS / macCatalyst 运行：macOS + Xcode  
-- Windows 运行：仅支持 Windows 系统
-
-### 🔍 验证环境 | Verify Environment
-```bash
-dotnet --info
-dotnet workload list
-````
-
-### 🧩 安装 / 修复 MAUI Workload
-
-```bash
-dotnet workload install maui
-dotnet workload repair
-```
-
----
-
-## 🚀 快速开始 | Getting Started
-
-### 1️⃣ 克隆仓库 | Clone Repository
-
-```bash
-git clone https://github.com/Lab3r5/E-Book.git
-cd E-Book
-```
-
-### 2️⃣ 还原依赖 | Restore Dependencies
-
-```bash
-dotnet restore
-```
-
-### 3️⃣ 运行 Android | Run on Android
-
-> 需要已启动模拟器或连接真实设备
-
-```bash
-dotnet build -t:Run -f net9.0-android
-```
-
-### 4️⃣ 运行 Windows | Run on Windows
-
-> 仅可在 Windows 系统上运行
-
-```bash
-dotnet build -t:Run -f net9.0-windows10.0.19041.0
-```
-
----
-
-## 🗃️ 数据库与存储 | Database & Storage
-
-* **数据库类型**：SQLite
-
-* **存储位置**：应用私有 AppData 目录
-
-* **用途**：
-
-  * 用户应用设置（启动密码、常亮等）
-  * 阅读设置（字体大小、背景颜色）
-  * 阅读进度（按书籍/文件记录）
-
-* **Database**: SQLite
-
-* **Location**: Platform-specific AppData directory
-
-* **Used for**:
-
-  * App-level settings
-  * Reading preferences
-  * Reading progress per book/file
-
-数据库在应用首次启动时自动初始化，确保表结构与默认设置可用。
-
----
-
-## 🛠 常见问题 | Troubleshooting
-
-### ❓ MAUI workload 或 SDK 版本错误
-
-**原因**：未安装 .NET MAUI 工作负载或 SDK 版本不匹配
-**解决**：
-
-```bash
-dotnet workload install maui
-dotnet workload repair
-```
-
----
-
-### ❓ SQLite 报错：`no such table: UserSettings`
-
-**原因**：数据库初始化未完成或旧数据损坏
-**解决**：
-
-* 清理应用数据或卸载重装
-* 确保数据库初始化方法在查询前已 `await`
-
----
-
-### ❓ `StaticResource not found`
-
-**原因**：颜色或样式 key 未定义，或资源字典未正确合并
-**解决**：
-
-* 检查 `Resources/Styles/Colors.xaml` 中是否包含所有 key
-* 确认 `App.xaml` 中已正确合并资源字典
-
----
-
-### ❓ 字体相关错误
-
-**原因**：不支持的 `FontAttributes` 枚举或字体未注册
-**解决**：
-
-* 使用已注册字体族名（如 `OpenSansRegular`）
-* 通过 `FontAttributes="Bold"` 实现加粗
-
----
-
-## 🧭 未来计划 | Roadmap
-
-* [ ] 书架与本地文件导入
-* [ ] EPUB / PDF 格式支持
-* [ ] 目录、书签与阅读笔记
-* [ ] 搜索与文本高亮
-* [ ] 云同步与多设备进度同步
-
----
-
-## 🤝 贡献 | Contributing
-
-欢迎提出 Issue 或 Pull Request。
-建议在提交前说明修改内容，并附上必要的截图或说明。
-
----
-
-## 📄 License
-
-本项目目前未指定 License，仅用于学习与课程作业目的。
-如需开源复用，可自行添加 MIT / Apache-2.0 License。
-
----
