@@ -66,6 +66,7 @@ namespace E_Book
         {
             base.OnCreate(savedInstanceState);
             Instance = this;
+            Window?.SetSoftInputMode(SoftInput.AdjustResize);
             StartEnsureLoop();
         }
 

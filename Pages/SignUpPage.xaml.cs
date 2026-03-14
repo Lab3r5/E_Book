@@ -130,14 +130,16 @@ public partial class SignUpPage : ContentPage
         }
     }
 
-    private void OnNameCompleted(object sender, EventArgs e)
+    private async void OnNameCompleted(object sender, EventArgs e)
     {
         EmailEntry.Focus();
+        await ScrollEntryIntoViewAsync(EmailEntry);
     }
 
-    private void OnEmailCompleted(object sender, EventArgs e)
+    private async void OnEmailCompleted(object sender, EventArgs e)
     {
         PasswordEntry.Focus();
+        await ScrollEntryIntoViewAsync(PasswordEntry);
     }
 
     private async void OnPasswordCompleted(object sender, EventArgs e)
@@ -271,4 +273,25 @@ public partial class SignUpPage : ContentPage
             ? Color.FromArgb("#2D2D35")
             : Color.FromArgb("#E8E0F8");
     }
+    private async void OnInputFocused(object sender, FocusEventArgs e)
+    {
+        await ScrollEntryIntoViewAsync(sender as VisualElement);
+    }
+
+    private async Task ScrollEntryIntoViewAsync(VisualElement? target)
+    {
+        if (target == null || PageScrollView == null)
+            return;
+
+        await Task.Delay(250);
+
+        try
+        {
+            await PageScrollView.ScrollToAsync(target, ScrollToPosition.Center, true);
+        }
+        catch
+        {
+        }
+    }
+
 }

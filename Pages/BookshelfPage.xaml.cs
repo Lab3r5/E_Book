@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using E_Book.Models;
+using E_Book.Services;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
-using Microsoft.Maui.ApplicationModel;
-using E_Book.Services;
-using E_Book.Models;
 
 namespace E_Book.Pages
 {
@@ -77,6 +77,7 @@ namespace E_Book.Pages
             get
             {
                 if (IsImporting) return "Importing...";
+
                 return _importFeedbackState switch
                 {
                     ImportFeedbackState.Success => "Imported",
@@ -91,6 +92,7 @@ namespace E_Book.Pages
             get
             {
                 if (IsImporting) return "Please wait while we add your file";
+
                 return _importFeedbackState switch
                 {
                     ImportFeedbackState.Success => "Your book is ready in the library",
@@ -105,6 +107,7 @@ namespace E_Book.Pages
             get
             {
                 if (IsImporting) return "Import in progress...";
+
                 return _importFeedbackState switch
                 {
                     ImportFeedbackState.Success => "Book added successfully.",
@@ -131,14 +134,16 @@ namespace E_Book.Pages
                 {
                     ImportFeedbackState.Success => "Nice — your first book has been added.",
                     ImportFeedbackState.Failure => "Import failed. Try another supported file.",
-                    _ => "Tip: imported files stay in your local library for quick access."
+                    _ => "Use the Add Book card below to import your first file."
                 };
             }
         }
 
-        public string InProgressCountText => Books.Count(b => b.ReadingProgress > 0 && b.ReadingProgress < 0.999).ToString();
+        public string InProgressCountText =>
+            Books.Count(b => b.ReadingProgress > 0 && b.ReadingProgress < 0.999).ToString();
 
-        public string CompletedCountText => Books.Count(b => b.ReadingProgress >= 0.999).ToString();
+        public string CompletedCountText =>
+            Books.Count(b => b.ReadingProgress >= 0.999).ToString();
 
         public string TotalReadingTimeText
         {
@@ -157,11 +162,16 @@ namespace E_Book.Pages
             }
         }
 
+        public bool ShowBottomAddBookArea => !IsMultiSelectMode;
+
+        public bool ShowReadingSummary => Books.Count > 0;
+
         public ICommand LongPressCommand { get; }
 
         private List<BookItem> _pendingDeleteItems = new();
         private readonly HashSet<BookItem> _subscribedItems = new();
-        private readonly Dictionary<string, WeakReference<Border>> _bookCardMap = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, WeakReference<Border>> _bookCardMap =
+            new(StringComparer.OrdinalIgnoreCase);
 
         private bool _isHeaderAnimating;
         private bool _isSelectionCountPulsing;
@@ -191,6 +201,8 @@ namespace E_Book.Pages
             UpdateConfirmState();
             RaiseSummaryProperties();
             OnPropertyChanged(nameof(SelectedCountText));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
+            OnPropertyChanged(nameof(ShowReadingSummary));
             RaiseImportUiProperties();
         }
 
@@ -401,7 +413,8 @@ namespace E_Book.Pages
                 UpdateConfirmState();
                 RaiseSummaryProperties();
                 OnPropertyChanged(nameof(SelectedCountText));
-
+                OnPropertyChanged(nameof(ShowBottomAddBookArea));
+                OnPropertyChanged(nameof(ShowReadingSummary));
                 IsLoadingBooks = false;
             });
         }
@@ -837,6 +850,8 @@ namespace E_Book.Pages
                     Books.Move(existingIndex, 0);
 
                 RaiseSummaryProperties();
+                OnPropertyChanged(nameof(ShowReadingSummary));
+                OnPropertyChanged(nameof(ShowBottomAddBookArea));
                 return;
             }
 
@@ -847,6 +862,8 @@ namespace E_Book.Pages
             UpdateConfirmState();
             RaiseSummaryProperties();
             OnPropertyChanged(nameof(SelectedCountText));
+            OnPropertyChanged(nameof(ShowReadingSummary));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
         }
 
         private async Task AnimateAddBookPressAsync()
@@ -982,7 +999,8 @@ namespace E_Book.Pages
 
         private async void OnFileClicked(object sender, EventArgs e)
         {
-            if (IsMultiSelectMode || IsImporting) return;
+            if (IsMultiSelectMode || IsImporting)
+                return;
 
             if (sender is Button button && button.CommandParameter is BookItem book)
             {
@@ -1000,14 +1018,17 @@ namespace E_Book.Pages
                 _animateListOnNextAppear = false;
 
                 bool restart = book.IsCompleted;
-                var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
+                var route =
+                    $"reading?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
+
                 await Shell.Current.GoToAsync(route);
             }
         }
 
         private void OnItemTapped(object sender, TappedEventArgs e)
         {
-            if (!IsMultiSelectMode || IsImporting) return;
+            if (!IsMultiSelectMode || IsImporting)
+                return;
 
             if (e.Parameter is BookItem book)
             {
@@ -1019,7 +1040,8 @@ namespace E_Book.Pages
 
         private void OnItemLongPressed(BookItem? book)
         {
-            if (book == null || IsImporting) return;
+            if (book == null || IsImporting)
+                return;
 
             if (!IsMultiSelectMode)
                 EnterMultiSelectMode();
@@ -1053,7 +1075,7 @@ namespace E_Book.Pages
             EnterMultiSelectMode();
         }
 
-        private void OnSwipeDelete(object sender, EventArgs e)
+        private async void OnSwipeDelete(object sender, EventArgs e)
         {
             if (IsImporting || IsMultiSelectMode)
                 return;
@@ -1074,6 +1096,7 @@ namespace E_Book.Pages
             UpdateSelectAllText();
             UpdateConfirmState();
             OnPropertyChanged(nameof(SelectedCountText));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
 
             _ = PlayMultiSelectEnterAnimationAsync();
         }
@@ -1088,13 +1111,15 @@ namespace E_Book.Pages
             UpdateSelectAllText();
             UpdateConfirmState();
             OnPropertyChanged(nameof(SelectedCountText));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
 
             ResetHeaderAnimationState();
         }
 
         private void OnSelectAllClicked(object? sender, EventArgs e)
         {
-            if (!IsMultiSelectMode || Books.Count == 0 || IsImporting) return;
+            if (!IsMultiSelectMode || Books.Count == 0 || IsImporting)
+                return;
 
             bool allSelected = Books.All(b => b.IsSelected);
             foreach (var b in Books)
@@ -1103,11 +1128,14 @@ namespace E_Book.Pages
             UpdateSelectAllText();
             UpdateConfirmState();
             OnPropertyChanged(nameof(SelectedCountText));
+            OnPropertyChanged(nameof(ShowReadingSummary));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
         }
 
         private void UpdateSelectAllText()
         {
-            if (SelectAllButton == null) return;
+            if (SelectAllButton == null)
+                return;
 
             if (!IsMultiSelectMode)
             {
@@ -1121,16 +1149,20 @@ namespace E_Book.Pages
 
         private void OnCancelMultiSelectClicked(object? sender, EventArgs e)
         {
-            if (IsImporting) return;
+            if (IsImporting)
+                return;
+
             ExitMultiSelectMode();
         }
 
         private async void OnConfirmTapped(object sender, EventArgs e)
         {
-            if (!IsMultiSelectMode || IsImporting) return;
+            if (!IsMultiSelectMode || IsImporting)
+                return;
 
             var selected = Books.Where(b => b.IsSelected).ToList();
-            if (selected.Count == 0) return;
+            if (selected.Count == 0)
+                return;
 
             await AnimatePress(ConfirmButton);
             OpenDeleteDialog(selected, single: false);
@@ -1138,7 +1170,8 @@ namespace E_Book.Pages
 
         private void UpdateConfirmState()
         {
-            if (ConfirmButton == null) return;
+            if (ConfirmButton == null)
+                return;
 
             if (!IsMultiSelectMode)
             {
@@ -1166,12 +1199,12 @@ namespace E_Book.Pages
             {
                 var name = items[0].DisplayFileName;
                 DeleteTitle.Text = "Delete this book?";
-                DeleteMessage.Text = $"Delete \"{name}\"?\nThis action cannot be undone.";
+                DeleteMessage.Text = $"Delete \"{name}\"? This action cannot be undone.";
             }
             else
             {
                 DeleteTitle.Text = "Delete selected books?";
-                DeleteMessage.Text = $"You are about to delete {items.Count} file(s).\nThis action cannot be undone.";
+                DeleteMessage.Text = $"You are about to delete {items.Count} file(s). This action cannot be undone.";
             }
 
             await ShowDeleteDialog();
@@ -1180,20 +1213,39 @@ namespace E_Book.Pages
         private async Task ShowDeleteDialog()
         {
             DeleteDialog.Opacity = 0;
-            DeleteDialog.Scale = 0.85;
+            DeleteDialog.Scale = 0.92;
+            DeleteDialog.TranslationY = 18;
+            DeleteDialog.TranslationX = 8;
+
             DeleteOverlay.IsVisible = true;
 
             await Task.WhenAll(
-                DeleteDialog.FadeTo(1, 220, Easing.CubicOut),
-                DeleteDialog.ScaleTo(1, 220, Easing.SpringOut)
+                DeleteDialog.FadeTo(1, 180, Easing.CubicOut),
+                DeleteDialog.ScaleTo(1, 220, Easing.SpringOut),
+                DeleteDialog.TranslateTo(0, 0, 200, Easing.CubicOut)
             );
+
+            _ = AnimateDeleteIcon();
+        }
+
+        private async Task AnimateDeleteIcon()
+        {
+            await Task.Delay(120);
+
+            if (DeleteDialog == null)
+                return;
+
+            var icon = DeleteDialog.FindByName<Border>("DeleteDialog")?.Content as Layout;
+            if (icon == null)
+                return;
         }
 
         private async Task HideDeleteDialog()
         {
             await Task.WhenAll(
-                DeleteDialog.FadeTo(0, 160, Easing.CubicIn),
-                DeleteDialog.ScaleTo(0.85, 160, Easing.CubicIn)
+                DeleteDialog.FadeTo(0, 140, Easing.CubicIn),
+                DeleteDialog.ScaleTo(0.92, 140, Easing.CubicIn),
+                DeleteDialog.TranslateTo(8, 14, 140, Easing.CubicIn)
             );
 
             DeleteOverlay.IsVisible = false;
@@ -1253,6 +1305,8 @@ namespace E_Book.Pages
                 _bookCardMap.Remove(book.FullPath);
 
                 RaiseSummaryProperties();
+                OnPropertyChanged(nameof(ShowReadingSummary));
+                OnPropertyChanged(nameof(ShowBottomAddBookArea));
 
                 if (reloadAfter)
                     await RefreshBooksAsync();
@@ -1398,13 +1452,16 @@ namespace E_Book.Pages
 
         private async Task AnimatePress(VisualElement view)
         {
-            if (view == null) return;
+            if (view == null)
+                return;
+
             await UIAnimationService.PressAsync(view, 0.94, 0.96, 70, 110);
         }
 
         private async Task ShowToast(string message)
         {
-            if (ToastFrame == null || ToastLabel == null) return;
+            if (ToastFrame == null || ToastLabel == null)
+                return;
 
             ToastLabel.Text = message;
             ToastFrame.IsVisible = true;
@@ -1446,7 +1503,10 @@ namespace E_Book.Pages
                 while (_isEmptyIconBreathing && Books.Count == 0)
                 {
                     await EmptyIcon.ScaleTo(1.08, 900, Easing.CubicInOut);
-                    if (!_isEmptyIconBreathing || Books.Count != 0) break;
+
+                    if (!_isEmptyIconBreathing || Books.Count != 0)
+                        break;
+
                     await EmptyIcon.ScaleTo(1.0, 900, Easing.CubicInOut);
                 }
             }
@@ -1456,6 +1516,7 @@ namespace E_Book.Pages
             finally
             {
                 _isEmptyIconBreathing = false;
+
                 if (EmptyIcon != null)
                     EmptyIcon.Scale = 1.0;
             }
@@ -1513,6 +1574,61 @@ namespace E_Book.Pages
                 await Task.Delay(120);
                 await TryHighlightPendingBookAsync();
             });
+        }
+
+        private async void OnDeleteButtonPressed(object sender, EventArgs e)
+        {
+            if (sender is VisualElement v)
+                await v.ScaleTo(0.96, 70);
+        }
+
+        private async void OnDeleteButtonReleased(object sender, EventArgs e)
+        {
+            if (sender is VisualElement v)
+                await v.ScaleTo(1, 120, Easing.SpringOut);
+        }
+
+        private async void OnDialogButtonPressed(object sender, EventArgs e)
+        {
+            if (sender is VisualElement view)
+                await view.ScaleTo(0.96, 70);
+        }
+
+        private async void OnDialogButtonReleased(object sender, EventArgs e)
+        {
+            if (sender is VisualElement view)
+                await view.ScaleTo(1, 120, Easing.SpringOut);
+        }
+
+        private void OnSelectionBoxTapped(object sender, TappedEventArgs e)
+        {
+            if (!IsMultiSelectMode || IsImporting)
+                return;
+
+            if (e.Parameter is BookItem book)
+            {
+                book.IsSelected = !book.IsSelected;
+                UpdateConfirmState();
+                UpdateSelectAllText();
+                OnPropertyChanged(nameof(SelectedCountText));
+            }
+        }
+
+        private void OnBookCardTapped(object sender, TappedEventArgs e)
+        {
+            if (e.Parameter is not BookItem book)
+                return;
+
+            if (IsImporting)
+                return;
+
+            if (!IsMultiSelectMode)
+                return;
+
+            book.IsSelected = !book.IsSelected;
+            UpdateConfirmState();
+            UpdateSelectAllText();
+            OnPropertyChanged(nameof(SelectedCountText));
         }
 
         public new event PropertyChangedEventHandler? PropertyChanged;

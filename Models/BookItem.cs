@@ -57,7 +57,12 @@ namespace E_Book.Models
             {
                 if (_isSelected == value) return;
                 _isSelected = value;
+
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectionMark));
+                OnPropertyChanged(nameof(SelectionBackgroundColor));
+                OnPropertyChanged(nameof(SelectionTextColor));
+                OnPropertyChanged(nameof(SelectionBorderColor));
             }
         }
 
@@ -300,6 +305,17 @@ namespace E_Book.Models
             }
         }
 
+        public string SelectionMark => IsSelected ? "✓" : "";
+
+        public Color SelectionBackgroundColor =>
+            IsSelected ? Color.FromArgb("#8C79FF") : Colors.White;
+
+        public Color SelectionTextColor =>
+            IsSelected ? Colors.White : Colors.Transparent;
+
+        public Color SelectionBorderColor =>
+            IsSelected ? Color.FromArgb("#8C79FF") : Color.FromArgb("#C9C4DA");
+
         public void RefreshVisualMeta()
         {
             UpdateCover();
@@ -320,6 +336,10 @@ namespace E_Book.Models
             OnPropertyChanged(nameof(LastReadPageText));
             OnPropertyChanged(nameof(HasReadingTime));
             OnPropertyChanged(nameof(ReadingTimeText));
+            OnPropertyChanged(nameof(SelectionMark));
+            OnPropertyChanged(nameof(SelectionBackgroundColor));
+            OnPropertyChanged(nameof(SelectionTextColor));
+            OnPropertyChanged(nameof(SelectionBorderColor));
         }
 
         private void UpdateCover()

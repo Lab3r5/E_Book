@@ -7,16 +7,18 @@
     shell:Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light=#F7F6FB, Dark=#121212}">
 
-    <Grid Padding="20,36,20,20"
+    <ScrollView x:Name="PageScrollView"
+        VerticalScrollBarVisibility="Never">
+        <Grid Padding="20,36,20,20"
           RowDefinitions="Auto,*">
 
-        <!-- Top Bar -->
-        <Grid Grid.Row="0"
+            <!-- Top Bar -->
+            <Grid Grid.Row="0"
               ColumnDefinitions="56,*,56"
               Margin="0,0,0,8">
 
-            <!-- Back -->
-            <Border WidthRequest="46"
+                <!-- Back -->
+                <Border WidthRequest="46"
                     HeightRequest="46"
                     BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#1E1E1E}"
                     Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
@@ -25,20 +27,20 @@
                     VerticalOptions="Center"
                     StrokeShape="RoundRectangle 23">
 
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnBackTapped" />
-                </Border.GestureRecognizers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Border.GestureRecognizers>
 
-                <Label Text="←"
+                    <Label Text="←"
                        FontSize="20"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=#3D36B3, Dark=White}"
                        HorizontalTextAlignment="Center"
                        VerticalTextAlignment="Center" />
-            </Border>
+                </Border>
 
-            <!-- Theme -->
-            <Border x:Name="ThemeToggleBorder"
+                <!-- Theme -->
+                <Border x:Name="ThemeToggleBorder"
                     Grid.Column="2"
                     WidthRequest="46"
                     HeightRequest="46"
@@ -49,27 +51,28 @@
                     VerticalOptions="Center"
                     StrokeShape="RoundRectangle 23">
 
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnThemeToggleTapped" />
-                </Border.GestureRecognizers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnThemeToggleTapped" />
+                    </Border.GestureRecognizers>
 
-                <Label x:Name="ThemeIconLabel"
+                    <Label x:Name="ThemeIconLabel"
                        Text="🌙"
                        FontSize="18"
                        TextColor="{AppThemeBinding Light=#3D36B3, Dark=White}"
                        HorizontalTextAlignment="Center"
                        VerticalTextAlignment="Center" />
-            </Border>
-        </Grid>
+                </Border>
+            </Grid>
 
-        <!-- Main content -->
-        <Grid Grid.Row="1"
-              VerticalOptions="Center"
+            <!-- Main content -->
+            <Grid Grid.Row="1"
+              VerticalOptions="Start"
               HorizontalOptions="Center"
-              WidthRequest="360">
+              WidthRequest="360"
+              Margin="0,24,0,140">
 
-            <!-- Main Card -->
-            <Frame x:Name="SignUpCard"
+                <!-- Main Card -->
+                <Frame x:Name="SignUpCard"
                    Padding="24,62,24,24"
                    CornerRadius="28"
                    HasShadow="True"
@@ -77,31 +80,31 @@
                    Opacity="0"
                    TranslationY="40">
 
-                <Frame.Shadow>
-                    <Shadow Brush="#22000000"
+                    <Frame.Shadow>
+                        <Shadow Brush="#22000000"
                             Offset="0,10"
                             Radius="24"
                             Opacity="0.16" />
-                </Frame.Shadow>
+                    </Frame.Shadow>
 
-                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="16">
 
-                    <!-- Title -->
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Sign Up"
+                        <!-- Title -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Sign Up"
                                HorizontalTextAlignment="Center"
                                FontSize="34"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=#3D36B3, Dark=White}" />
 
-                        <Label Text="Create an account to get started."
+                            <Label Text="Create an account to get started."
                                HorizontalTextAlignment="Center"
                                FontSize="16"
                                TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}" />
-                    </VerticalStackLayout>
+                        </VerticalStackLayout>
 
-                    <!-- Name -->
-                    <Border x:Name="NameBorder"
+                        <!-- Name -->
+                        <Border x:Name="NameBorder"
                             Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 18"
@@ -109,19 +112,20 @@
                             HeightRequest="58"
                             Padding="18,0">
 
-                        <Entry x:Name="NameEntry"
+                            <Entry x:Name="NameEntry"
                                Placeholder="Name"
                                ReturnType="Next"
                                Completed="OnNameCompleted"
+                               Focused="OnInputFocused"
                                FontSize="16"
                                BackgroundColor="Transparent"
                                TextColor="{AppThemeBinding Light=#2E2A3B, Dark=White}"
                                PlaceholderColor="{AppThemeBinding Light=#A09AB2, Dark=#8F8AA0}"
                                VerticalOptions="Center" />
-                    </Border>
+                        </Border>
 
-                    <!-- Email -->
-                    <Border x:Name="EmailBorder"
+                        <!-- Email -->
+                        <Border x:Name="EmailBorder"
                             Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 18"
@@ -129,20 +133,21 @@
                             HeightRequest="58"
                             Padding="18,0">
 
-                        <Entry x:Name="EmailEntry"
+                            <Entry x:Name="EmailEntry"
                                Placeholder="Email"
                                Keyboard="Email"
                                ReturnType="Next"
                                Completed="OnEmailCompleted"
+                               Focused="OnInputFocused"
                                FontSize="16"
                                BackgroundColor="Transparent"
                                TextColor="{AppThemeBinding Light=#2E2A3B, Dark=White}"
                                PlaceholderColor="{AppThemeBinding Light=#A09AB2, Dark=#8F8AA0}"
                                VerticalOptions="Center" />
-                    </Border>
+                        </Border>
 
-                    <!-- Password -->
-                    <Border x:Name="PasswordBorder"
+                        <!-- Password -->
+                        <Border x:Name="PasswordBorder"
                             Stroke="{AppThemeBinding Light=#E8E0F8, Dark=#2D2D35}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 18"
@@ -150,22 +155,23 @@
                             HeightRequest="58"
                             Padding="0">
 
-                        <Grid ColumnDefinitions="*,Auto"
+                            <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="8"
                               Padding="18,0">
 
-                            <Entry x:Name="PasswordEntry"
+                                <Entry x:Name="PasswordEntry"
                                    Placeholder="Password"
                                    IsPassword="True"
                                    ReturnType="Go"
                                    Completed="OnPasswordCompleted"
+                                   Focused="OnInputFocused"
                                    FontSize="16"
                                    BackgroundColor="Transparent"
                                    TextColor="{AppThemeBinding Light=#2E2A3B, Dark=White}"
                                    PlaceholderColor="{AppThemeBinding Light=#A09AB2, Dark=#8F8AA0}"
                                    VerticalOptions="Center" />
 
-                            <Button x:Name="TogglePasswordButton"
+                                <Button x:Name="TogglePasswordButton"
                                     Grid.Column="1"
                                     Text="👁"
                                     BackgroundColor="Transparent"
@@ -179,13 +185,13 @@
                                     Margin="4,0,0,0"
                                     Clicked="OnTogglePasswordClicked"
                                     VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
+                            </Grid>
+                        </Border>
 
-                    <!-- Sign Up Button -->
-                    <Grid HeightRequest="60">
+                        <!-- Sign Up Button -->
+                        <Grid HeightRequest="60">
 
-                        <Button x:Name="SignUpButton"
+                            <Button x:Name="SignUpButton"
                                 Text="Sign Up"
                                 HeightRequest="60"
                                 CornerRadius="24"
@@ -194,34 +200,34 @@
                                 TextColor="White"
                                 Clicked="OnSignUpClicked">
 
-                            <Button.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#D9C5FF" Offset="0" />
-                                    <GradientStop Color="#B496F4" Offset="1" />
-                                </LinearGradientBrush>
-                            </Button.Background>
+                                <Button.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#D9C5FF" Offset="0" />
+                                        <GradientStop Color="#B496F4" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Button.Background>
 
-                        </Button>
+                            </Button>
 
-                        <ActivityIndicator x:Name="SignUpLoading"
+                            <ActivityIndicator x:Name="SignUpLoading"
                                            IsVisible="False"
                                            IsRunning="False"
                                            Color="White"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center" />
-                    </Grid>
+                        </Grid>
 
-                    <!-- Login -->
-                    <HorizontalStackLayout HorizontalOptions="Center"
+                        <!-- Login -->
+                        <HorizontalStackLayout HorizontalOptions="Center"
                                            Spacing="4"
                                            Padding="4">
 
-                        <Label Text="Already have an account?"
+                            <Label Text="Already have an account?"
                                FontSize="16"
                                TextColor="{AppThemeBinding Light=#2F2B85, Dark=#C9C6D8}"
                                VerticalOptions="Center" />
 
-                        <Button Text="Log In"
+                            <Button Text="Log In"
                                 Clicked="OnBackClicked"
                                 BackgroundColor="Transparent"
                                 TextColor="{AppThemeBinding Light=#3D36B3, Dark=#B9A8FF}"
@@ -233,13 +239,13 @@
                                 BorderWidth="0"
                                 CornerRadius="0"
                                 VerticalOptions="Center" />
-                    </HorizontalStackLayout>
+                        </HorizontalStackLayout>
 
-                </VerticalStackLayout>
-            </Frame>
+                    </VerticalStackLayout>
+                </Frame>
 
-            <!-- Floating Logo -->
-            <Grid x:Name="LogoFrame"
+                <!-- Floating Logo -->
+                <Grid x:Name="LogoFrame"
                   HorizontalOptions="Center"
                   VerticalOptions="Start"
                   TranslationY="-22"
@@ -247,27 +253,28 @@
                   WidthRequest="96"
                   HeightRequest="96">
 
-                <Border Stroke="{AppThemeBinding Light=#D8CCF6, Dark=#2F2A46}"
+                    <Border Stroke="{AppThemeBinding Light=#D8CCF6, Dark=#2F2A46}"
                         StrokeThickness="2"
                         StrokeShape="RoundRectangle 48"
                         BackgroundColor="{AppThemeBinding Light=#FCFAFF, Dark=#1A1A1E}">
 
-                    <Border.Shadow>
-                        <Shadow Brush="#22000000"
+                        <Border.Shadow>
+                            <Shadow Brush="#22000000"
                                 Offset="0,7"
                                 Radius="16"
                                 Opacity="0.10" />
-                    </Border.Shadow>
-                </Border>
+                        </Border.Shadow>
+                    </Border>
 
-                <Image Source="app_logo.png"
+                    <Image Source="app_logo.png"
                        WidthRequest="380"
                        HeightRequest="350"
                        HorizontalOptions="Center"
                        VerticalOptions="Center" />
+                </Grid>
+
             </Grid>
 
         </Grid>
-
-    </Grid>
+    </ScrollView>
 </ContentPage>
