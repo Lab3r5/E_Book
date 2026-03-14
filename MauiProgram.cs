@@ -1,22 +1,38 @@
 ﻿using Microsoft.Extensions.Logging;
+using CommunityToolkit.Maui;
+using Microsoft.Maui.Handlers;
+#if ANDROID
+using Android.Graphics.Drawables;
+#endif
 
-namespace EZ_Read
+namespace E_Book
 {
     public static class MauiProgram
     {
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
+
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
+                    fonts.AddFont("Pacifico-Regular.ttf", "Pacifico");
                 });
 
+            EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, view) =>
+            {
+#if ANDROID
+                handler.PlatformView.Background = new ColorDrawable(Android.Graphics.Color.Transparent);
+#endif
+            });
+
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();
