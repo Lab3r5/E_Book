@@ -1212,20 +1212,23 @@ namespace E_Book.Pages
 
         private async Task ShowDeleteDialog()
         {
-            DeleteDialog.Opacity = 0;
-            DeleteDialog.Scale = 0.92;
-            DeleteDialog.TranslationY = 18;
-            DeleteDialog.TranslationX = 8;
+            if (DeleteDialog == null || DeleteOverlay == null)
+                return;
 
             DeleteOverlay.IsVisible = true;
+            DeleteOverlay.Opacity = 0;
+
+            DeleteDialog.Opacity = 0;
+            DeleteDialog.Scale = 0.96;
+            DeleteDialog.TranslationX = 0;
+            DeleteDialog.TranslationY = 24;
 
             await Task.WhenAll(
-                DeleteDialog.FadeTo(1, 180, Easing.CubicOut),
+                DeleteOverlay.FadeTo(1, 160, Easing.CubicOut),
+                DeleteDialog.FadeTo(1, 190, Easing.CubicOut),
                 DeleteDialog.ScaleTo(1, 220, Easing.SpringOut),
-                DeleteDialog.TranslateTo(0, 0, 200, Easing.CubicOut)
+                DeleteDialog.TranslateTo(0, 0, 220, Easing.CubicOut)
             );
-
-            _ = AnimateDeleteIcon();
         }
 
         private async Task AnimateDeleteIcon()
@@ -1242,13 +1245,23 @@ namespace E_Book.Pages
 
         private async Task HideDeleteDialog()
         {
+            if (DeleteDialog == null || DeleteOverlay == null)
+                return;
+
             await Task.WhenAll(
+                DeleteOverlay.FadeTo(0, 140, Easing.CubicIn),
                 DeleteDialog.FadeTo(0, 140, Easing.CubicIn),
-                DeleteDialog.ScaleTo(0.92, 140, Easing.CubicIn),
-                DeleteDialog.TranslateTo(8, 14, 140, Easing.CubicIn)
+                DeleteDialog.ScaleTo(0.96, 140, Easing.CubicIn),
+                DeleteDialog.TranslateTo(0, 20, 140, Easing.CubicIn)
             );
 
             DeleteOverlay.IsVisible = false;
+
+            DeleteOverlay.Opacity = 1;
+            DeleteDialog.Opacity = 0;
+            DeleteDialog.Scale = 1;
+            DeleteDialog.TranslationX = 0;
+            DeleteDialog.TranslationY = 0;
         }
 
         private async void OnCancelDeleteDialog(object sender, EventArgs e)
