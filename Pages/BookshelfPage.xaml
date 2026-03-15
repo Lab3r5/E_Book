@@ -18,7 +18,7 @@
         <Grid
             x:Name="RootGrid"
             RowDefinitions="Auto,*"
-            Padding="24,18">
+            Padding="{StaticResource Space24},{StaticResource Space18}">
 
             <!-- Header -->
             <Grid
@@ -127,7 +127,7 @@
                     VerticalOptions="Center"
                     BackgroundColor="{AppThemeBinding Light={StaticResource DangerLightRed}, Dark={StaticResource DangerDarkRed}}">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="22" />
+                        <RoundRectangle CornerRadius="{StaticResource RadiusLg}" />
                     </Border.StrokeShape>
 
                     <Label
@@ -202,7 +202,7 @@
                 TranslationY="26"
                 StrokeThickness="0">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="28" />
+                    <RoundRectangle CornerRadius="{StaticResource RadiusXl}" />
                 </Border.StrokeShape>
 
                 <Grid RowDefinitions="Auto,*,Auto">
@@ -1007,7 +1007,7 @@
                                                     ZIndex="10"
                                                     IsVisible="False">
                                                     <Border.StrokeShape>
-                                                        <RoundRectangle CornerRadius="14" />
+                                                        <RoundRectangle CornerRadius="{StaticResource RadiusSm}" />
                                                     </Border.StrokeShape>
 
                                                     <Label

@@ -17,6 +17,40 @@ namespace E_Book.Pages
 {
     public partial class BookshelfPage : ContentPage, INotifyPropertyChanged
     {
+        private const string TextCancel = "Cancel";
+        private const string TextSelectAll = "Select All";
+        private const string TextUnselectAll = "Unselect All";
+        private const string TextSelectBooks = "Select books";
+        private const string TextSelectedSuffix = "selected";
+
+        private const string TextImportedSuccessfully = "Imported successfully";
+        private const string TextDeletedSuccessfully = "Deleted successfully";
+        private const string TextNoBooksToDelete = "No books to delete";
+
+        private const string TextImporting = "Importing...";
+        private const string TextImported = "Imported";
+        private const string TextImportFailed = "Import failed";
+        private const string TextAddBook = "Add Book";
+
+        private const string TextImportWaitMessage = "Please wait while we add your file";
+        private const string TextImportReadyMessage = "Your book is ready in the library";
+        private const string TextImportFailMessage = "Please check the file and try again";
+
+        private const string TextImportInProgress = "Import in progress...";
+        private const string TextImportSuccessHelper = "Book added successfully.";
+        private const string TextImportFailHelper = "Import failed. Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.";
+        private const string TextImportSupportHelper = "Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.";
+
+        private const string TextEmptyImportWait = "Please keep this page open while your book is being imported.";
+        private const string TextEmptyImportSuccess = "Nice — your first book has been added.";
+        private const string TextEmptyImportFailed = "Import failed. Try another supported file.";
+        private const string TextEmptyImportDefault = "Use the Add Book card below to import your first file.";
+
+        private const string TextUnsupportedTypeTitle = "Not supported";
+        private const string TextNoticeTitle = "Notice";
+        private const string TextErrorTitle = "Error";
+        private const string TextOk = "OK";
+
         private enum ImportFeedbackState
         {
             Idle,
@@ -68,7 +102,7 @@ namespace E_Book.Pages
             get
             {
                 int count = Books.Count(b => b.IsSelected);
-                return count == 0 ? "Select books" : $"{count} selected";
+                return count == 0 ? TextSelectBooks : $"{count} {TextSelectedSuffix}";
             }
         }
 
@@ -76,13 +110,13 @@ namespace E_Book.Pages
         {
             get
             {
-                if (IsImporting) return "Importing...";
+                if (IsImporting) return TextImporting;
 
                 return _importFeedbackState switch
                 {
-                    ImportFeedbackState.Success => "Imported",
-                    ImportFeedbackState.Failure => "Import failed",
-                    _ => "Add Book"
+                    ImportFeedbackState.Success => TextImported,
+                    ImportFeedbackState.Failure => TextImportFailed,
+                    _ => TextAddBook
                 };
             }
         }
@@ -91,12 +125,12 @@ namespace E_Book.Pages
         {
             get
             {
-                if (IsImporting) return "Please wait while we add your file";
+                if (IsImporting) return TextImportWaitMessage;
 
                 return _importFeedbackState switch
                 {
-                    ImportFeedbackState.Success => "Your book is ready in the library",
-                    ImportFeedbackState.Failure => "Please check the file and try again",
+                    ImportFeedbackState.Success => TextImportReadyMessage,
+                    ImportFeedbackState.Failure => TextImportFailMessage,
                     _ => "Import a new file to your library"
                 };
             }
@@ -106,13 +140,13 @@ namespace E_Book.Pages
         {
             get
             {
-                if (IsImporting) return "Import in progress...";
+                if (IsImporting) return TextImportInProgress;
 
                 return _importFeedbackState switch
                 {
-                    ImportFeedbackState.Success => "Book added successfully.",
-                    ImportFeedbackState.Failure => "Import failed. Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.",
-                    _ => "Supports TXT, EPUB, PDF, HTML, DOCX, and RTF."
+                    ImportFeedbackState.Success => TextImportSuccessHelper,
+                    ImportFeedbackState.Failure => TextImportFailHelper,
+                    _ => TextImportSupportHelper
                 };
             }
         }
@@ -121,20 +155,20 @@ namespace E_Book.Pages
 
         public bool ShowAddBookPlus => !IsImporting;
 
-        public string EmptyStatePrimaryButtonText => IsImporting ? "Importing..." : "Add Your First Book";
+        public string EmptyStatePrimaryButtonText => IsImporting ? TextImporting : "Add Your First Book";
 
         public string EmptyStateSecondaryHint
         {
             get
             {
                 if (IsImporting)
-                    return "Please keep this page open while your book is being imported.";
+                    return TextEmptyImportWait;
 
                 return _importFeedbackState switch
                 {
-                    ImportFeedbackState.Success => "Nice — your first book has been added.",
-                    ImportFeedbackState.Failure => "Import failed. Try another supported file.",
-                    _ => "Use the Add Book card below to import your first file."
+                    ImportFeedbackState.Success => TextEmptyImportSuccess,
+                    ImportFeedbackState.Failure => TextEmptyImportFailed,
+                    _ => TextEmptyImportDefault
                 };
             }
         }
@@ -477,15 +511,17 @@ namespace E_Book.Pages
             if (SkeletonShimmer == null)
                 return;
 
-            SkeletonShimmer.TranslationX = -420;
+            SkeletonShimmer.TranslationX = -320;
 
-            while (IsLoadingBooks)
+            int loopCount = 0;
+            while (IsLoadingBooks && loopCount < 4)
             {
-                await SkeletonShimmer.TranslateTo(420, 0, 900, Easing.Linear);
-                SkeletonShimmer.TranslationX = -420;
+                await SkeletonShimmer.TranslateTo(320, 0, 850, Easing.Linear);
+                SkeletonShimmer.TranslationX = -320;
+                loopCount++;
             }
 
-            SkeletonShimmer.TranslationX = -420;
+            SkeletonShimmer.TranslationX = -320;
         }
 
         private async Task AnimateBookListAppearance()
@@ -503,151 +539,271 @@ namespace E_Book.Pages
             string guidePath = Path.Combine(LibraryService.LibraryPath, "Usage Guidelines.txt");
 
             string guideContent = """
-            Welcome to E_Book 📚
+            ==================================================
+                            E_Book User Guide
+            ==================================================
 
-            E_Book is a modern cross-platform e-book reader built with .NET MAUI.
-            It focuses on a clean reading experience, an intelligent bookshelf system,
-            and smooth mobile-style interactions.
+            Welcome to E_Book.
 
-            Current Version
-            E_Book v1.07
+            E_Book is a modern cross-platform reading application
+            designed to provide a simple, clean and comfortable
+            reading experience.
 
-            ────────────────────────────
-            📚 Smart Library
-            ────────────────────────────
-            Your library acts as a reading dashboard where all imported books are organized automatically.
+            This guide will introduce the main features of the app
+            and help you get started quickly.
 
-            Features include:
 
-            • Automatically generated book covers
-            • File format labels
-            • Reading progress indicators
-            • Continue Reading badges
-            • Last opened time tracking
-            • Recently opened books appear first
+            --------------------------------------------------
+            Chapter 1 · Getting Started
+            --------------------------------------------------
 
-            Supported file formats:
+            When you first open the application,
+            you will see the main page called:
+
+            My Library
+
+            Your library is where all imported books are stored.
+
+            If your library is empty, simply add your first book.
+
+            Steps to import a book:
+
+            1. Tap the "Add Book" card
+            2. Select a supported file
+            3. Wait while the book is processed
+
+            Once imported, the book will appear in your library.
+
+
+
+            --------------------------------------------------
+            Chapter 2 · Supported File Formats
+            --------------------------------------------------
+
+            E_Book supports multiple document formats.
+
+            You can import:
 
             TXT
             EPUB
             PDF
-            HTML / HTM
+            HTML
             DOCX
             RTF
 
-            All imported files are stored inside the app's private Library folder to ensure stable access.
+            Different formats may have slightly different layouts,
+            but the reading experience will remain consistent.
 
-            ────────────────────────────
-            ➕ Importing Books
-            ────────────────────────────
-            Adding books to your library is simple.
 
-            1. Tap the "Add Book" button
-            2. Select a supported file
-            3. The file will be copied into your library
 
-            During import you will see a loading indicator.
+            --------------------------------------------------
+            Chapter 3 · Opening a Book
+            --------------------------------------------------
 
-            Notes:
+            To begin reading:
 
-            • Duplicate files will not be imported again
-            • Imported books remain available even if the original file is removed
-            • Large files may take a few seconds to import
+            1. Tap any book in your library
+            2. The reader will open instantly
 
-            ────────────────────────────
-            📖 Reading Books
-            ────────────────────────────
-            To start reading a book:
+            If you have read the book before,
+            the reader will automatically return to:
 
-            1. Tap the "Read" button on a book card
-            2. The reading page will open instantly
+            your last page.
 
-            Reader controls include:
 
-            • Swipe left / right to change pages
-            • Tap the center to toggle reading controls
-            • Use the back button to return to the library
 
-            The reading interface is designed to minimize distractions.
+            --------------------------------------------------
+            Chapter 4 · Reading Navigation
+            --------------------------------------------------
 
-            ────────────────────────────
-            🧠 Reading Progress
-            ────────────────────────────
+            The reader supports intuitive gestures.
+
+            Swipe Left
+            → Next Page
+
+            Swipe Right
+            → Previous Page
+
+            Tap the screen once
+            → Show or hide the reading menu
+
+            These gestures allow smooth page navigation
+            without interrupting your reading.
+
+
+
+            --------------------------------------------------
+            Chapter 5 · Reader Controls
+            --------------------------------------------------
+
+            When the reading menu is visible,
+            you can adjust several options.
+
+            These include:
+
+            • Font Size
+            • Line Spacing
+            • Theme Mode
+
+            Available reading themes:
+
+            Light Mode
+            Beige Mode
+            Green Mode
+            Blue Mode
+            Dark Mode
+
+            Choose the theme that feels most comfortable
+            for long reading sessions.
+
+
+
+            --------------------------------------------------
+            Chapter 6 · Reading Progress
+            --------------------------------------------------
+
             E_Book automatically tracks your reading activity.
 
-            The system remembers:
+            Information stored includes:
 
-            ✓ Last reading position
-            ✓ Reading progress percentage
-            ✓ Last opened time
+            • Last opened time
+            • Current page
+            • Total pages
+            • Reading progress
+            • Total reading time
 
-            Books you started reading will show:
+            Recently opened books will automatically appear
+            at the top of the library.
 
-            • Continue Reading badge
-            • Progress bar
-            • Reading percentage
 
-            When reopening a book, you continue exactly where you stopped.
 
-            ────────────────────────────
-            🗑️ Managing Books
-            ────────────────────────────
-            The bookshelf supports modern mobile interactions.
+            --------------------------------------------------
+            Chapter 7 · Progress Indicator
+            --------------------------------------------------
 
-            Delete a book by:
+            Your reading progress is displayed as a percentage.
 
-            • Swiping left on a book card
-            • Tapping Delete
+            Example:
 
-            You can also delete multiple books:
+            Page 5 / 20
+            Progress: 25%
 
-            1. Tap the trash icon to enter selection mode
-            2. Select multiple books
-            3. Press the ✓ confirm button
+            When you reach the end of the book,
+            the status will show:
 
-            A confirmation dialog will appear before files are permanently removed.
+            Completed
 
-            ────────────────────────────
-            🔎 Search
-            ────────────────────────────
-            The Search page helps you quickly find books.
 
-            Search features include:
 
-            • Search by book title
-            • Instant results while typing
-            • Recently searched keywords
-            • Reading progress shown in results
+            --------------------------------------------------
+            Chapter 8 · Managing Your Library
+            --------------------------------------------------
 
-            Search results update automatically as you type.
+            You can organize your library easily.
 
-            ────────────────────────────
-            ✨ Interface Features
-            ────────────────────────────
-            E_Book includes several interface improvements:
+            To delete books:
 
-            • Smooth page transitions
-            • Import success feedback
-            • Animated bookshelf updates
-            • Skeleton loading when the library loads
-            • Empty library guidance
+            1. Tap the trash icon
+            2. Select the books
+            3. Confirm deletion
 
-            These help create a smooth and responsive reading experience.
+            Deleted files will be permanently removed.
 
-            ────────────────────────────
-            💡 Tips
-            ────────────────────────────
 
-            • Recently opened books appear at the top of the library
-            • Books with progress display a Continue Reading badge
-            • Long-press a book to quickly enter multi-select mode
-            • The library automatically refreshes after reading
 
-            ────────────────────────────
+            --------------------------------------------------
+            Chapter 9 · Search
+            --------------------------------------------------
 
-            Thank you for using E_Book.
+            The Search tab allows you to quickly find books.
 
-            Enjoy your reading experience!
+            You can search by:
+
+            Book title
+            File name
+            Keywords
+
+            Recent searches will also appear
+            to help you search faster.
+
+
+
+            --------------------------------------------------
+            Chapter 10 · Settings
+            --------------------------------------------------
+
+            The Settings page allows you to customize the app.
+
+            Available options include:
+
+            • Appearance
+            • Reader behavior
+            • Account management
+            • Help and support
+
+            More customization features may be added
+            in future updates.
+
+
+
+            --------------------------------------------------
+            Chapter 11 · Reading Comfort
+            --------------------------------------------------
+
+            Reading for long periods may cause eye strain.
+
+            For better comfort you can:
+
+            Increase font size
+            Adjust line spacing
+            Use dark mode at night
+
+            Small adjustments can greatly improve
+            your reading experience.
+
+
+
+            --------------------------------------------------
+            Chapter 12 · Performance
+            --------------------------------------------------
+
+            E_Book uses optimized pagination
+            to ensure smooth page transitions.
+
+            Nearby pages are preloaded
+            so page turns feel fast and natural.
+
+            Even large books should load quickly.
+
+
+
+            --------------------------------------------------
+            Chapter 13 · Tips
+            --------------------------------------------------
+
+            For the best experience:
+
+            Keep your library organized
+            Import supported file formats
+            Use search to find books quickly
+            Adjust reader settings for comfort
+
+
+
+            --------------------------------------------------
+            Final Message
+            --------------------------------------------------
+
+            Reading should always be simple and enjoyable.
+
+            Take your time, explore new books,
+            and enjoy building your personal library.
+
+            Happy Reading.
+
+            --------------------------------------------------
+                                E_Book
+            --------------------------------------------------
             """;
 
             if (!File.Exists(guidePath))
@@ -741,7 +897,7 @@ namespace E_Book.Pages
                 var ext = Path.GetExtension(result.FileName)?.ToLowerInvariant() ?? "";
                 if (!LibraryService.SupportedExtensions.Contains(ext))
                 {
-                    await DisplayAlert("Not supported", $"Unsupported file type: {ext}", "OK");
+                    await DisplayAlert(TextUnsupportedTypeTitle, $"Unsupported file type: {ext}", TextOk);
                     _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Failure);
                     return;
                 }
@@ -750,7 +906,7 @@ namespace E_Book.Pages
 
                 if (File.Exists(targetPath))
                 {
-                    await DisplayAlert("Notice", "This file has already been imported!", "OK");
+                    await DisplayAlert(TextNoticeTitle, "This file has already been imported!", TextOk);
                     _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Failure);
                     return;
                 }
@@ -788,7 +944,7 @@ namespace E_Book.Pages
                     RaiseSummaryProperties();
                 });
 
-                await ShowToast("Imported successfully");
+                await ShowToast(TextImportedSuccessfully);
                 _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Success);
 
                 _refreshOnNextAppear = false;
@@ -823,7 +979,7 @@ namespace E_Book.Pages
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Failed to save file: {ex.Message}", "OK");
+                await DisplayAlert(TextErrorTitle, $"Failed to save file: {ex.Message}", TextOk);
                 return null;
             }
         }
@@ -1006,7 +1162,7 @@ namespace E_Book.Pages
             {
                 if (!File.Exists(book.FullPath))
                 {
-                    await DisplayAlert("Error", "File not found!", "OK");
+                    await DisplayAlert(TextErrorTitle, "File not found!", TextOk);
                     _refreshOnNextAppear = true;
                     _animateListOnNextAppear = false;
                     await RefreshBooksAsync();
@@ -1062,7 +1218,7 @@ namespace E_Book.Pages
 
             if (Books.Count == 0)
             {
-                await ShowToast("No books to delete");
+                await ShowToast(TextNoBooksToDelete);
                 return;
             }
 
@@ -1139,12 +1295,12 @@ namespace E_Book.Pages
 
             if (!IsMultiSelectMode)
             {
-                SelectAllButton.Text = "Select All";
+                SelectAllButton.Text = TextSelectAll;
                 return;
             }
 
             bool allSelected = Books.Count > 0 && Books.All(b => b.IsSelected);
-            SelectAllButton.Text = allSelected ? "Unselect All" : "Select All";
+            SelectAllButton.Text = allSelected ? TextUnselectAll : TextSelectAll;
         }
 
         private void OnCancelMultiSelectClicked(object? sender, EventArgs e)
@@ -1284,15 +1440,17 @@ namespace E_Book.Pages
             if (IsMultiSelectMode)
                 ExitMultiSelectMode();
 
-            await RefreshBooksAsync();
+            RaiseSummaryProperties();
+            OnPropertyChanged(nameof(ShowReadingSummary));
+            OnPropertyChanged(nameof(ShowBottomAddBookArea));
+            OnPropertyChanged(nameof(SelectedCountText));
 
             if (Books.Count < 30)
                 await AnimateBookListAppearance();
             else
                 EnsureBookListVisibleImmediately();
 
-            RaiseSummaryProperties();
-            await ShowToast("Deleted successfully");
+            await ShowToast(TextDeletedSuccessfully);
 
             _refreshOnNextAppear = false;
             _animateListOnNextAppear = false;
@@ -1326,7 +1484,7 @@ namespace E_Book.Pages
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Failed to delete file: {ex.Message}", "OK");
+                await DisplayAlert(TextErrorTitle, $"Failed to delete file: {ex.Message}", TextOk);
             }
         }
 
@@ -1537,7 +1695,7 @@ namespace E_Book.Pages
 
         private void OnReadingMetaChanged(object? sender, ReadingMetaStore.ReadingMetaChangedEventArgs e)
         {
-            MainThread.BeginInvokeOnMainThread(async () =>
+            MainThread.BeginInvokeOnMainThread(() =>
             {
                 if (string.IsNullOrWhiteSpace(e.FullPath))
                     return;
@@ -1558,6 +1716,8 @@ namespace E_Book.Pages
                     UpdateConfirmState();
                     RaiseSummaryProperties();
                     OnPropertyChanged(nameof(SelectedCountText));
+                    OnPropertyChanged(nameof(ShowReadingSummary));
+                    OnPropertyChanged(nameof(ShowBottomAddBookArea));
                     return;
                 }
 
@@ -1572,20 +1732,7 @@ namespace E_Book.Pages
                 if (oldIndex > 0)
                     Books.Move(oldIndex, 0);
 
-                _pendingHighlightBookPath = book.FullPath;
-
-                try
-                {
-                    if (BookCollectionView != null)
-                        BookCollectionView.ScrollTo(book, position: ScrollToPosition.Start, animate: true);
-                }
-                catch
-                {
-                }
-
                 RaiseSummaryProperties();
-                await Task.Delay(120);
-                await TryHighlightPendingBookAsync();
             });
         }
 

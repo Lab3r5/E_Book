@@ -196,26 +196,26 @@ namespace E_Book.Models
             }
         }
 
-        public bool HasProgress => ReadingProgress > 0;
+        public bool HasProgress => ReadingProgress > 0.001;
 
-        public bool ShowProgressBar => ReadingProgress > 0 && ReadingProgress < 0.999;
+        public bool ShowProgressBar => ReadingProgress > 0.001 && ReadingProgress < 0.995;
 
         public bool HasLastOpened => LastOpenedTicks > 0;
 
         public bool IsUnread => LastOpenedTicks <= 0;
 
-        public bool IsCompleted => ReadingProgress >= 0.999;
+        public bool IsCompleted => ReadingProgress >= 0.995;
 
-        public bool IsAlmostFinished => ReadingProgress >= 0.90 && ReadingProgress < 0.999;
+        public bool IsAlmostFinished => ReadingProgress >= 0.90 && ReadingProgress < 0.995;
 
-        public bool ShowReadingBadge => ReadingProgress > 0 || IsCompleted;
+        public bool ShowReadingBadge => !string.IsNullOrWhiteSpace(ReadingStatusText);
 
-        public bool HasLastReadPage => LastReadPage > 0 || IsCompleted;
+        public bool HasLastReadPage => !string.IsNullOrWhiteSpace(LastReadPageText);
 
-        public bool HasReadingTime => TotalReadingSeconds > 0 || IsCompleted;
+        public bool HasReadingTime => !string.IsNullOrWhiteSpace(ReadingTimeText);
 
         public string ProgressPercentText =>
-            $"{Math.Round(ReadingProgress * 100)}%";
+    $"{Math.Clamp((int)Math.Round(ReadingProgress * 100), 0, 100)}%";
 
         public string ReadingStatusText
         {
@@ -223,7 +223,7 @@ namespace E_Book.Models
             {
                 if (IsCompleted) return "Completed";
                 if (IsAlmostFinished) return "Almost finished";
-                if (ReadingProgress > 0) return "Continue reading";
+                if (ReadingProgress > 0.001) return "Continue reading";
                 return string.Empty;
             }
         }

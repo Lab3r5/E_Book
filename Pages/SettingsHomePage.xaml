@@ -393,7 +393,7 @@
             <!-- Footer -->
             <Label x:Name="FooterLabel"
                    Grid.Row="2"
-                   Text="Version 1.07"
+                   Text="Version 1.08"
                    FontSize="12"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="End"

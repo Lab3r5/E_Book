@@ -54,7 +54,6 @@ namespace E_Book.Pages
             foreach (var book in books)
             {
                 ReadingMetaStore.ApplyToBook(book);
-                book.RefreshVisualMeta();
                 _allBooks.Add(book);
             }
 
@@ -141,9 +140,7 @@ namespace E_Book.Pages
             foreach (var book in result)
             {
                 ReadingMetaStore.ApplyToBook(book);
-                book.RefreshVisualMeta();
                 Results.Add(book);
-
             }
 
             if (Results.Count == 0)
