@@ -226,7 +226,7 @@ public partial class LoginPage : ContentPage
 
     private async void OnForgetTapped(object sender, TappedEventArgs e)
     {
-        await DisplayAlert("Reset Password", "Feature coming soon.", "OK");
+        await Shell.Current.GoToAsync(AppShell.RouteForgotPassword);
     }
 
     private void OnEntryFocused(object sender, FocusEventArgs e)

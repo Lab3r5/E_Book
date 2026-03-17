@@ -20,6 +20,8 @@ namespace E_Book
         public const string RoutePrivacyPolicy = "privacy-policy";
         public const string RoutePassword = "password";
         public const string RouteReading = "reading";
+        public const string RouteForgotPassword = "forgot-password";
+        public const string RouteResetPassword = "reset-password";
 
 #if ANDROID
         private bool _tabsBoundOnce;
@@ -46,6 +48,8 @@ namespace E_Book
             Routing.RegisterRoute(RoutePrivacyPolicy, typeof(PrivacyPolicyPage));
             Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
             Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
+            Routing.RegisterRoute(RouteForgotPassword, typeof(ForgotPasswordPage));
+            Routing.RegisterRoute(RouteResetPassword, typeof(ResetPasswordPage));
         }
 
         private async void OnShellLoaded(object? sender, EventArgs e)

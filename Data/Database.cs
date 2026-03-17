@@ -51,9 +51,30 @@ namespace E_Book.Data
             await database.CreateTableAsync<ReadingSettings>();
             await database.CreateTableAsync<ReadingProgress>();
 
+            await EnsureAppUserColumnsAsync();
+
             await EnsureGuestUserExistsAsync();
             await MigrateLegacySingleUserDataToGuestAsync();
             await EnsureDefaultRowsForUserAsync(UserSession.UserId);
+        }
+
+        private async Task EnsureAppUserColumnsAsync()
+        {
+            try
+            {
+                await database.ExecuteAsync("ALTER TABLE AppUsers ADD COLUMN SecurityQuestion TEXT");
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await database.ExecuteAsync("ALTER TABLE AppUsers ADD COLUMN SecurityAnswer TEXT");
+            }
+            catch
+            {
+            }
         }
 
         private async Task EnsureGuestUserExistsAsync()
@@ -225,7 +246,12 @@ namespace E_Book.Data
             return user != null;
         }
 
-        public async Task<(bool Success, string Message)> RegisterUserAsync(string userId, string displayName, string password)
+        public async Task<(bool Success, string Message)> RegisterUserAsync(
+    string userId,
+    string displayName,
+    string password,
+    string securityQuestion,
+    string securityAnswer)
         {
             await EnsureInitializedAsync();
 
@@ -240,11 +266,16 @@ namespace E_Book.Data
             if (existing != null)
                 return (false, "This email is already registered.");
 
+            if (string.IsNullOrWhiteSpace(securityQuestion) || string.IsNullOrWhiteSpace(securityAnswer))
+                return (false, "Security question and answer are required.");
+
             var user = new AppUser
             {
                 UserId = normalizedUserId,
                 DisplayName = string.IsNullOrWhiteSpace(displayName) ? normalizedUserId : displayName.Trim(),
                 Password = password ?? string.Empty,
+                SecurityQuestion = securityQuestion.Trim(),
+                SecurityAnswer = securityAnswer.Trim(),
                 IsGuest = false
             };
 
@@ -537,6 +568,10 @@ namespace E_Book.Data
         public string DisplayName { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
+
+        public string SecurityQuestion { get; set; } = string.Empty;
+
+        public string SecurityAnswer { get; set; } = string.Empty;
 
         public bool IsGuest { get; set; } = false;
     }

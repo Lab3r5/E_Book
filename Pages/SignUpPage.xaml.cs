@@ -26,6 +26,12 @@ public partial class SignUpPage : ContentPage
         PasswordEntry.Focused += OnEntryFocused;
         PasswordEntry.Unfocused += OnEntryUnfocused;
 
+        SecurityQuestionPicker.Focused += OnPickerFocused;
+        SecurityQuestionPicker.Unfocused += OnPickerUnfocused;
+
+        SecurityAnswerEntry.Focused += OnEntryFocused;
+        SecurityAnswerEntry.Unfocused += OnEntryUnfocused;
+
         UpdateThemeIcon();
     }
 
@@ -71,7 +77,8 @@ public partial class SignUpPage : ContentPage
 
     private async void StartLogoBreathing()
     {
-        if (_isLogoBreathing) return;
+        if (_isLogoBreathing)
+            return;
 
         _isLogoBreathing = true;
 
@@ -85,7 +92,8 @@ public partial class SignUpPage : ContentPage
 
     private void UpdateThemeIcon()
     {
-        if (ThemeIconLabel == null) return;
+        if (ThemeIconLabel == null)
+            return;
 
         ThemeIconLabel.Text =
             Application.Current?.RequestedTheme == AppTheme.Dark ? "☀" : "🌙";
@@ -144,6 +152,21 @@ public partial class SignUpPage : ContentPage
 
     private async void OnPasswordCompleted(object sender, EventArgs e)
     {
+        SecurityQuestionPicker.Focus();
+        await ScrollEntryIntoViewAsync(SecurityQuestionPicker);
+    }
+
+    private async void OnSecurityQuestionChanged(object sender, EventArgs e)
+    {
+        if (SecurityQuestionPicker.SelectedIndex >= 0)
+        {
+            SecurityAnswerEntry.Focus();
+            await ScrollEntryIntoViewAsync(SecurityAnswerEntry);
+        }
+    }
+
+    private async void OnSecurityAnswerCompleted(object sender, EventArgs e)
+    {
         await PerformSignUpAsync();
     }
 
@@ -167,12 +190,22 @@ public partial class SignUpPage : ContentPage
         var name = NameEntry.Text?.Trim() ?? "";
         var email = EmailEntry.Text?.Trim() ?? "";
         var password = PasswordEntry.Text?.Trim() ?? "";
+        var securityQuestion = SecurityQuestionPicker.SelectedItem?.ToString()?.Trim() ?? "";
+        var securityAnswer = SecurityAnswerEntry.Text?.Trim() ?? "";
 
         if (string.IsNullOrWhiteSpace(name) ||
             string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(password))
+            string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(securityQuestion) ||
+            string.IsNullOrWhiteSpace(securityAnswer))
         {
             await DisplayAlert("Error", "All fields are required.", "OK");
+            return;
+        }
+
+        if (password.Length < 4)
+        {
+            await DisplayAlert("Error", "Password must be at least 4 characters.", "OK");
             return;
         }
 
@@ -188,7 +221,13 @@ public partial class SignUpPage : ContentPage
 
             string normalizedEmail = UserSession.NormalizeUserId(email);
 
-            var result = await _database.RegisterUserAsync(normalizedEmail, name, password);
+            var result = await _database.RegisterUserAsync(
+                normalizedEmail,
+                name,
+                password,
+                securityQuestion,
+                securityAnswer);
+
             if (!result.Success)
             {
                 await DisplayAlert("Sign up failed", result.Message, "OK");
@@ -257,6 +296,9 @@ public partial class SignUpPage : ContentPage
 
         if (sender == PasswordEntry)
             PasswordBorder.Stroke = Color.FromArgb("#A48BFF");
+
+        if (sender == SecurityAnswerEntry)
+            SecurityAnswerBorder.Stroke = Color.FromArgb("#A48BFF");
     }
 
     private void OnEntryUnfocused(object sender, FocusEventArgs e)
@@ -272,7 +314,28 @@ public partial class SignUpPage : ContentPage
         PasswordBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
             ? Color.FromArgb("#2D2D35")
             : Color.FromArgb("#E8E0F8");
+
+        SecurityAnswerBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+            ? Color.FromArgb("#2D2D35")
+            : Color.FromArgb("#E8E0F8");
     }
+
+    private void OnPickerFocused(object sender, FocusEventArgs e)
+    {
+        if (sender == SecurityQuestionPicker)
+            SecurityQuestionBorder.Stroke = Color.FromArgb("#A48BFF");
+    }
+
+    private void OnPickerUnfocused(object sender, FocusEventArgs e)
+    {
+        if (sender == SecurityQuestionPicker)
+        {
+            SecurityQuestionBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+                ? Color.FromArgb("#2D2D35")
+                : Color.FromArgb("#E8E0F8");
+        }
+    }
+
     private async void OnInputFocused(object sender, FocusEventArgs e)
     {
         await ScrollEntryIntoViewAsync(sender as VisualElement);
@@ -293,5 +356,4 @@ public partial class SignUpPage : ContentPage
         {
         }
     }
-
 }
