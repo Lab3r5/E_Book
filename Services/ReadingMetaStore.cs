@@ -11,6 +11,7 @@ namespace E_Book.Services
         private static string MetaKey => $"ebook_reading_meta_{UserSession.StorageKey}_v4";
 
         private static Dictionary<string, ReadingMeta>? _cache;
+        private static string? _cachedMetaKey;
 
         private class ReadingMeta
         {
@@ -57,9 +58,11 @@ namespace E_Book.Services
 
         public static event EventHandler<ReadingMetaChangedEventArgs>? MetaChanged;
 
-        // -----------------------------
-        // Core API
-        // -----------------------------
+        public static void ResetCache()
+        {
+            _cache = null;
+            _cachedMetaKey = null;
+        }
 
         public static void UpdateLastOpened(string fullPath)
         {
@@ -150,10 +153,6 @@ namespace E_Book.Services
             book.RefreshVisualMeta();
         }
 
-        // -----------------------------
-        // Snapshot API
-        // -----------------------------
-
         public static bool TryGetSnapshot(string fullPath, out ReadingMetaSnapshot snapshot)
         {
             snapshot = default;
@@ -198,10 +197,6 @@ namespace E_Book.Services
             return result;
         }
 
-        // -----------------------------
-        // Delete
-        // -----------------------------
-
         public static void Remove(string fullPath)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
@@ -225,36 +220,37 @@ namespace E_Book.Services
         public static void ClearCurrentUser()
         {
             Preferences.Default.Remove(MetaKey);
-            _cache = null;
+            ResetCache();
         }
-
-        // -----------------------------
-        // Storage
-        // -----------------------------
 
         private static Dictionary<string, ReadingMeta> LoadAll()
         {
-            if (_cache != null)
+            string currentKey = MetaKey;
+
+            if (_cache != null && string.Equals(_cachedMetaKey, currentKey, StringComparison.Ordinal))
                 return _cache;
 
             try
             {
-                var json = Preferences.Default.Get(MetaKey, string.Empty);
+                var json = Preferences.Default.Get(currentKey, string.Empty);
 
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     _cache = new Dictionary<string, ReadingMeta>(StringComparer.OrdinalIgnoreCase);
+                    _cachedMetaKey = currentKey;
                     return _cache;
                 }
 
                 _cache = JsonSerializer.Deserialize<Dictionary<string, ReadingMeta>>(json)
                          ?? new Dictionary<string, ReadingMeta>(StringComparer.OrdinalIgnoreCase);
 
+                _cachedMetaKey = currentKey;
                 return _cache;
             }
             catch
             {
                 _cache = new Dictionary<string, ReadingMeta>(StringComparer.OrdinalIgnoreCase);
+                _cachedMetaKey = currentKey;
                 return _cache;
             }
         }
@@ -263,18 +259,16 @@ namespace E_Book.Services
         {
             try
             {
+                var currentKey = MetaKey;
                 var json = JsonSerializer.Serialize(all);
-                Preferences.Default.Set(MetaKey, json);
+                Preferences.Default.Set(currentKey, json);
                 _cache = all;
+                _cachedMetaKey = currentKey;
             }
             catch
             {
             }
         }
-
-        // -----------------------------
-        // Helpers
-        // -----------------------------
 
         private static void RaiseMetaChanged(string fullPath, ReadingMeta meta, bool removed)
         {

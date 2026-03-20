@@ -70,6 +70,10 @@ namespace E_Book.Pages
         private bool _enterAnimationPlayed = false;
         private bool _readerInitialized = false;
 
+        private bool _isReaderLoading;
+        private bool _deferFirstDisplayUntilFullPagination;
+        private bool _hasDisplayedInitialPage;
+
         private const uint PageAnimMs = 120;
         private const double SlideDistance = 28;
 
@@ -136,11 +140,8 @@ namespace E_Book.Pages
 
             if (string.IsNullOrWhiteSpace(FilePath))
             {
-                ShowWebView();
-                ContentWebView.Source = new HtmlWebViewSource
-                {
-                    Html = WrapHtml("<p>No file selected.</p>")
-                };
+                HideReaderContentForLoading();
+                SetReaderLoading(true, "No file selected", "Please return and choose a book.");
                 UpdateProgressUI();
                 return;
             }
@@ -149,6 +150,8 @@ namespace E_Book.Pages
                 return;
 
             _loadedFilePath = FilePath;
+            _hasDisplayedInitialPage = false;
+
             await InitializeReaderAsync();
         }
 
@@ -197,6 +200,10 @@ namespace E_Book.Pages
 
             try
             {
+                _readerInitialized = false;
+                _deferFirstDisplayUntilFullPagination = false;
+                _hasDisplayedInitialPage = false;
+
                 var readingSettings = await dbHelper.GetReadingSettingsAsync();
 
                 int idx = Array.IndexOf(fontSizes, readingSettings.FontSize);
@@ -205,8 +212,6 @@ namespace E_Book.Pages
 
                 themeMode = NormalizeTheme(readingSettings.BackgroundColor);
                 ApplyTheme(themeMode);
-
-                ShowLoadingPage();
 
                 try
                 {
@@ -226,6 +231,8 @@ namespace E_Book.Pages
                 {
                     currentLineSpacing = lineSpacings[lineSpacingIndex];
                 }
+
+                ShowLoadingPage();
 
                 await LoadByTypeAsync(FilePath);
 
@@ -250,17 +257,34 @@ namespace E_Book.Pages
                 }
 
                 ClampCurrentPage();
-                await Task.Yield();
-                DisplayPage();
-                UpdateProgressUI();
-                TrimRenderedPageCache();
+
+                bool hasSavedProgress = progress.LastPage > 0;
+                bool waitForFullTxtPagination =
+                    mode == ReaderMode.TxtPaged &&
+                    _txtPaginationIsPartial &&
+                    hasSavedProgress;
+
+                _deferFirstDisplayUntilFullPagination = waitForFullTxtPagination;
+
+                if (waitForFullTxtPagination)
+                {
+                    SetReaderLoading(true, "Restoring your page...", "Finishing pagination for accurate position");
+                    await StartBackgroundFullTxtPaginationAsync();
+                }
+                else
+                {
+                    await Task.Yield();
+                    DisplayPage();
+                    UpdateProgressUI();
+                    WarmupNearbyPages();
+                    TrimRenderedPageCache();
+                    ShowReaderContent();
+                    _hasDisplayedInitialPage = true;
+                }
 
                 ReadingMetaStore.UpdateLastOpened(FilePath);
                 _sessionStartUtc = DateTime.UtcNow;
                 _sessionOpened = true;
-
-                if (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial)
-                    await StartBackgroundFullTxtPaginationAsync();
 
                 _readerInitialized = true;
 
@@ -276,18 +300,52 @@ namespace E_Book.Pages
             catch (Exception ex)
             {
                 _readerInitialized = false;
+                SetReaderLoading(true, "Unable to open book", ex.Message);
                 await DisplayAlert("Error", ex.Message, "OK");
             }
         }
 
+        private void SetReaderLoading(bool isLoading, string? title = null, string? subtitle = null)
+        {
+            _isReaderLoading = isLoading;
+
+            if (ReaderLoadingOverlay == null)
+                return;
+
+            ReaderLoadingOverlay.IsVisible = isLoading;
+            ReaderLoadingOverlay.Opacity = isLoading ? 1 : 0;
+
+            if (ReaderLoadingText != null && !string.IsNullOrWhiteSpace(title))
+                ReaderLoadingText.Text = title;
+
+            if (ReaderLoadingSubText != null && !string.IsNullOrWhiteSpace(subtitle))
+                ReaderLoadingSubText.Text = subtitle;
+        }
+
+        private void ShowReaderContent()
+        {
+            if (ContentWebView != null)
+                ContentWebView.IsVisible = true;
+
+            if (fileContentLabel != null)
+                fileContentLabel.IsVisible = false;
+
+            SetReaderLoading(false);
+        }
+
+        private void HideReaderContentForLoading()
+        {
+            if (ContentWebView != null)
+                ContentWebView.IsVisible = false;
+
+            if (fileContentLabel != null)
+                fileContentLabel.IsVisible = false;
+        }
+
         private void ShowLoadingPage()
         {
-            ShowWebView();
-            ContentWebView.BackgroundColor = PageBgColor;
-            ContentWebView.Source = new HtmlWebViewSource
-            {
-                Html = WrapHtml("<p style='opacity:.65'>Loading book...</p>")
-            };
+            HideReaderContentForLoading();
+            SetReaderLoading(true, "Loading book...", "Preparing your reading page");
         }
 
         private async Task PlayEnterAnimationAsync()
@@ -366,7 +424,11 @@ namespace E_Book.Pages
                     }
 
                     ClampCurrentPage();
-                    RefreshCurrentPage();
+
+                    if (!_isReaderLoading || _hasDisplayedInitialPage)
+                    {
+                        RefreshCurrentPage();
+                    }
                 }
                 catch (TaskCanceledException) { }
             });
@@ -891,10 +953,26 @@ namespace E_Book.Pages
                     UpdateProgressUI();
                     WarmupNearbyPages();
                     TrimRenderedPageCache();
+
+                    ShowReaderContent();
+                    _hasDisplayedInitialPage = true;
+                    _deferFirstDisplayUntilFullPagination = false;
                 });
             }
             catch
             {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (!_hasDisplayedInitialPage)
+                    {
+                        DisplayPage();
+                        UpdateProgressUI();
+                        WarmupNearbyPages();
+                        TrimRenderedPageCache();
+                        ShowReaderContent();
+                        _hasDisplayedInitialPage = true;
+                    }
+                });
             }
             finally
             {
@@ -1712,6 +1790,7 @@ namespace E_Book.Pages
 
             ShowWebView();
             ContentWebView.Source = new HtmlWebViewSource { Html = wrapped };
+            _hasDisplayedInitialPage = true;
             TrimRenderedPageCache();
         }
 
@@ -2443,6 +2522,7 @@ namespace E_Book.Pages
 
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
+            SetReaderLoading(false);
             _progressSaveCts?.Cancel();
 
             try

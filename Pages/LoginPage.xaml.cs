@@ -182,7 +182,9 @@ public partial class LoginPage : ContentPage
             }
 
             UserSession.SetUser(user.UserId, user.DisplayName);
+            ReadingMetaStore.ResetCache();
             LibraryService.EnsureLibraryExists();
+
             ThemeScheduler.StartTimer();
             ThemeScheduler.ApplyNow();
 
@@ -206,7 +208,9 @@ public partial class LoginPage : ContentPage
         }
 
         UserSession.SetGuest();
+        ReadingMetaStore.ResetCache();
         LibraryService.EnsureLibraryExists();
+
         ThemeScheduler.StartTimer();
         ThemeScheduler.ApplyNow();
 
@@ -248,11 +252,11 @@ public partial class LoginPage : ContentPage
             ? Color.FromArgb("#2D2D35")
             : Color.FromArgb("#E8E0F8");
     }
+
     private async void OnInputFocused(object sender, FocusEventArgs e)
     {
         await ScrollEntryIntoViewAsync(sender as VisualElement);
     }
-    
 
     private async Task ScrollEntryIntoViewAsync(VisualElement? target)
     {
@@ -269,5 +273,4 @@ public partial class LoginPage : ContentPage
         {
         }
     }
-
 }

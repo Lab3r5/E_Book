@@ -252,6 +252,7 @@ namespace E_Book.Pages
 
             EnsureLibraryExists();
             ReadingMetaStore.MetaChanged += OnReadingMetaChanged;
+            UserSession.SessionChanged += OnUserSessionChanged;
 
             UpdateSelectAllText();
             UpdateConfirmState();
@@ -305,6 +306,20 @@ namespace E_Book.Pages
             await TryHighlightPendingBookAsync();
         }
 
+        protected override void OnHandlerChanged()
+        {
+            base.OnHandlerChanged();
+
+            if (Handler == null)
+            {
+                ReadingMetaStore.MetaChanged -= OnReadingMetaChanged;
+                UserSession.SessionChanged -= OnUserSessionChanged;
+
+                foreach (var item in _subscribedItems.ToList())
+                    UnsubscribeItem(item);
+            }
+        }
+
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
@@ -343,6 +358,27 @@ namespace E_Book.Pages
             }
         }
 
+        private void OnUserSessionChanged(object? sender, EventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                try
+                {
+                    ReadingMetaStore.ResetCache();
+                    EnsureLibraryExists();
+
+                    _refreshOnNextAppear = true;
+                    _animateListOnNextAppear = false;
+
+                    if (Window != null)
+                        await RefreshBooksAsync(showLoadingPlaceholder: true);
+                }
+                catch
+                {
+                }
+            });
+        }
+        
         private async Task HandleListAppearanceAsync()
         {
             if (Books.Count == 0)
@@ -723,6 +759,9 @@ Happy Reading.
 
         private async Task RefreshBooksAsync(bool showLoadingPlaceholder = false)
         {
+            EnsureLibraryExists();
+            ReadingMetaStore.ResetCache();
+
             if (showLoadingPlaceholder)
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>

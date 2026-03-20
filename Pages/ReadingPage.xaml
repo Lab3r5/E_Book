@@ -434,5 +434,59 @@
                     TextColor="#4A4361"/>
         </Border>
 
+        <!-- Reader Loading Overlay -->
+        <Grid x:Name="ReaderLoadingOverlay"
+      Grid.RowSpan="3"
+      ZIndex="200"
+      IsVisible="False"
+      Opacity="1"
+      BackgroundColor="#CCF7F6FB"
+      InputTransparent="False">
+
+            <VerticalStackLayout HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="14">
+
+                <Border WidthRequest="74"
+                HeightRequest="74"
+                StrokeThickness="0"
+                BackgroundColor="#FFFFFF"
+                HorizontalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="24" />
+                    </Border.StrokeShape>
+
+                    <Border.Shadow>
+                        <Shadow Brush="#22000000"
+                        Offset="0,8"
+                        Radius="20"
+                        Opacity="0.18" />
+                    </Border.Shadow>
+
+                    <ActivityIndicator x:Name="ReaderLoadingIndicator"
+                               IsRunning="True"
+                               IsVisible="True"
+                               Color="#7B6CFF"
+                               WidthRequest="28"
+                               HeightRequest="28"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                </Border>
+
+                <Label x:Name="ReaderLoadingText"
+               Text="Loading book..."
+               FontSize="15"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center"
+               TextColor="#4A4361" />
+
+                <Label x:Name="ReaderLoadingSubText"
+               Text="Preparing your reading page"
+               FontSize="12"
+               HorizontalTextAlignment="Center"
+               TextColor="#7A7488" />
+            </VerticalStackLayout>
+        </Grid>
+
     </Grid>
 </ContentPage>

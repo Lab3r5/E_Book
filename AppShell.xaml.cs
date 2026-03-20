@@ -60,13 +60,12 @@ namespace E_Book
             _startupRedirectDone = true;
             Loaded -= OnShellLoaded;
 
-            if (UserSession.TryConsumeQuickLogin())
-            {
-                await GoToAsync($"//{RouteTabs}/{RouteBookshelf}");
-            }
-            else
+            try
             {
                 await GoToAsync($"//{RouteLogin}");
+            }
+            catch
+            {
             }
         }
 

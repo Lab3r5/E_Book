@@ -13,10 +13,10 @@ namespace E_Book.Services
 
         public const string GuestUserId = "guest";
 
+        public static event EventHandler? SessionChanged;
+
         public static bool HasSession =>
-            Preferences.ContainsKey(KeyUserId) ||
-            Preferences.ContainsKey(KeyIsGuest) ||
-            Preferences.ContainsKey(KeyDisplayName);
+            Preferences.ContainsKey(KeyUserId);
 
         public static string UserId => Preferences.Get(KeyUserId, GuestUserId);
 
@@ -43,6 +43,8 @@ namespace E_Book.Services
             Preferences.Set(KeyIsGuest, true);
             Preferences.Set(KeyDisplayName, "Guest");
             Preferences.Set(KeyQuickLoginRemaining, 0);
+
+            RaiseSessionChanged();
         }
 
         public static void SetUser(string userId, string displayName)
@@ -51,8 +53,11 @@ namespace E_Book.Services
 
             Preferences.Set(KeyUserId, normalizedUserId);
             Preferences.Set(KeyIsGuest, false);
-            Preferences.Set(KeyDisplayName,
+            Preferences.Set(
+                KeyDisplayName,
                 string.IsNullOrWhiteSpace(displayName) ? normalizedUserId : displayName.Trim());
+
+            RaiseSessionChanged();
         }
 
         public static void Logout()
@@ -61,16 +66,20 @@ namespace E_Book.Services
             Preferences.Remove(KeyIsGuest);
             Preferences.Remove(KeyDisplayName);
             Preferences.Set(KeyQuickLoginRemaining, 0);
+
+            RaiseSessionChanged();
         }
 
         public static void LogoutKeepIdentity()
         {
             Preferences.Set(KeyIsGuest, false);
+            RaiseSessionChanged();
         }
 
         public static void UpdateDisplayName(string displayName)
         {
             Preferences.Set(KeyDisplayName, displayName?.Trim() ?? "Guest");
+            RaiseSessionChanged();
         }
 
         public static void SetQuickLoginCount(int count)
@@ -120,6 +129,11 @@ namespace E_Book.Services
                 normalized = normalized.Replace("__", "_");
 
             return normalized;
+        }
+
+        private static void RaiseSessionChanged()
+        {
+            SessionChanged?.Invoke(null, EventArgs.Empty);
         }
     }
 }
