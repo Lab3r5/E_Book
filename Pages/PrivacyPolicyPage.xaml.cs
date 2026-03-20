@@ -10,19 +10,30 @@ namespace E_Book.Pages
         {
             InitializeComponent();
 
-            BackCommand = new Command(async () =>
+            BackCommand = new Command(async () => await GoBackAsync());
+
+            BindingContext = this;
+        }
+
+        private async Task GoBackAsync()
+        {
+            try
             {
-                try
+                var state = Shell.Current?.CurrentState?.Location?.ToString() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(state) && state.Contains('/'))
                 {
                     await Shell.Current.GoToAsync("..");
                 }
-                catch (Exception ex)
+                else
                 {
-                    await DisplayAlert("Navigation Error", ex.Message, "OK");
+                    await Shell.Current.GoToAsync($"//{AppShell.RouteTabs}/{AppShell.RouteSettings}");
                 }
-            });
-
-            BindingContext = this;
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Navigation Error", ex.Message, "OK");
+            }
         }
     }
 }

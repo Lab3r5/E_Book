@@ -49,7 +49,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                                <Label Text="A quick overview of how E_Book stores and uses your information."
+                                <Label Text="A quick overview of how E_Book stores and uses your information in Version 1.09."
                                        FontSize="13"
                                        LineBreakMode="WordWrap"
                                        TextColor="{AppThemeBinding Light=#5A4B8A, Dark=#D7D0F1}" />
@@ -60,7 +60,7 @@
                                  Opacity="0.35"
                                  Color="{AppThemeBinding Light=#CFC2F6, Dark=#5A4C92}" />
 
-                        <Label Text="E-Book Reader is designed as a lightweight academic reading application. This policy explains what information may be stored by the app, why it is needed, and how it supports your reading experience."
+                        <Label Text="E_Book is designed as a lightweight academic reading application. This policy explains what information may be stored by the app, why it is needed, and how it supports your reading experience while remaining on your device."
                                FontSize="13"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#2A1A62, Dark=#F2EEFF}" />
@@ -94,7 +94,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, reading progress, theme preferences, and interface settings."
+                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, reading progress, reading time, theme preferences, interface settings, and account-related preferences."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -129,7 +129,77 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="If you create an account, your display name and email address may be stored locally on your device to personalize your reading experience. This information is not transmitted to external servers in this academic prototype."
+                            <Label Text="If you create an account, your display name, email address, password, selected security question, and security answer may be stored locally on your device. This information is used only within the academic prototype to support authentication and password recovery."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Section: Password Recovery -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#26262C}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14">
+
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                VerticalOptions="Start">
+                            <Label Text="🛡️"
+                                   FontSize="18"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="Password Recovery"
+                                   FontSize="17"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                            <Label Text="The Forgot Password feature uses a locally stored security question and answer to verify your identity before allowing a password reset. No email service, cloud server, or external verification provider is used in this prototype."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Section: Reading Data -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#26262C}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14">
+
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                VerticalOptions="Start">
+                            <Label Text="📖"
+                                   FontSize="18"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="Reading Data"
+                                   FontSize="17"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                            <Label Text="E_Book may locally store reading-related information such as the last opened time, current page, total pages, reading progress, and total reading duration. This helps restore your reading state and improve your experience across sessions."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -164,7 +234,42 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="The Quick Login feature allows registered users to skip login verification for a limited number of app launches between 1 and 5. This setting is stored locally and can be disabled at any time from profile settings."
+                            <Label Text="The Quick Login feature allows registered users to skip login verification for a limited number of app launches between 1 and 5. This preference is stored locally and can be adjusted or cleared from account-related settings."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Section: External Sharing -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#26262C}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14">
+
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                VerticalOptions="Start">
+                            <Label Text="🌐"
+                                   FontSize="18"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="External Sharing"
+                                   FontSize="17"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                            <Label Text="This academic prototype does not intentionally transmit your personal reading data or account data to external servers for analytics, advertising, or commercial profiling. Core user data is primarily handled on-device."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -199,7 +304,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="All stored information remains on your device. You may remove locally stored data by logging out, clearing application data, or uninstalling the application, depending on your device settings."
+                            <Label Text="All stored information remains on your device. You may remove locally stored data by deleting imported books, resetting account-related data, clearing application storage, or uninstalling the application, depending on your device settings."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -218,7 +323,7 @@
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=#5D5872, Dark=#D2CDE0}" />
 
-                        <Label Text="This privacy policy applies to the current academic prototype and may be updated as new features are introduced."
+                        <Label Text="This privacy policy applies to the current academic prototype and may be updated as new features such as account recovery, personalization, or data controls are introduced in future versions."
                                FontSize="12"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#8F8AA3, Dark=#AAA5BA}" />
@@ -226,7 +331,7 @@
                 </Border>
 
                 <!-- Version -->
-                <Label Text="Last updated · Version 1.08"
+                <Label Text="Last updated · Version 1.09"
                        FontSize="12"
                        HorizontalOptions="Center"
                        Margin="0,2,0,0"
