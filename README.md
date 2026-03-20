@@ -7,13 +7,13 @@
 
 # 🏷 Version | 版本信息
 
-![Version](https://img.shields.io/badge/version-v1.08-purple)
+![Version](https://img.shields.io/badge/version-v1.09-purple)
 ![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-**Current Version:** `v1.08 – Settings UI Refinement & Page Style Unification`  
-**当前版本：** `v1.08 – 设置模块界面优化与页面风格统一`
+**Current Version:** `v1.09 – Account Security & Password Recovery System`  
+**当前版本：** `v1.09 – 账号安全系统与密码找回功能`
 
 ---
 
@@ -27,6 +27,7 @@ The goal of the project is to build a **modern mobile reading experience** with:
 - Structured application architecture  
 - Lightweight local storage  
 - Smooth reading interactions  
+- Realistic account system  
 
 E_Book 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是打造：
 
@@ -34,6 +35,7 @@ E_Book 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目�
 - 清晰结构化架构  
 - 轻量级本地数据存储  
 - 流畅阅读体验  
+- 接近真实产品的账号系统  
 
 Developed for:
 
@@ -42,24 +44,77 @@ University of Newcastle
 
 ---
 
-# 🚀 Latest Release – v1.08
-# 最新版本 – v1.08
+# 🚀 Latest Release – v1.09
+# 最新版本 – v1.09
 
-Version **v1.08** focuses on refining the **Settings module UI** and improving the visual consistency of several application pages.
+Version **v1.09** introduces a **complete account security system**, including password recovery and structured authentication features.
 
-The update introduces a cleaner layout structure and more unified styling across settings-related pages.
-
-v1.08 版本重点优化 **设置模块 UI**，并统一多个页面的界面风格，使整体界面更加一致、清晰。
+v1.09 版本引入了完整的账号安全体系，包括密码找回与认证流程升级，使应用更加接近真实商业产品。
 
 Key improvements include:
 
-• Refined **Settings page layout and spacing**  
-• Improved **Edit Profile page styling**  
-• Unified **Settings subpage structure**  
-• Updated **Help Center page layout**  
-• Minor UI adjustments and navigation fixes  
+• Forgot Password workflow  
+• Security Question system (Picker-based)  
+• Reset Password page  
+• Navigation system upgrade  
+• Privacy Policy update  
+• Usage Guidelines enhancement  
 
-这些优化使设置模块更加统一，同时提升了整体界面体验。
+该版本重点提升：
+
+• 忘记密码功能  
+• 安全问题机制（下拉选择）  
+• 重置密码页面  
+• 导航结构升级  
+• 隐私政策更新  
+• 使用指南完善  
+
+---
+
+# 🔐 Account Security System
+# 账号安全系统
+
+## Forgot Password 功能
+
+Users can securely reset their password through:
+
+用户可以通过以下流程找回密码：
+
+1. Enter email  
+2. Answer security question  
+3. Set new password  
+
+该功能完全基于本地实现，无需服务器支持。
+
+---
+
+## Security Question（安全问题）
+
+Security questions are now **predefined instead of free input**.
+
+安全问题改为固定选项，提高系统一致性：
+
+- What is your favorite pet's name?  
+- What is your favorite book?  
+- What city were you born in?  
+
+优势：
+
+- 更安全  
+- 更规范  
+- 更接近真实产品设计  
+
+---
+
+## Reset Password Page
+
+A dedicated page for password reset with:
+
+- Input validation  
+- Error feedback  
+- Smooth UI interaction  
+
+提供完整用户体验。
 
 ---
 
@@ -68,64 +123,37 @@ Key improvements include:
 ## 📚 Smart Bookshelf System
 ## 智能书架系统
 
-The bookshelf works like a modern commercial reading app dashboard.
-
-书架系统模拟真实阅读应用。
-
-Features:
-
 - Reading progress display  
 - Continue reading indicators  
 - Recently opened sorting  
 - Automatic book cover generation  
-
-功能包括：
-
-- 阅读进度显示  
-- Continue Reading 提示  
-- 最近阅读排序  
-- 自动生成书籍封面  
 
 ---
 
 ## 👤 Multi-User Account System
 ## 多用户账号系统
 
-E_Book supports **independent user environments**.
+Each user has independent:
 
-每个账号拥有独立数据环境：
+- Library  
+- Reading progress  
+- Settings  
+- Search history  
 
-- Personal book library  
-- Independent reading progress  
-- Independent reading settings  
-- Independent search history  
-- Independent theme preferences  
-
-账号之间 **不会共享数据**。
+账号之间完全隔离。
 
 ---
 
 ## 👤 Guest Mode
 ## Guest 模式
 
-Guest users run in a **separate storage profile**.
-
-Guest 用户拥有独立存储空间：
-
-- Guest library  
-- Guest reading history  
-- Guest preferences  
-
-不会影响注册用户数据。
+- Independent storage profile  
+- No impact on registered users  
 
 ---
 
 ## 📖 Reading Engine
 ## 阅读系统
-
-The reading engine supports multiple formats.
-
-阅读系统支持多种文档格式。
 
 Supported formats:
 
@@ -133,73 +161,46 @@ Supported formats:
 - EPUB  
 - DOCX  
 - RTF  
-- PDF (external reader)  
+- PDF  
 
 Features:
 
-- Adjustable font size  
-- Light / Dark reading themes  
-- Reading progress persistence  
-- Resume reading position  
-
-功能：
-
-- 字体大小调整  
-- 深色 / 浅色主题  
-- 阅读进度自动保存  
-- 自动恢复阅读位置  
+- Font size control  
+- Theme switching  
+- Progress saving  
+- Resume reading  
 
 ---
 
-# 🎨 Interface Improvements | 界面优化
+# 🎨 UI & UX Improvements | 界面优化
 
-Version **v1.08** introduces several UI refinements to improve the overall visual consistency of the application.
+Version **v1.09** enhances UI consistency and interaction flow:
 
-v1.08 版本对应用界面进行了多项优化，使整体视觉风格更加统一。
+- Unified authentication pages (Login / SignUp / Forgot Password)  
+- Picker-based input interaction  
+- Improved feedback animations  
+- More consistent design language  
 
-Improvements include:
-
-- Cleaner **Settings page layout**
-- Improved **Edit Profile interface**
-- Unified **Help Center page structure**
-- Better spacing and layout hierarchy
-- More consistent page animations
-
-这些优化使应用界面更加接近完整产品设计。
+整体界面更加接近商业级应用。
 
 ---
 
 # ⚡ Performance Optimization
 # 性能优化
 
-Recent versions introduced multiple performance improvements.
-
-近期版本包含多项性能优化：
-
-- Smarter bookshelf refresh logic  
-- Reduced unnecessary page reloads  
-- Faster tab switching  
-- Improved navigation animations  
-
-优化包括：
-
-- 智能书架刷新机制  
-- 减少页面重复加载  
-- 更快 Tab 切换  
-- 更流畅页面动画  
+- Faster navigation transitions  
+- Optimized bookshelf loading  
+- Reduced redundant refresh  
+- Improved UI responsiveness  
 
 ---
 
 # 🏗 Architecture | 技术架构
 
-E_Book uses a modular architecture based on **.NET MAUI**.
-
-架构特点：
-
 - MAUI Shell navigation  
-- Service layer abstraction  
 - SQLite local database  
-- Preferences API storage  
+- Preferences API  
+- Service layer design  
 - User-based data isolation  
 
 ---
@@ -211,30 +212,21 @@ E_Book uses a modular architecture based on **.NET MAUI**.
 E_Book
 │
 ├── Models
-│   └── BookItem.cs
-│
 ├── Pages
+│   ├── LoginPage
+│   ├── SignUpPage
+│   ├── ForgotPasswordPage
+│   ├── ResetPasswordPage
 │   ├── BookshelfPage
 │   ├── ReadingPage
 │   ├── SearchPage
 │   ├── SettingsHomePage
-│   ├── LoginPage
-│   └── SignUpPage
 │
 ├── Services
-│   ├── LibraryService.cs
-│   ├── ReadingMetaStore.cs
-│   ├── SearchHistoryStore.cs
-│   └── ThemeScheduler.cs
-│
 ├── Data
 │   └── Database.cs
 │
 ├── Resources
-│   ├── Styles
-│   ├── Images
-│   └── TabIcons
-│
 └── AppShell.xaml
 
 ````
@@ -243,26 +235,24 @@ E_Book
 
 # 🔧 Tech Stack | 技术栈
 
-- **C#**
-- **.NET MAUI**
-- **SQLite**
-- **Shell Navigation**
-- **Preferences API**
+- C#  
+- .NET MAUI  
+- SQLite  
+- Shell Navigation  
+- Preferences API  
 
 ---
 
 # 📦 Installation | 安装方式
 
-Clone the repository:
-
 ```bash
 git clone https://github.com/Lab3r5/E_Book.git
 ````
 
-Open the solution in **Visual Studio 2022+**
+Open in:
 
 ```
-Open → E_Book.sln
+Visual Studio 2022+
 ```
 
 Run on:
@@ -274,56 +264,36 @@ Run on:
 
 # 📊 Version Evolution | 版本演进
 
-| Version   | Description                               |
-| --------- | ----------------------------------------- |
-| v1.01     | Base reading system                       |
-| v1.02     | UI layout refinement                      |
-| v1.03     | Animated TabBar                           |
-| v1.04     | Settings redesign                         |
-| v1.05     | Smart bookshelf                           |
-| v1.06     | UI & navigation improvements              |
-| v1.07     | Multi-user data isolation                 |
-| **v1.08** | Settings UI refinement & page consistency |
+| Version   | Description                          |
+| --------- | ------------------------------------ |
+| v1.01     | Base reading system                  |
+| v1.02     | UI layout refinement                 |
+| v1.03     | Animated TabBar                      |
+| v1.04     | Settings redesign                    |
+| v1.05     | Smart bookshelf                      |
+| v1.06     | UI & navigation improvements         |
+| v1.07     | Multi-user data isolation            |
+| v1.08     | Settings UI refinement               |
+| **v1.09** | Account security & password recovery |
 
 ---
 
 # 🎯 Design Philosophy | 设计理念
 
-E_Book emphasizes:
-
-* Clean UI design
-* Motion-driven interaction
+* Clean UI
+* Smooth interaction
 * Structured architecture
-* Minimalist purple theme
-* Mobile-first experience
-
-E_Book 强调：
-
-* 清晰 UI
-* 动效交互
-* 结构化架构
-* 紫色极简主题
-* 移动优先体验
+* Minimalist design
+* Real-world product alignment
 
 ---
 
 # 🛣 Future Roadmap | 后续规划
 
-Planned features:
-
 * Reading analytics dashboard
-* Smart book recommendations
-* MVVM architecture refactor
-* Reader engine improvements
+* Smart recommendations
+* MVVM architecture
 * iOS support
-
-未来计划：
-
-* 阅读统计系统
-* 智能书籍推荐
-* MVVM 架构升级
-* 阅读系统优化
-* iOS 支持
 
 ---
 
@@ -331,7 +301,6 @@ Planned features:
 
 **Shen Jiawei**
 University of Newcastle
-Mobile Application Development
 
 ---
 
