@@ -11,7 +11,6 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Header -->
         <Grid Grid.Row="0"
               ColumnDefinitions="80,*,80"
               Padding="18,10,18,6"
@@ -42,20 +41,19 @@
                    FontAttributes="Bold"
                    VerticalOptions="Center"
                    HorizontalOptions="End"
-                   TextColor="#C9BEF7">
+                   TextColor="#C9BEF7"
+                   Opacity="0.35">
                 <Label.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnSaveTapped" />
                 </Label.GestureRecognizers>
             </Label>
         </Grid>
 
-        <!-- Content -->
         <ScrollView Grid.Row="1"
                     VerticalScrollBarVisibility="Never">
             <VerticalStackLayout Padding="18,8,18,28"
                                  Spacing="16">
 
-                <!-- Hero Card -->
                 <Border StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#ECE7FA, Dark=#2C2C34}"
                         StrokeShape="RoundRectangle 26"
@@ -93,7 +91,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Profile Card -->
                 <Border StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}"
                         StrokeShape="RoundRectangle 24"
@@ -112,7 +109,6 @@
                                  Margin="0,8,0,8"
                                  BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
 
-                        <!-- Full Name -->
                         <Grid ColumnDefinitions="*,*"
                               Padding="0,10">
                             <VerticalStackLayout Spacing="3">
@@ -130,7 +126,8 @@
                                    Grid.Column="1"
                                    FontSize="16"
                                    HorizontalTextAlignment="End"
-                                   VerticalOptions="Center"
+                                   VerticalOptions="Start"
+                                   Margin="0,2,0,0"
                                    BackgroundColor="Transparent"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}"
                                    Placeholder="Enter your name"
@@ -142,7 +139,6 @@
                                  Margin="0,10,0,10"
                                  BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
 
-                        <!-- Email -->
                         <Grid ColumnDefinitions="*,Auto"
                               Padding="0,10">
                             <VerticalStackLayout Spacing="3">
@@ -170,7 +166,6 @@
                                  Margin="0,10,0,10"
                                  BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
 
-                        <!-- Password -->
                         <Grid ColumnDefinitions="*,Auto"
                               Padding="0,10">
                             <VerticalStackLayout Spacing="3">
@@ -206,7 +201,6 @@
                                  Margin="0,10,0,10"
                                  BackgroundColor="{AppThemeBinding Light=#EEEAF7, Dark=#2A2A31}" />
 
-                        <!-- Quick Login -->
                         <Grid ColumnDefinitions="*,Auto"
                               Padding="0,10">
                             <VerticalStackLayout Spacing="3"
@@ -245,7 +239,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Guest Notice -->
                 <Border x:Name="GuestNotice"
                         IsVisible="False"
                         StrokeThickness="0"
@@ -284,7 +277,6 @@
 
                 </Border>
 
-                <!-- Log Out -->
                 <Border StrokeThickness="0"
                         StrokeShape="RoundRectangle 22"
                         Padding="0"
@@ -306,6 +298,5 @@
 
             </VerticalStackLayout>
         </ScrollView>
-
     </Grid>
 </ContentPage>

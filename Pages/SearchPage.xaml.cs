@@ -17,6 +17,8 @@ namespace E_Book.Pages
         private readonly List<BookItem> _allBooks = new();
         private bool _isLoaded;
         private bool _hasPlayedEntrance;
+        private bool _skipAutoFocusOnce;
+        private bool _hasAppearedOnce;
 
         public SearchPage()
         {
@@ -38,12 +40,20 @@ namespace E_Book.Pages
                 await RunEntranceAsync();
             }
 
-            FocusSearchLater();
+            bool shouldAutoFocus = !_skipAutoFocusOnce;
+
+            if (_skipAutoFocusOnce)
+                _skipAutoFocusOnce = false;
+
+            if (shouldAutoFocus)
+                FocusSearchLater();
 
             if (string.IsNullOrWhiteSpace(SearchEntry?.Text))
             {
                 await PlayEmptyAnimation();
             }
+
+            _hasAppearedOnce = true;
         }
 
         private void LoadBooksToCache()
@@ -377,6 +387,8 @@ namespace E_Book.Pages
             }
 
             ReadingMetaStore.UpdateLastOpened(book.FullPath);
+
+            _skipAutoFocusOnce = true;
 
             var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
             await Shell.Current.GoToAsync(route);

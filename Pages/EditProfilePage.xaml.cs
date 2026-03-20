@@ -7,6 +7,8 @@ namespace E_Book.Pages
     {
         private readonly Database _database = new();
         private string _originalName = string.Empty;
+        private bool _isSaving;
+        private bool _hasChanges;
 
         public EditProfilePage()
         {
@@ -75,14 +77,30 @@ namespace E_Book.Pages
             if (UserSession.IsGuest)
             {
                 SaveLabel.Opacity = 0.35;
+                SaveLabel.TextColor = Color.FromArgb("#C9BEF7");
+                SaveLabel.Text = "Save";
+                _hasChanges = false;
                 return;
             }
 
             var currentName = NameEntry.Text?.Trim() ?? string.Empty;
-            var changed = !string.Equals(currentName, _originalName, StringComparison.Ordinal);
+            _hasChanges = !string.Equals(currentName, _originalName, StringComparison.Ordinal);
 
-            SaveLabel.Opacity = changed ? 1.0 : 0.35;
             AvatarLetter.Text = GetAvatarLetter(currentName);
+
+            if (_isSaving)
+            {
+                SaveLabel.Text = "Saving...";
+                SaveLabel.Opacity = 1.0;
+                SaveLabel.TextColor = Color.FromArgb("#7A63FF");
+                return;
+            }
+
+            SaveLabel.Text = "Save";
+            SaveLabel.Opacity = _hasChanges ? 1.0 : 0.35;
+            SaveLabel.TextColor = _hasChanges
+                ? Color.FromArgb("#7A63FF")
+                : Color.FromArgb("#C9BEF7");
         }
 
         private void UpdateQuickLoginUI()
@@ -151,7 +169,7 @@ namespace E_Book.Pages
             if (sender is VisualElement v)
                 await PressAnim(v);
 
-            if (UserSession.IsGuest)
+            if (UserSession.IsGuest || _isSaving)
                 return;
 
             var name = NameEntry.Text?.Trim() ?? string.Empty;
@@ -165,15 +183,28 @@ namespace E_Book.Pages
             if (string.Equals(name, _originalName, StringComparison.Ordinal))
                 return;
 
-            await _database.UpdateUserDisplayNameAsync(UserSession.UserId, name);
-            UserSession.UpdateDisplayName(name);
+            try
+            {
+                _isSaving = true;
+                UpdateSaveState();
 
-            _originalName = name;
-            AvatarLetter.Text = GetAvatarLetter(name);
-            UpdateSaveState();
+                await _database.UpdateUserDisplayNameAsync(UserSession.UserId, name);
+                UserSession.UpdateDisplayName(name);
 
-            await DisplayAlert("Saved", "Profile updated.", "OK");
-            await GoBackAsync();
+                _originalName = name;
+                AvatarLetter.Text = GetAvatarLetter(name);
+
+                _isSaving = false;
+                UpdateSaveState();
+
+                await DisplayAlert("Saved", "Profile updated.", "OK");
+            }
+            catch (Exception ex)
+            {
+                _isSaving = false;
+                UpdateSaveState();
+                await DisplayAlert("Error", $"Failed to save profile: {ex.Message}", "OK");
+            }
         }
 
         private async void OnChangePasswordTapped(object sender, TappedEventArgs e)
@@ -184,7 +215,7 @@ namespace E_Book.Pages
             if (UserSession.IsGuest)
                 return;
 
-            await Shell.Current.GoToAsync(AppShell.RoutePassword);
+            await Shell.Current.GoToAsync($"{AppShell.RoutePassword}?email={Uri.EscapeDataString(UserSession.UserId)}");
         }
 
         private async void OnQuickLoginTapped(object sender, TappedEventArgs e)

@@ -153,20 +153,49 @@ namespace E_Book.Pages
                 return;
             }
 
+            if (password.Length < 4)
+            {
+                await DisplayAlert("Error", "Password must be at least 4 characters.", "OK");
+                return;
+            }
+
             try
             {
                 ConfirmButton.IsEnabled = false;
                 ConfirmButton.Text = "Saving...";
                 ConfirmButton.Opacity = 1.0;
 
-                await dbHelper.UpdatePasswordAsync(UserSession.UserId, password);
+                bool updated = await dbHelper.UpdatePasswordAsync(UserSession.UserId, password);
+
+                if (!updated)
+                {
+                    await DisplayAlert("Error", "Failed to save password. Please try again.", "OK");
+                    return;
+                }
 
                 await DisplayAlert("Success", "Password has been updated.", "OK");
-                await Navigation.PopAsync();
+
+                try
+                {
+                    await Shell.Current.GoToAsync("..");
+                }
+                catch
+                {
+                    try
+                    {
+                        if (Navigation.ModalStack.Count > 0)
+                            await Navigation.PopModalAsync();
+                        else
+                            await Navigation.PopAsync();
+                    }
+                    catch
+                    {
+                    }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                await DisplayAlert("Error", "Failed to save password. Please try again.", "OK");
+                await DisplayAlert("Error", $"Failed to save password: {ex.Message}", "OK");
             }
             finally
             {

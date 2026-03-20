@@ -761,7 +761,6 @@ namespace E_Book.Pages
 
             double currentHeight = 0;
             var currentPageParagraphs = new List<string>();
-            int currentPageStartParagraphIndex = 0;
 
             int actualLimit = paragraphLimit.HasValue
                 ? Math.Min(txtParagraphs.Count, paragraphLimit.Value)
@@ -793,6 +792,9 @@ namespace E_Book.Pages
                         currentHeight = 0;
                     }
 
+                    int startPageIndex = result.Pages.Count;
+                    result.ParagraphStartPageIndices.Add(startPageIndex);
+
                     var splitParagraphs = SplitLongParagraphForPaging(
                         paragraph,
                         usableWidth,
@@ -802,12 +804,9 @@ namespace E_Book.Pages
                         blankParagraphPx,
                         mostlyChinese);
 
-                    result.ParagraphStartPageIndices.Add(result.Pages.Count);
-
                     foreach (var part in splitParagraphs)
                         result.Pages.Add(new List<string> { part });
 
-                    currentPageStartParagraphIndex = i + 1;
                     continue;
                 }
 
@@ -825,15 +824,10 @@ namespace E_Book.Pages
                         result.Pages.Add(new List<string>(currentPageParagraphs));
                         currentPageParagraphs.Clear();
                         currentHeight = 0;
-                        currentPageStartParagraphIndex = i;
                     }
                 }
 
-                if (currentPageParagraphs.Count == 0)
-                {
-                    while (result.ParagraphStartPageIndices.Count <= currentPageStartParagraphIndex)
-                        result.ParagraphStartPageIndices.Add(result.Pages.Count);
-                }
+                result.ParagraphStartPageIndices.Add(result.Pages.Count);
 
                 currentPageParagraphs.Add(paragraph);
                 currentHeight += estimatedHeight;
@@ -841,9 +835,6 @@ namespace E_Book.Pages
 
             if (currentPageParagraphs.Count > 0)
                 result.Pages.Add(new List<string>(currentPageParagraphs));
-
-            while (result.ParagraphStartPageIndices.Count < actualLimit)
-                result.ParagraphStartPageIndices.Add(Math.Max(0, result.Pages.Count - 1));
 
             return result;
         }

@@ -328,20 +328,22 @@ namespace E_Book.Data
             await database.UpdateAsync(user);
         }
 
-        public async Task UpdatePasswordAsync(string userId, string password)
+        public async Task<bool> UpdatePasswordAsync(string userId, string password)
         {
             await EnsureInitializedAsync();
 
             string normalizedUserId = UserSession.NormalizeUserId(userId);
 
             var user = await database.Table<AppUser>()
-                                     .FirstOrDefaultAsync(x => x.UserId == normalizedUserId);
+                                     .FirstOrDefaultAsync(x => x.UserId == normalizedUserId && !x.IsGuest);
 
             if (user == null)
-                return;
+                return false;
 
             user.Password = password ?? string.Empty;
-            await database.UpdateAsync(user);
+
+            int rows = await database.UpdateAsync(user);
+            return rows > 0;
         }
 
         // ================= Password (compatibility) =================
