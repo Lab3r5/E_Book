@@ -1,8 +1,7 @@
 ﻿<maui:MauiWinUIApplication
-    x:Class="EZ_Read.WinUI.App"
+    x:Class="E_Book.WinUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:maui="using:Microsoft.Maui"
-    xmlns:local="using:EZ_Read.WinUI">
-
+    xmlns:local="using:E_Book.WinUI">
 </maui:MauiWinUIApplication>

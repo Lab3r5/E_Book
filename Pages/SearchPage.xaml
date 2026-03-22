@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+    x:Class="E_Book.Pages.SearchPage"
+    shell:Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource OffBlack}}">
+
+    <Grid Padding="24,18"
+          RowDefinitions="Auto,*">
+
+        <!-- Header -->
+        <VerticalStackLayout x:Name="HeaderBlock"
+                             Grid.Row="0"
+                             Spacing="12"
+                             Margin="0,2,0,10">
+
+            <Label x:Name="TitleLabel"
+                   Text="Search"
+                   FontFamily="Pacifico"
+                   FontSize="34"
+                   HorizontalTextAlignment="Center"
+                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+            <Border x:Name="SearchBarCard"
+                    Stroke="{AppThemeBinding Light=#E5E1F3, Dark=#3A3A42}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 22"
+                    BackgroundColor="{AppThemeBinding Light=#FBFAFE, Dark=#1D1D22}"
+                    Padding="16,0"
+                    HeightRequest="74">
+
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                      ColumnSpacing="10"
+                      VerticalOptions="Center">
+
+                    <Label Text="⌕"
+                           FontSize="22"
+                           VerticalOptions="Center"
+                           Margin="0,0,2,0"
+                           TextColor="{AppThemeBinding Light=#A49CC7, Dark=#9D96BE}" />
+
+                    <Entry x:Name="SearchEntry"
+                           Grid.Column="1"
+                           Placeholder="Search books..."
+                           PlaceholderColor="{AppThemeBinding Light=#AAA4C4, Dark=#8E88A9}"
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                           BackgroundColor="Transparent"
+                           FontSize="15"
+                           Margin="0"
+                           HeightRequest="48"
+                           ClearButtonVisibility="Never"
+                           ReturnType="Search"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Fill"
+                           Completed="OnSearchPressed"
+                           TextChanged="OnSearchTextChanged" />
+
+                    <Label x:Name="ClearTextLabel"
+                           Grid.Column="2"
+                           Text="✕"
+                           FontSize="15"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           IsVisible="False"
+                           Margin="0,0,4,0"
+                           TextColor="{AppThemeBinding Light=#8D86B2, Dark=#B4ADD4}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnClearTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+
+                    <Label Grid.Column="3"
+                           Text="Cancel"
+                           FontSize="14"
+                           VerticalOptions="Center"
+                           Margin="2,0,0,0"
+                           TextColor="{AppThemeBinding Light=#8D86B2, Dark=#B4ADD4}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCancelTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- Main card -->
+        <Frame x:Name="MainCard"
+               Grid.Row="1"
+               BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+               CornerRadius="28"
+               Padding="18,18,18,12"
+               HasShadow="True"
+               Margin="0,2,0,10">
+
+            <Frame.Shadow>
+                <Shadow Brush="#18000000"
+                        Offset="0,8"
+                        Radius="22"
+                        Opacity="0.18" />
+            </Frame.Shadow>
+
+            <Grid RowDefinitions="Auto,Auto,*">
+
+                <!-- Recent Searches -->
+                <VerticalStackLayout x:Name="HistorySection"
+                                     Spacing="10"
+                                     IsVisible="False">
+
+                    <Grid ColumnDefinitions="*,Auto"
+                          VerticalOptions="Center">
+
+                        <Label Text="Recent Searches"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#6D69A5, Dark={StaticResource White}}" />
+
+                        <Label Grid.Column="1"
+                               Text="Clear"
+                               FontSize="12.5"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#8D86B2, Dark=#C8C1E3}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnClearHistoryTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
+
+                    <FlexLayout x:Name="HistoryContainer"
+                                Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="Start"
+                                AlignItems="Start" />
+                </VerticalStackLayout>
+
+                <!-- Result title -->
+                <Label x:Name="ResultTitleLabel"
+                       Grid.Row="1"
+                       Text="Search Results"
+                       Margin="0,14,0,10"
+                       IsVisible="False"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#6D69A5, Dark={StaticResource White}}" />
+
+                <!-- Content -->
+                <Grid Grid.Row="2">
+
+                    <!-- Empty state -->
+                    <VerticalStackLayout x:Name="EmptyStateLayout"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         Spacing="14"
+                                         Margin="0,-40,0,0">
+
+                        <Image x:Name="EmptyImage"
+                               Source="search_empty_square.png"
+                               HeightRequest="190"
+                               WidthRequest="190"
+                               Aspect="AspectFit"
+                               HorizontalOptions="Center"
+                               Opacity="0"
+                               Scale="0.85" />
+
+                        <Label x:Name="EmptyTitleLabel"
+                               Text="Search your books"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                               Opacity="0" />
+
+                        <Label x:Name="EmptySubLabel"
+                               Text="Find books you added to your library."
+                               FontSize="14"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                               Opacity="0" />
+                    </VerticalStackLayout>
+
+                    <!-- Result list -->
+                    <CollectionView x:Name="ResultList"
+                                    IsVisible="False"
+                                    SelectionMode="None">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame CornerRadius="16"
+                                       Padding="10"
+                                       Margin="0,0,0,9"
+                                       HasShadow="True"
+                                       BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+
+                                    <Frame.Shadow>
+                                        <Shadow Brush="#12000000"
+                                                Offset="0,3"
+                                                Radius="11"
+                                                Opacity="0.11" />
+                                    </Frame.Shadow>
+
+                                    <Grid ColumnDefinitions="56,*,44"
+                                          ColumnSpacing="8"
+                                          VerticalOptions="Center">
+
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnResultCardTapped"
+                                                                  CommandParameter="{Binding .}" />
+                                        </Grid.GestureRecognizers>
+
+                                        <!-- Cover -->
+                                        <Frame Grid.Column="0"
+                                               HeightRequest="56"
+                                               WidthRequest="56"
+                                               Padding="0"
+                                               CornerRadius="12"
+                                               HasShadow="False"
+                                               BackgroundColor="{Binding CoverColor}"
+                                               VerticalOptions="Center">
+
+                                            <Grid>
+                                                <Label Text="{Binding CoverText}"
+                                                       FontSize="12"
+                                                       FontAttributes="Bold"
+                                                       TextColor="White"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center" />
+                                            </Grid>
+                                        </Frame>
+
+                                        <!-- Text -->
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             Spacing="2"
+                                                             VerticalOptions="Center">
+
+                                            <Label Text="{Binding DisplayFileName}"
+                                                   FontSize="12.5"
+                                                   FontAttributes="Bold"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="1"
+                                                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                                            <Frame Padding="6,2"
+                                                   CornerRadius="6"
+                                                   HasShadow="False"
+                                                   HorizontalOptions="Start"
+                                                   BorderColor="{AppThemeBinding Light=#E5E1F3, Dark=#444444}"
+                                                   BackgroundColor="{AppThemeBinding Light=#F6F3FF, Dark=#2B2B2F}">
+                                                <Label Text="{Binding Format}"
+                                                       FontSize="8.5"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                            </Frame>
+
+                                            <Label Text="{Binding LastOpenedText}"
+                                                   FontSize="9.3"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="1" />
+
+                                            <Frame Padding="5,1"
+                                                   CornerRadius="6"
+                                                   HasShadow="False"
+                                                   HorizontalOptions="Start"
+                                                   BackgroundColor="{AppThemeBinding Light=#EFE9FF, Dark=#2A2340}"
+                                                   IsVisible="{Binding HasProgress}">
+                                                <HorizontalStackLayout Spacing="4">
+                                                    <Label Text="●"
+                                                           FontSize="7.5"
+                                                           TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                                           VerticalOptions="Center" />
+                                                    <Label Text="Continue reading"
+                                                           FontSize="8"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                                           VerticalOptions="Center" />
+                                                </HorizontalStackLayout>
+                                            </Frame>
+
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="6"
+                                                  VerticalOptions="Center"
+                                                  IsVisible="{Binding HasProgress}">
+
+                                                <ProgressBar Grid.Column="0"
+                                                             Progress="{Binding ReadingProgress}"
+                                                             HeightRequest="4"
+                                                             VerticalOptions="Center"
+                                                             BackgroundColor="{AppThemeBinding Light=#ECEAF5, Dark=#2F2F34}"
+                                                             ProgressColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}" />
+
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding ProgressPercentText}"
+                                                       FontSize="8.8"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center"
+                                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+                                            </Grid>
+                                        </VerticalStackLayout>
+
+                                        <!-- Open -->
+                                        <Button Grid.Column="2"
+                                                Text="›"
+                                                FontSize="24"
+                                                Padding="0"
+                                                HeightRequest="36"
+                                                WidthRequest="44"
+                                                MinimumWidthRequest="44"
+                                                CornerRadius="10"
+                                                TextColor="White"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource ReadLightPurple}, Dark={StaticResource ReadDarkPurple}}"
+                                                Clicked="OnReadClicked"
+                                                CommandParameter="{Binding .}"
+                                                VerticalOptions="Center"
+                                                HorizontalOptions="End" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </Grid>
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentPage>

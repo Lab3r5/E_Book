@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace EZ_Read
+namespace E_Book
 {
     [Application]
     public class MainApplication : MauiApplication

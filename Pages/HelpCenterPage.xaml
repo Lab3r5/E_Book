@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:controls="clr-namespace:E_Book.Controls"
+    x:Class="E_Book.Pages.HelpCenterPage"
+    shell:Shell.TabBarIsVisible="False"
+    shell:Shell.NavBarIsVisible="False"
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light=#F6F5FB, Dark=#121212}">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <controls:AppHeader Title="Help Center"
+                            BackCommand="{Binding BackCommand}" />
+
+        <ScrollView Grid.Row="1"
+                    VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Padding="18,10,18,24"
+                                 Spacing="18">
+
+                <!-- Intro -->
+                <VerticalStackLayout Spacing="4"
+                                     Padding="2,0,2,0">
+                    <Label Text="Support"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <Label Text="Frequently asked questions"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                    <Label Text="Find quick answers and simple guides for using E_Book."
+                           FontSize="12.5"
+                           LineBreakMode="WordWrap"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                </VerticalStackLayout>
+
+                <!-- Intro Card -->
+                <Border StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F3EEFF, Dark=#2A214F}"
+                        StrokeShape="RoundRectangle 20"
+                        Padding="16">
+                    <Label Text="You can browse common questions below or use the guide section to learn the main features of the app."
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                </Border>
+
+                <!-- FAQ Section -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Frequently Asked Questions"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           Margin="2,0,0,0"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <!-- FAQ 1 -->
+                    <Border x:Name="FaqItem1"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="How do I add a book?"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label x:Name="Arrow1"
+                                       Grid.Column="1"
+                                       Text="⌄"
+                                       FontSize="20"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Label x:Name="Answer1"
+                                   IsVisible="False"
+                                   Opacity="0"
+                                   Text="Go to your library and use the add-book option to import a supported file into the app."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFaq1Tapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <!-- FAQ 2 -->
+                    <Border x:Name="FaqItem2"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="Will my reading progress be saved?"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label x:Name="Arrow2"
+                                       Grid.Column="1"
+                                       Text="⌄"
+                                       FontSize="20"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Label x:Name="Answer2"
+                                   IsVisible="False"
+                                   Opacity="0"
+                                   Text="Yes. E_Book can save your reading progress locally so you can continue from where you stopped."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFaq2Tapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <!-- FAQ 3 -->
+                    <Border x:Name="FaqItem3"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="Can I switch between light and dark mode?"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label x:Name="Arrow3"
+                                       Grid.Column="1"
+                                       Text="⌄"
+                                       FontSize="20"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Label x:Name="Answer3"
+                                   IsVisible="False"
+                                   Opacity="0"
+                                   Text="Yes. You can change the app appearance from the Appearance section in Settings."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFaq3Tapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <!-- FAQ 4 -->
+                    <Border x:Name="FaqItem4"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="What file types are supported?"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label x:Name="Arrow4"
+                                       Grid.Column="1"
+                                       Text="⌄"
+                                       FontSize="20"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Label x:Name="Answer4"
+                                   IsVisible="False"
+                                   Opacity="0"
+                                   Text="Supported formats include TXT, EPUB, PDF, HTML, DOCX, and RTF in the current version of the app."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFaq4Tapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Guide Section -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="User Guide"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           Margin="2,0,0,0"
+                           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Add Books"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Import supported files into your library to begin reading."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Reading Mode"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Adjust font size, theme, and display preferences for a better reading experience."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Search Library"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Use the Search page to quickly find imported books in your library."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Save Progress"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Your last reading position can be stored automatically so you can continue later."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
