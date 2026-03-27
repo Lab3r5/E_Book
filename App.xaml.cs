@@ -1,4 +1,5 @@
 ﻿using E_Book.Services;
+using Microsoft.Maui.ApplicationModel;
 
 namespace E_Book
 {
@@ -8,14 +9,25 @@ namespace E_Book
         {
             InitializeComponent();
 
-            // ✅ 启动就应用上次模式（Auto/Light/Dark）
             ThemeScheduler.StartTimer();
             ThemeScheduler.ApplyNow();
+
+            RequestedThemeChanged += OnRequestedThemeChanged;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
             return new Window(new AppShell());
         }
+
+#if ANDROID
+        private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                MainActivity.Instance?.ApplySystemBarTheme();
+            });
+        }
+#endif
     }
 }

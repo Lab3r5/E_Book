@@ -73,6 +73,7 @@ namespace E_Book
         {
 #if ANDROID
             HandleAndroidTabRebind();
+            HandleAndroidKeyboardByRoute();
 #endif
         }
 
@@ -111,5 +112,23 @@ namespace E_Book
                 Loaded -= OnShellLoaded;
             }
         }
+#if ANDROID
+private void HandleAndroidKeyboardByRoute()
+{
+    string location = CurrentState?.Location?.ToString() ?? string.Empty;
+
+    bool isOnSearchTab =
+        location.StartsWith($"//{RouteTabs}/{RouteSearch}", StringComparison.OrdinalIgnoreCase) ||
+        location.Equals($"//{RouteTabs}/{RouteSearch}", StringComparison.OrdinalIgnoreCase);
+
+    if (!isOnSearchTab)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            MainActivity.Instance?.HideSoftKeyboard();
+        });
+    }
+}
+#endif
     }
 }

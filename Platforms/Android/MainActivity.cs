@@ -8,6 +8,8 @@ using Android.Util;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
+using Android.Views.InputMethods;
+using AndroidX.Core.View;
 
 using Google.Android.Material.BottomNavigation;
 using Google.Android.Material.Navigation;
@@ -61,18 +63,22 @@ namespace E_Book
         private readonly Android.Graphics.Color _selectedColor = Android.Graphics.Color.White;
         private readonly Android.Graphics.Color _lightUnselectedColor = Android.Graphics.Color.Rgb(0xB7, 0xB3, 0xC6);
         private readonly Android.Graphics.Color _darkUnselectedColor = Android.Graphics.Color.Rgb(0x8A, 0x86, 0x9E);
+        private readonly Android.Graphics.Color _statusBarLightColor = Android.Graphics.Color.Rgb(0xF2, 0xF2, 0xF5);
+        private readonly Android.Graphics.Color _statusBarDarkColor = Android.Graphics.Color.Rgb(0x08, 0x08, 0x0A);
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Instance = this;
             Window?.SetSoftInputMode(SoftInput.AdjustResize);
+            ApplySystemBarTheme();
             StartEnsureLoop();
         }
 
         protected override void OnResume()
         {
             base.OnResume();
+            ApplySystemBarTheme();
             StartEnsureLoop();
         }
 
@@ -976,6 +982,46 @@ namespace E_Book
             {
                 for (int i = 0; i < vg2.ChildCount; i++)
                     CollectMenuChildrenAsItems(vg2.GetChildAt(i), list);
+            }
+        }
+        public void HideSoftKeyboard()
+        {
+            try
+            {
+                var view = CurrentFocus ?? Window?.DecorView;
+                if (view == null)
+                    return;
+
+                var imm = GetSystemService(InputMethodService) as InputMethodManager;
+                imm?.HideSoftInputFromWindow(view.WindowToken, HideSoftInputFlags.None);
+
+                view.ClearFocus();
+            }
+            catch
+            {
+            }
+        }
+
+        public void ApplySystemBarTheme()
+        {
+            try
+            {
+                if (Window == null || Window.DecorView == null)
+                    return;
+
+                bool isNight = IsNightMode();
+                var statusBarColor = isNight ? _statusBarDarkColor : _statusBarLightColor;
+
+                Window.SetStatusBarColor(statusBarColor);
+
+                var controller = WindowCompat.GetInsetsController(Window, Window.DecorView);
+                if (controller != null)
+                {
+                    controller.AppearanceLightStatusBars = !isNight;
+                }
+            }
+            catch
+            {
             }
         }
     }

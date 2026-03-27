@@ -56,6 +56,34 @@ namespace E_Book.Pages
             _hasAppearedOnce = true;
         }
 
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            try
+            {
+                SearchEntry?.Unfocus();
+            }
+            catch
+            {
+            }
+
+#if ANDROID
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                MainActivity.Instance?.HideSoftKeyboard();
+            });
+#endif
+        }
+
+        private bool IsOnSearchTab()
+        {
+            string location = Shell.Current?.CurrentState?.Location?.ToString() ?? string.Empty;
+
+            return location.StartsWith($"//{AppShell.RouteTabs}/{AppShell.RouteSearch}", StringComparison.OrdinalIgnoreCase) ||
+                   location.Equals($"//{AppShell.RouteTabs}/{AppShell.RouteSearch}", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void LoadBooksToCache()
         {
             _allBooks.Clear();
@@ -72,11 +100,19 @@ namespace E_Book.Pages
 
         private async void FocusSearchLater()
         {
-            await Task.Delay(180);
+            await Task.Delay(260);
 
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
-                SearchEntry?.Focus();
+                try
+                {
+                    SearchEntry?.Unfocus();
+                    await Task.Delay(30);
+                    SearchEntry?.Focus();
+                }
+                catch
+                {
+                }
             });
         }
 
@@ -327,6 +363,14 @@ namespace E_Book.Pages
             Results.Clear();
             ShowInitialState();
             SearchEntry.Unfocus();
+
+#if ANDROID
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                MainActivity.Instance?.HideSoftKeyboard();
+            });
+#endif
+
             UpdateClearButtonVisibility();
             _ = PlayEmptyAnimation();
         }
@@ -390,6 +434,14 @@ namespace E_Book.Pages
 
             _skipAutoFocusOnce = true;
 
+#if ANDROID
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SearchEntry?.Unfocus();
+                MainActivity.Instance?.HideSoftKeyboard();
+            });
+#endif
+
             var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
             await Shell.Current.GoToAsync(route);
         }
@@ -401,6 +453,7 @@ namespace E_Book.Pages
 
             await UIAnimationService.FadeListInAsync(ResultList, 18, 220, 30);
         }
+
         private async Task RunEntranceAsync()
         {
             if (HeaderBlock != null)
@@ -427,6 +480,5 @@ namespace E_Book.Pages
             await UIAnimationService.FadeScaleCardInAsync(SearchBarCard, 14, 0.995, 230, 10);
             await UIAnimationService.FadeScaleCardInAsync(MainCard, 14, 0.995, 240, 10);
         }
-
     }
 }
