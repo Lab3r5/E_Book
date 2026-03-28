@@ -3,187 +3,257 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 
-namespace EZ_Read.Pages
+namespace E_Book.Pages
 {
     public partial class Homepage : ContentPage
     {
-        public ObservableCollection<string> TxtFiles { get; set; } = new ObservableCollection<string>();
-        private readonly string TxtFolderPath;
+        public ObservableCollection<BookItem> Books { get; set; } = new();
+
+        private readonly string LibraryPath;
+
+        private static readonly string[] SupportedExtensions =
+        {
+            ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf"
+        };
 
         public Homepage()
         {
             InitializeComponent();
-            TxtFolderPath = Path.Combine(FileSystem.AppDataDirectory, "TxtFiles");
-            EnsureTxtFolderExists();
+
+            LibraryPath = Path.Combine(FileSystem.AppDataDirectory, "Library");
+            EnsureLibraryExists();
+
             BindingContext = this;
             LoadSavedFiles();
         }
 
-        // Make sure the Txt folder exists, if not create it
-        private void EnsureTxtFolderExists()
+        private void EnsureLibraryExists()
         {
-            if (!Directory.Exists(TxtFolderPath))
-            {
-                Directory.CreateDirectory(TxtFolderPath);
-            }
+            if (!Directory.Exists(LibraryPath))
+                Directory.CreateDirectory(LibraryPath);
 
             // Create a default usage guide (first time run only)
-            string guidePath = Path.Combine(TxtFolderPath, "Usage Guidelines.txt");
+            string guidePath = Path.Combine(LibraryPath, "Usage Guidelines.txt");
             if (!File.Exists(guidePath))
             {
                 string guideContent = """
-                Welcome to EZ-Read 📚
+                Welcome to E_Book 📘
 
-                Your lightweight Android reading app for TXT files.
+                E_Book is a lightweight and multi-format reading application built with .NET MAUI.
+                It helps you organize, read, and customize your documents with a clean,
+                distraction-free reading experience across different file types.
 
                 ────────────────────────────
-                📂 Basic Usage:
+                📂 Bookshelf & File Management:
                 ────────────────────────────
-                ➕ Tap the plus button in the top-left to import TXT files  
+                ➕ Tap the plus button to import files into your bookshelf  
                 📖 Tap the book icon next to a file to start reading  
-                🗑️ Tap the trash icon to delete unwanted files  
+                🗑️ Tap the trash icon to remove unwanted files from the bookshelf  
+                
+                Supported formats:
+                • TXT  • EPUB  • PDF
+                • HTML/HTM  • DOCX  • RTF
+
+                Imported files are copied into the app’s local Library folder and managed
+                automatically by the application to ensure stable access and permissions.
 
                 ────────────────────────────
-                🛠️ Reading Tools:
+                🛠️ Reading Features:
                 ────────────────────────────
-                • Tap the center of the screen to show tools  
-                • Tap the ❮ button to return to the bookshelf  
-                • Tap the Aa button to customize:
-                   - Font Size (A- / A+)
-                   - Background Color (5 themes available)
+                • Swipe left or right to navigate pages or chapters
+                • Tap the center of the screen to show or hide reading tools  
+                • Tap the ❮ back button to return to the bookshelf  
+                • Tap the Aa button to customize your reading experience:
+                   - Adjust font size (Small / Medium / Large)
+                   - Switch between Light and Dark reading themes
+
+                All changes are applied instantly to improve reading comfort.
 
                 ────────────────────────────
                 🔐 Settings (from ⚙️ page):
                 ────────────────────────────
-                • Enable password protection on startup  
-                • Lock screen after exit (requires password enabled)  
-                • Keep screen on during reading  
+                From the Settings page, you can:
+                • Enable password protection when launching the app  
+                • Automatically lock the app after exiting (password required)  
+                • Keep the screen on while reading to avoid interruptions
+                
+                These options help protect your privacy and enhance usability.
 
                 ────────────────────────────
-                📌 Tips:
+                📌 Reading Tips:
                 ────────────────────────────
-                ✓ Your reading settings will be saved automatically  
-                ✓ Reading progress is tracked per file — you’ll resume where you left off  
-                ✓ Use a comfortable background color and font size for better readability  
-
+                ✓ Reading progress is saved automatically for each document  
+                ✓ You will continue reading from where you last stopped  
+                ✓ Adjust font size and theme to reduce eye strain  
+                ✓ All data is stored locally on your device for privacy and performance
+                
                 ────────────────────────────
-                Thank you for using EZ-Read!
-                Developed by Team Shawarma  
+                Thank you for using E_Book!
+                Enjoy a simple, flexible, and focused reading experience.
                 """;
                 File.WriteAllText(guidePath, guideContent);
             }
         }
-        //
 
-        // Read the saved TXT file and update the list
         private void LoadSavedFiles()
         {
-            var files = Directory.GetFiles(TxtFolderPath, "*.txt");
-            var fileNames = files.Select(Path.GetFileName).ToList();
+            if (!Directory.Exists(LibraryPath))
+                Directory.CreateDirectory(LibraryPath);
 
-            // Only update the UI when the file list has changed
-            if (!TxtFiles.SequenceEqual(fileNames))
+            var files = Directory.GetFiles(LibraryPath)
+                                 .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                                 .OrderBy(f => Path.GetFileName(f))
+                                 .ToList();
+
+            var list = files.Select(f => new BookItem
             {
-                TxtFiles.Clear();
-                foreach (var file in fileNames)
-                {
-                    TxtFiles.Add(file);
-                }
+                FileName = Path.GetFileName(f),
+                FullPath = f,
+                Format = GetFormatTag(f)
+            }).ToList();
+
+            // Only update if changed (by filename order)
+            bool same = Books.Count == list.Count &&
+                        !Books.Where((t, i) => t.FileName != list[i].FileName).Any();
+
+            if (!same)
+            {
+                Books.Clear();
+                foreach (var b in list) Books.Add(b);
             }
         }
-        //
 
-        // Add TXT file
+        private static string GetFormatTag(string path)
+        {
+            return Path.GetExtension(path).ToLowerInvariant() switch
+            {
+                ".txt" => "TXT",
+                ".epub" => "EPUB",
+                ".pdf" => "PDF",
+                ".html" or ".htm" => "HTML",
+                ".docx" => "DOCX",
+                ".rtf" => "RTF",
+                _ => "FILE"
+            };
+        }
+
+        private static FilePickerFileType BuildPickerTypes()
+        {
+            return new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+            {
+                {
+                    DevicePlatform.Android,
+                    new[]
+                    {
+                        "text/plain",
+                        "application/epub+zip",
+                        "application/pdf",
+                        "text/html",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "application/rtf",
+                        "*/*" // fallback; we validate extension after picking
+                    }
+                },
+                {
+                    DevicePlatform.iOS,
+                    new[]
+                    {
+                        "public.plain-text",
+                        "org.idpf.epub-container",
+                        "com.adobe.pdf",
+                        "public.html",
+                        "org.openxmlformats.wordprocessingml.document",
+                        "public.rtf"
+                    }
+                }
+            });
+        }
+
         private async void OnAddFileClicked(object sender, EventArgs e)
         {
             var result = await FilePicker.PickAsync(new PickOptions
             {
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                {
-                    { DevicePlatform.Android, new[] { "text/plain" } },
-                    { DevicePlatform.iOS, new[] { "public.plain-text" } }
-                }),
-                PickerTitle = "Select TXT file"
+                FileTypes = BuildPickerTypes(),
+                PickerTitle = "Select a file (TXT/EPUB/PDF/HTML/DOCX/RTF)"
             });
 
-            if (result != null)
+            if (result == null) return;
+
+            var ext = Path.GetExtension(result.FileName)?.ToLowerInvariant() ?? "";
+            if (!SupportedExtensions.Contains(ext))
             {
-                string newFilePath = Path.Combine(TxtFolderPath, result.FileName);
-
-                // Prevent duplicate file imports
-                if (File.Exists(newFilePath))
-                {
-                    await DisplayAlert("Notice", "This file has already been imported!", "OK");
-                    return;
-                }
-
-                await SaveTxtFile(result);
-                LoadSavedFiles();  // Reload the file list
+                await DisplayAlert("Not supported", $"Unsupported file type: {ext}", "OK");
+                return;
             }
-        }
-        //
 
-        // Save TXT file
-        private async Task SaveTxtFile(FileResult file)
+            string targetPath = Path.Combine(LibraryPath, result.FileName);
+
+            // Prevent duplicates
+            if (File.Exists(targetPath))
+            {
+                await DisplayAlert("Notice", "This file has already been imported!", "OK");
+                return;
+            }
+
+            await SaveFileToLibrary(result, targetPath);
+
+            // Reload to keep order consistent
+            LoadSavedFiles();
+        }
+
+        private async Task SaveFileToLibrary(FileResult file, string targetPath)
         {
             try
             {
                 using var stream = await file.OpenReadAsync();
-                using var newFileStream = File.Create(Path.Combine(TxtFolderPath, file.FileName));
+                using var newFileStream = File.Create(targetPath);
                 await stream.CopyToAsync(newFileStream);
-                TxtFiles.Add(Path.GetFileName(newFileStream.Name));  // Update UI immediately
+
+                Books.Add(new BookItem
+                {
+                    FileName = Path.GetFileName(targetPath),
+                    FullPath = targetPath,
+                    Format = GetFormatTag(targetPath)
+                });
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Error", $"Failed to save file: {ex.Message}", "OK");
             }
         }
-        //
 
-        // Go to ReadingPage
         private async void OnFileClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is string fileName)
+            if (sender is Button button && button.CommandParameter is BookItem book)
             {
-                string filePath = Path.Combine(TxtFolderPath, fileName);
-
-                // Ensure the file exists before opening it
-                if (!File.Exists(filePath))
+                if (!File.Exists(book.FullPath))
                 {
                     await DisplayAlert("Error", "File not found!", "OK");
+                    LoadSavedFiles();
                     return;
                 }
 
-                await Navigation.PushAsync(new ReadingPage(filePath));
+                await Navigation.PushAsync(new ReadingPage(book.FullPath));
             }
         }
-        //
 
-        // Delete TXT file
         private async void OnDeleteFileClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is string fileName)
+            if (sender is Button button && button.CommandParameter is BookItem book)
             {
-                string filePath = Path.Combine(TxtFolderPath, fileName);
-
-                // Confirm before deleting
-                bool confirm = await DisplayAlert("Delete", $"Are you sure you want to delete \"{fileName}\"?", "Yes", "No");
+                bool confirm = await DisplayAlert("Delete", $"Delete \"{book.FileName}\"?", "Yes", "No");
                 if (!confirm) return;
 
                 try
                 {
-                    if (File.Exists(filePath))
-                    {
-                        File.Delete(filePath);
-                        TxtFiles.Remove(fileName); // Update UI
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "File not found!", "OK");
-                    }
+                    if (File.Exists(book.FullPath))
+                        File.Delete(book.FullPath);
+
+                    Books.Remove(book);
                 }
                 catch (Exception ex)
                 {
@@ -191,13 +261,17 @@ namespace EZ_Read.Pages
                 }
             }
         }
-        //
 
-        // Bottom navigation bar
         private async void OnSettingClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new SettingPage());
         }
-        //
+    }
+
+    public class BookItem
+    {
+        public string FileName { get; set; } = "";
+        public string FullPath { get; set; } = "";
+        public string Format { get; set; } = ""; // TXT/EPUB/PDF/HTML/DOCX/RTF
     }
 }

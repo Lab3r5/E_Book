@@ -23,8 +23,15 @@
     </Style>
 
     <Style TargetType="BoxView">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray300}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
     </Style>
+
+    <!-- 可选：需要紫色的 BoxView 专用样式 -->
+    <Style TargetType="BoxView" x:Key="PrimaryBoxView">
+        <Setter Property="BackgroundColor"
+            Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+    </Style>
+
 
     <!-- ========== 按钮：统一改成圆角大按钮风格 ========== -->
 
