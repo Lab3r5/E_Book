@@ -1,19 +1,19 @@
 # 📚 E_Book
 
-> A modern cross-platform e-book reader built with **.NET MAUI**  
+> A modern cross-platform e-book reader built with **.NET MAUI**
 > 基于 **.NET MAUI** 构建的现代跨平台电子书阅读应用
 
 ---
 
 # 🏷 Version | 版本信息
 
-![Version](https://img.shields.io/badge/version-v1.09-purple)
+![Version](https://img.shields.io/badge/version-v1.10-purple)
 ![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-**Current Version:** `v1.09 – Account Security & Password Recovery System`  
-**当前版本：** `v1.09 – 账号安全系统与密码找回功能`
+**Current Version:** `v1.10 – Stability Improvements & Reading Experience Refinement`
+**当前版本：** `v1.10 – 稳定性提升与阅读体验优化`
 
 ---
 
@@ -23,192 +23,219 @@
 
 The goal of the project is to build a **modern mobile reading experience** with:
 
-- Clean UI design  
-- Structured application architecture  
-- Lightweight local storage  
-- Smooth reading interactions  
-- Realistic account system  
+* Clean UI design
+* Structured application architecture
+* Lightweight local storage
+* Smooth reading interactions
+* Realistic account system
 
 E_Book 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是打造：
 
-- 现代化阅读界面  
-- 清晰结构化架构  
-- 轻量级本地数据存储  
-- 流畅阅读体验  
-- 接近真实产品的账号系统  
+* 现代化阅读界面
+* 清晰结构化架构
+* 轻量级本地数据存储
+* 流畅阅读体验
+* 接近真实产品的账号系统
 
 Developed for:
 
-**INFT2051 – Mobile Application Development**  
+**INFT2051 – Mobile Application Development**
 University of Newcastle
 
 ---
 
-# 🚀 Latest Release – v1.09
-# 最新版本 – v1.09
+# 🚀 Latest Release – v1.10
 
-Version **v1.09** introduces a **complete account security system**, including password recovery and structured authentication features.
+# 最新版本 – v1.10
 
-v1.09 版本引入了完整的账号安全体系，包括密码找回与认证流程升级，使应用更加接近真实商业产品。
+Version **v1.10** focuses on improving overall system stability and refining the reading experience across the application.
+
+v1.10 版本重点提升系统稳定性，并进一步优化整体阅读体验，使应用更加流畅与一致。
 
 Key improvements include:
 
-• Forgot Password workflow  
-• Security Question system (Picker-based)  
-• Reset Password page  
-• Navigation system upgrade  
-• Privacy Policy update  
-• Usage Guidelines enhancement  
+• Improved navigation reliability
+• Enhanced reading interaction stability
+• Refined UI consistency across pages
+• Improved search behaviour responsiveness
+• Better session handling reliability
 
-该版本重点提升：
+该版本重点优化：
 
-• 忘记密码功能  
-• 安全问题机制（下拉选择）  
-• 重置密码页面  
-• 导航结构升级  
-• 隐私政策更新  
-• 使用指南完善  
+• 导航流程稳定性
+• 阅读交互体验
+• 页面视觉一致性
+• 搜索交互响应速度
+• 用户会话管理可靠性
 
 ---
 
-# 🔐 Account Security System
-# 账号安全系统
+# 📖 Reading Experience Improvements
 
-## Forgot Password 功能
+# 阅读体验优化
 
-Users can securely reset their password through:
+Version **v1.10** improves reading responsiveness and interaction smoothness.
 
-用户可以通过以下流程找回密码：
+v1.10 对阅读模块进行了优化，使阅读体验更加流畅：
 
-1. Enter email  
-2. Answer security question  
-3. Set new password  
+* Improved content loading behaviour
+* More stable page transitions
+* Better interaction consistency
+* Reduced unexpected UI refresh
 
-该功能完全基于本地实现，无需服务器支持。
+优化效果：
 
----
-
-## Security Question（安全问题）
-
-Security questions are now **predefined instead of free input**.
-
-安全问题改为固定选项，提高系统一致性：
-
-- What is your favorite pet's name?  
-- What is your favorite book?  
-- What city were you born in?  
-
-优势：
-
-- 更安全  
-- 更规范  
-- 更接近真实产品设计  
+* 页面加载更加稳定
+* 阅读交互更加自然
+* 页面切换更加顺畅
+* 减少不必要刷新
 
 ---
 
-## Reset Password Page
+# 🔎 Search Experience Improvements
 
-A dedicated page for password reset with:
+# 搜索体验优化
 
-- Input validation  
-- Error feedback  
-- Smooth UI interaction  
+Search interaction flow has been refined to improve usability and consistency.
 
-提供完整用户体验。
+搜索体验进一步优化：
+
+* More consistent search behaviour
+* Improved result interaction logic
+* Better responsiveness when navigating results
+
+改进：
+
+* 搜索流程更加清晰
+* 结果交互更加稳定
+* 页面响应更加流畅
+
+---
+
+# 👤 Session & Navigation Stability
+
+# 会话与导航稳定性
+
+Version **v1.10** enhances navigation reliability and session consistency.
+
+提升：
+
+* More predictable navigation flow
+* Improved login state handling
+* Better page transition reliability
+* Reduced unexpected behaviour
+
+效果：
+
+* 页面跳转更稳定
+* 登录状态更加可靠
+* 减少异常情况
 
 ---
 
 # ⭐ Key Features | 核心功能
 
 ## 📚 Smart Bookshelf System
+
 ## 智能书架系统
 
-- Reading progress display  
-- Continue reading indicators  
-- Recently opened sorting  
-- Automatic book cover generation  
+* Reading progress display
+* Continue reading indicators
+* Recently opened sorting
+* Automatic book cover generation
 
 ---
 
 ## 👤 Multi-User Account System
+
 ## 多用户账号系统
 
 Each user has independent:
 
-- Library  
-- Reading progress  
-- Settings  
-- Search history  
+* Library
+* Reading progress
+* Settings
+* Search history
 
 账号之间完全隔离。
 
 ---
 
 ## 👤 Guest Mode
+
 ## Guest 模式
 
-- Independent storage profile  
-- No impact on registered users  
+* Independent storage profile
+* No impact on registered users
+
+访客模式与注册用户数据互不影响。
 
 ---
 
 ## 📖 Reading Engine
+
 ## 阅读系统
 
 Supported formats:
 
-- TXT  
-- EPUB  
-- DOCX  
-- RTF  
-- PDF  
+* TXT
+* EPUB
+* DOCX
+* RTF
+* PDF
 
 Features:
 
-- Font size control  
-- Theme switching  
-- Progress saving  
-- Resume reading  
+* Font size control
+* Theme switching
+* Progress saving
+* Resume reading
+
+支持多种格式阅读，并提供主题切换与进度保存功能。
 
 ---
 
 # 🎨 UI & UX Improvements | 界面优化
 
-Version **v1.09** enhances UI consistency and interaction flow:
+Version **v1.10** further improves UI consistency across multiple modules:
 
-- Unified authentication pages (Login / SignUp / Forgot Password)  
-- Picker-based input interaction  
-- Improved feedback animations  
-- More consistent design language  
+* Unified visual style across pages
+* Improved layout consistency
+* More stable interaction behaviour
+* Cleaner visual hierarchy
 
-整体界面更加接近商业级应用。
+整体界面更加统一，交互更稳定。
 
 ---
 
 # ⚡ Performance Optimization
+
 # 性能优化
 
-- Faster navigation transitions  
-- Optimized bookshelf loading  
-- Reduced redundant refresh  
-- Improved UI responsiveness  
+* Improved page responsiveness
+* Reduced redundant UI refresh
+* Improved navigation performance
+* More stable interaction feedback
+
+提升整体流畅度。
 
 ---
 
 # 🏗 Architecture | 技术架构
 
-- MAUI Shell navigation  
-- SQLite local database  
-- Preferences API  
-- Service layer design  
-- User-based data isolation  
+* MAUI Shell navigation
+* SQLite local database
+* Preferences API
+* Service layer design
+* User-based data isolation
+
+结构保持清晰可维护。
 
 ---
 
 # 📂 Project Structure | 项目结构
 
 ```
-
 E_Book
 │
 ├── Models
@@ -228,18 +255,17 @@ E_Book
 │
 ├── Resources
 └── AppShell.xaml
-
-````
+```
 
 ---
 
 # 🔧 Tech Stack | 技术栈
 
-- C#  
-- .NET MAUI  
-- SQLite  
-- Shell Navigation  
-- Preferences API  
+* C#
+* .NET MAUI
+* SQLite
+* Shell Navigation
+* Preferences API
 
 ---
 
@@ -247,7 +273,7 @@ E_Book
 
 ```bash
 git clone https://github.com/Lab3r5/E_Book.git
-````
+```
 
 Open in:
 
@@ -264,17 +290,18 @@ Run on:
 
 # 📊 Version Evolution | 版本演进
 
-| Version   | Description                          |
-| --------- | ------------------------------------ |
-| v1.01     | Base reading system                  |
-| v1.02     | UI layout refinement                 |
-| v1.03     | Animated TabBar                      |
-| v1.04     | Settings redesign                    |
-| v1.05     | Smart bookshelf                      |
-| v1.06     | UI & navigation improvements         |
-| v1.07     | Multi-user data isolation            |
-| v1.08     | Settings UI refinement               |
-| **v1.09** | Account security & password recovery |
+| Version   | Description                    |
+| --------- | ------------------------------ |
+| v1.01     | Base reading system            |
+| v1.02     | UI layout refinement           |
+| v1.03     | Animated TabBar                |
+| v1.04     | Settings redesign              |
+| v1.05     | Smart bookshelf                |
+| v1.06     | UI improvements                |
+| v1.07     | Multi-user isolation           |
+| v1.08     | Settings refinement            |
+| v1.09     | Account security system        |
+| **v1.10** | Stability & reading refinement |
 
 ---
 
@@ -286,6 +313,8 @@ Run on:
 * Minimalist design
 * Real-world product alignment
 
+以真实产品体验为目标。
+
 ---
 
 # 🛣 Future Roadmap | 后续规划
@@ -294,6 +323,7 @@ Run on:
 * Smart recommendations
 * MVVM architecture
 * iOS support
+* Performance enhancements
 
 ---
 
