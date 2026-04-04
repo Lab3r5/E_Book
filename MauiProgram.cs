@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Handlers;
+using Syncfusion.Maui.Core.Hosting;
+using Syncfusion.Licensing;
+using Syncfusion.Maui.Core.Hosting;
+
 #if ANDROID
 using Android.Graphics.Drawables;
 #endif
@@ -12,10 +16,11 @@ namespace E_Book
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
-
+            SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCe0xyWmFZfVhgd19HZVZTQ2YuP1ZhSXxVdkFjXX9dcXFWQmFVU0x9XEE=");
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .ConfigureSyncfusionCore()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

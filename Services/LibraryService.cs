@@ -13,7 +13,8 @@ namespace E_Book.Services
 
         public static readonly string[] SupportedExtensions =
         {
-            ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf"
+            ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf",
+            ".jpg", ".jpeg", ".png", ".webp"
         };
 
         public static string UsersRootPath =>
@@ -146,6 +147,7 @@ namespace E_Book.Services
                 ".html" or ".htm" => "HTML",
                 ".docx" => "DOCX",
                 ".rtf" => "RTF",
+                ".jpg" or ".jpeg" or ".png" or ".webp" => "IMAGE",
                 _ => "FILE"
             };
         }

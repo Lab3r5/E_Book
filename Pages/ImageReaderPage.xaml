@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
+    x:Class="E_Book.Pages.ImageReaderPage"
+    x:Name="ImageReaderPageRoot"
+    shell:Shell.NavBarIsVisible="False"
+    shell:Shell.TabBarIsVisible="False"
+    Padding="0"
+    BackgroundColor="#101014">
+
+    <Grid x:Name="RootGrid">
+
+        <!-- Image viewport -->
+        <Grid x:Name="ReadingArea"
+              BackgroundColor="#101014"
+              Padding="0">
+
+            <Grid x:Name="ImageViewport"
+                  BackgroundColor="Transparent">
+
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnViewportTapped" />
+                    <PanGestureRecognizer PanUpdated="OnImagePanUpdated" />
+                    <PinchGestureRecognizer PinchUpdated="OnImagePinchUpdated" />
+                </Grid.GestureRecognizers>
+
+                <Image x:Name="ReaderImage"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       WidthRequest="320"
+                       HeightRequest="520">
+
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer NumberOfTapsRequired="2"
+                                              Tapped="OnImageDoubleTapped" />
+                    </Image.GestureRecognizers>
+                </Image>
+            </Grid>
+
+            <!-- Loading -->
+            <Grid x:Name="LoadingOverlay"
+                  IsVisible="False"
+                  BackgroundColor="#AA101014"
+                  InputTransparent="False">
+
+                <VerticalStackLayout
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Spacing="14">
+
+                    <Border WidthRequest="76"
+                            HeightRequest="76"
+                            StrokeThickness="0"
+                            BackgroundColor="#1A1A22">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="24" />
+                        </Border.StrokeShape>
+
+                        <ActivityIndicator
+                            x:Name="LoadingIndicator"
+                            IsRunning="True"
+                            IsVisible="True"
+                            Color="#8E7CFF"
+                            WidthRequest="28"
+                            HeightRequest="28"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+
+                    <Label x:Name="LoadingText"
+                           Text="Loading image..."
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="White" />
+
+                    <Label x:Name="LoadingSubText"
+                           Text="Preparing image viewer"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#BDB8C8" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Error -->
+            <Grid x:Name="ErrorState"
+                  IsVisible="False"
+                  Padding="30">
+
+                <VerticalStackLayout
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Spacing="12">
+
+                    <Border HeightRequest="84"
+                            WidthRequest="84"
+                            StrokeThickness="0"
+                            BackgroundColor="#2A233A">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="24" />
+                        </Border.StrokeShape>
+
+                        <Label Text="🖼"
+                               FontSize="34"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Border>
+
+                    <Label Text="Unable to load image"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="White" />
+
+                    <Label x:Name="ErrorText"
+                           Text="The image file could not be opened."
+                           FontSize="13"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#CFC7E6" />
+                </VerticalStackLayout>
+            </Grid>
+        </Grid>
+
+        <!-- Top bar -->
+        <Grid x:Name="TopBar"
+              ZIndex="20"
+              ColumnDefinitions="Auto,*,Auto"
+              Padding="16,18,16,10"
+              BackgroundColor="#66000000">
+
+            <Button x:Name="BackButton"
+                    Text="←"
+                    FontSize="22"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    TextColor="White" />
+
+            <Label x:Name="TitleLabel"
+                   Grid.Column="1"
+                   Text="Image"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                   VerticalOptions="Center"
+                   LineBreakMode="TailTruncation"
+                   TextColor="White" />
+
+            <Button x:Name="MenuButton"
+                    Grid.Column="2"
+                    Text="⋯"
+                    FontSize="24"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnMenuClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    TextColor="White" />
+        </Grid>
+
+        <!-- Overlay + menu -->
+        <Grid ZIndex="100">
+
+            <BoxView x:Name="Overlay"
+                     IsVisible="False"
+                     Opacity="0"
+                     BackgroundColor="#66000000">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDismissTapped" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <Border x:Name="MenuPopup"
+                    IsVisible="False"
+                    Opacity="0"
+                    StrokeThickness="0"
+                    BackgroundColor="#17171C"
+                    Padding="16,10,16,18"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="End"
+                    HeightRequest="250"
+                    TranslationY="20">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22,22,0,0" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12">
+
+                    <Border x:Name="HandleBar"
+                            HorizontalOptions="Center"
+                            WidthRequest="38"
+                            HeightRequest="4"
+                            BackgroundColor="#2A2A32"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="2" />
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <Label Text="Image Settings"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="White" />
+
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+
+                        <Label Text="Zoom"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="White" />
+
+                        <Grid Grid.Column="1"
+                              ColumnDefinitions="*,*,*,*"
+                              ColumnSpacing="6">
+
+                            <Button x:Name="Zoom1Btn"
+                                    Text="1x"
+                                    CommandParameter="1"
+                                    Clicked="OnZoomPresetClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    HeightRequest="34"
+                                    BackgroundColor="#20202A"
+                                    TextColor="White" />
+
+                            <Button x:Name="Zoom15Btn"
+                                    Grid.Column="1"
+                                    Text="1.5x"
+                                    CommandParameter="1.5"
+                                    Clicked="OnZoomPresetClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    HeightRequest="34"
+                                    BackgroundColor="#20202A"
+                                    TextColor="White" />
+
+                            <Button x:Name="Zoom2Btn"
+                                    Grid.Column="2"
+                                    Text="2x"
+                                    CommandParameter="2"
+                                    Clicked="OnZoomPresetClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    HeightRequest="34"
+                                    BackgroundColor="#20202A"
+                                    TextColor="White" />
+
+                            <Button x:Name="Zoom3Btn"
+                                    Grid.Column="3"
+                                    Text="3x"
+                                    CommandParameter="3"
+                                    Clicked="OnZoomPresetClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    HeightRequest="34"
+                                    BackgroundColor="#20202A"
+                                    TextColor="White" />
+                        </Grid>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+
+                        <Label Text="Theme"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="White" />
+
+                        <HorizontalStackLayout Grid.Column="1"
+                                               Spacing="5"
+                                               HorizontalOptions="Start"
+                                               VerticalOptions="Center">
+
+                            <Button x:Name="ThemeWhiteBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    CommandParameter="White"
+                                    Clicked="OnThemeClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BackgroundColor="#F7F6FB" />
+
+                            <Button x:Name="ThemeBeigeBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    CommandParameter="Beige"
+                                    Clicked="OnThemeClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BackgroundColor="#D8D2BE" />
+
+                            <Button x:Name="ThemeGreenBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    CommandParameter="Green"
+                                    Clicked="OnThemeClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BackgroundColor="#C9D5B9" />
+
+                            <Button x:Name="ThemeBlueBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    CommandParameter="Blue"
+                                    Clicked="OnThemeClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BackgroundColor="#C4D2E2" />
+
+                            <Button x:Name="ThemeDarkBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text="☾"
+                                    FontSize="10"
+                                    CommandParameter="Dark"
+                                    Clicked="OnThemeClicked"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BackgroundColor="#101014"
+                                    TextColor="#A5A7AE" />
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

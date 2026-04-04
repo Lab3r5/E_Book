@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shell="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
+    xmlns:pdf="clr-namespace:Syncfusion.Maui.PdfViewer;assembly=Syncfusion.Maui.PdfViewer"
+    x:Class="E_Book.Pages.PdfReaderPage"
+    x:Name="PdfReaderPageRoot"
+    shell:Shell.NavBarIsVisible="False"
+    shell:Shell.TabBarIsVisible="False"
+    Padding="0"
+    BackgroundColor="#F7F6FB">
+
+    <Grid x:Name="RootGrid"
+          RowDefinitions="Auto,*,Auto">
+
+        <!-- Top Bar -->
+        <Grid x:Name="TopBar"
+              Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto,Auto"
+              Padding="16,10"
+              BackgroundColor="Transparent"
+              ZIndex="10">
+
+            <Button x:Name="BackButton"
+                    Text="←"
+                    FontSize="22"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnBackButtonClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Start"
+                    TextColor="#4A4361"/>
+
+            <Label x:Name="TitleLabel"
+                   Grid.Column="1"
+                   Text="PDF"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                   VerticalOptions="Center"
+                   LineBreakMode="TailTruncation"
+                   TextColor="#4A4361"/>
+
+            <Button x:Name="TocButton"
+                    Grid.Column="2"
+                    Text="≣"
+                    FontSize="18"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnTocClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    VerticalOptions="Center"
+                    HorizontalOptions="End"
+                    TextColor="#4A4361"/>
+
+            <Button x:Name="MenuButton"
+                    Grid.Column="3"
+                    Text="⋯"
+                    FontSize="24"
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    BackgroundColor="Transparent"
+                    Padding="0"
+                    Clicked="OnMenuClicked"
+                    Pressed="OnButtonPressed"
+                    Released="OnButtonReleased"
+                    VerticalOptions="Center"
+                    HorizontalOptions="End"
+                    TextColor="#4A4361"/>
+        </Grid>
+
+        <!-- Reader Area -->
+        <Grid Grid.Row="1"
+              x:Name="ReadingArea"
+              BackgroundColor="#F7F6FB"
+              Padding="10,4,10,4">
+
+            <Border x:Name="ReaderSurface"
+                    StrokeThickness="0"
+                    BackgroundColor="#F7F6FB">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="18" />
+                </Border.StrokeShape>
+
+                <!-- 保留内置工具栏，不加 ShowToolbars=False -->
+                <pdf:SfPdfViewer x:Name="PdfViewer" />
+            </Border>
+
+            <Grid x:Name="ReaderLoadingOverlay"
+                  IsVisible="False"
+                  Opacity="1"
+                  BackgroundColor="#CCF7F6FB"
+                  InputTransparent="False">
+
+                <VerticalStackLayout HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="14">
+
+                    <Border WidthRequest="74"
+                            HeightRequest="74"
+                            StrokeThickness="0"
+                            BackgroundColor="#FFFFFF"
+                            HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="24" />
+                        </Border.StrokeShape>
+
+                        <Border.Shadow>
+                            <Shadow Brush="#22000000"
+                                    Offset="0,8"
+                                    Radius="20"
+                                    Opacity="0.18" />
+                        </Border.Shadow>
+
+                        <ActivityIndicator x:Name="ReaderLoadingIndicator"
+                                           IsRunning="True"
+                                           IsVisible="True"
+                                           Color="#7B6CFF"
+                                           WidthRequest="28"
+                                           HeightRequest="28"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                    </Border>
+
+                    <Label x:Name="ReaderLoadingText"
+                           Text="Loading PDF..."
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#4A4361" />
+
+                    <Label x:Name="ReaderLoadingSubText"
+                           Text="Preparing your reading page"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#7A7488" />
+                </VerticalStackLayout>
+            </Grid>
+        </Grid>
+
+        <!-- Bottom progress -->
+        <Grid x:Name="BottomBar"
+              Grid.Row="2"
+              Padding="18,8,18,10"
+              ColumnDefinitions="*,Auto"
+              VerticalOptions="Center"
+              BackgroundColor="#F7F6FB"
+              ZIndex="10">
+
+            <ProgressBar x:Name="ReadingProgressBar"
+                         Progress="0"
+                         HeightRequest="4"
+                         VerticalOptions="Center"
+                         ProgressColor="#7B6CFF"
+                         BackgroundColor="#E5E1F2"/>
+
+            <Label x:Name="ProgressText"
+                   Grid.Column="1"
+                   Text="Page 1 / 1"
+                   FontSize="12"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   Margin="12,0,0,0"
+                   TextColor="#6A6577"/>
+        </Grid>
+
+        <!-- Overlay + Bottom Sheet -->
+        <Grid Grid.RowSpan="3"
+              ZIndex="100">
+
+            <BoxView x:Name="Overlay"
+                     IsVisible="False"
+                     Opacity="0"
+                     BackgroundColor="#55000000">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDismissTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <Border x:Name="MenuPopup"
+                    IsVisible="False"
+                    Opacity="0"
+                    Scale="1"
+                    StrokeThickness="0"
+                    BackgroundColor="#FFFFFF"
+                    Padding="16,10,16,18"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="End"
+                    HeightRequest="190"
+                    Margin="0"
+                    TranslationY="20">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="22,22,0,0"/>
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="12"
+                                     Padding="2,0">
+
+                    <Border x:Name="HandleBar"
+                            HorizontalOptions="Center"
+                            WidthRequest="38"
+                            HeightRequest="4"
+                            BackgroundColor="#D8D6DE"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="2"/>
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <Label Text="PDF Settings"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#1F1F1F"
+                           Margin="0,0,0,2"/>
+
+                    <Grid ColumnDefinitions="42,*"
+                          ColumnSpacing="8">
+                        <Label Text="Theme"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center"
+                               TextColor="#1F1F1F"/>
+
+                        <HorizontalStackLayout Grid.Column="1"
+                                               Spacing="5"
+                                               HorizontalOptions="Start"
+                                               VerticalOptions="Center">
+
+                            <Button x:Name="ThemeWhiteBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="White"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="2"
+                                    BorderColor="#3A3A3A"
+                                    Padding="0"
+                                    BackgroundColor="#F7F6FB"/>
+
+                            <Button x:Name="ThemeBeigeBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Beige"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#D8D2BE"/>
+
+                            <Button x:Name="ThemeGreenBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Green"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#C9D5B9"/>
+
+                            <Button x:Name="ThemeBlueBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text=""
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Blue"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#C4D2E2"/>
+
+                            <Button x:Name="ThemeDarkBtn"
+                                    WidthRequest="34"
+                                    HeightRequest="24"
+                                    Text="☾"
+                                    FontSize="10"
+                                    Clicked="OnThemeClicked"
+                                    CommandParameter="Dark"
+                                    Pressed="OnButtonPressed"
+                                    Released="OnButtonReleased"
+                                    CornerRadius="12"
+                                    BorderWidth="0"
+                                    Padding="0"
+                                    BackgroundColor="#101014"
+                                    TextColor="#A5A7AE"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

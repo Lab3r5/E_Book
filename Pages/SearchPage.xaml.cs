@@ -435,14 +435,16 @@ namespace E_Book.Pages
             _skipAutoFocusOnce = true;
 
 #if ANDROID
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                SearchEntry?.Unfocus();
-                MainActivity.Instance?.HideSoftKeyboard();
-            });
+    MainThread.BeginInvokeOnMainThread(() =>
+    {
+        SearchEntry?.Unfocus();
+        MainActivity.Instance?.HideSoftKeyboard();
+    });
 #endif
 
-            var route = $"reading?filePath={Uri.EscapeDataString(book.FullPath)}";
+            string routeName = FileTypeHelper.GetRouteByPath(book.FullPath);
+            string route = $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}";
+
             await Shell.Current.GoToAsync(route);
         }
 

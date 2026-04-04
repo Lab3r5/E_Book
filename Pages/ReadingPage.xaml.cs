@@ -678,12 +678,11 @@ namespace E_Book.Pages
                         break;
 
                     case ".pdf":
-                        mode = ReaderMode.PdfExternal;
-                        await OpenPdfExternalAsync(filePath);
+                        mode = ReaderMode.Unknown;
                         ShowWebView();
                         ContentWebView.Source = new HtmlWebViewSource
                         {
-                            Html = WrapHtml("<p>PDF opened in an external viewer.</p><p>Use the Back button to return.</p>")
+                            Html = WrapHtml("<p>PDF is now opened through the dedicated PDF reader page.</p>")
                         };
                         break;
 

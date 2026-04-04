@@ -22,6 +22,8 @@ namespace E_Book
         public const string RouteReading = "reading";
         public const string RouteForgotPassword = "forgot-password";
         public const string RouteResetPassword = "reset-password";
+        public const string RoutePdfReader = "pdf-reader";
+        public const string RouteImageReader = "image-reader";
 
 #if ANDROID
         private bool _tabsBoundOnce;
@@ -48,6 +50,8 @@ namespace E_Book
             Routing.RegisterRoute(RoutePrivacyPolicy, typeof(PrivacyPolicyPage));
             Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
             Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
+            Routing.RegisterRoute(RoutePdfReader, typeof(PdfReaderPage));
+            Routing.RegisterRoute(RouteImageReader, typeof(ImageReaderPage));
             Routing.RegisterRoute(RouteForgotPassword, typeof(ForgotPasswordPage));
             Routing.RegisterRoute(RouteResetPassword, typeof(ResetPasswordPage));
         }

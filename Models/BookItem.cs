@@ -213,7 +213,11 @@ namespace E_Book.Models
         public bool HasLastReadPage => !string.IsNullOrWhiteSpace(LastReadPageText);
 
         public bool HasReadingTime => !string.IsNullOrWhiteSpace(ReadingTimeText);
+        public bool IsPdf => string.Equals(Path.GetExtension(FullPath), ".pdf", StringComparison.OrdinalIgnoreCase);
 
+        public bool IsImage => Path.GetExtension(FullPath).ToLowerInvariant() is ".jpg" or ".jpeg" or ".png" or ".webp";
+
+        public bool IsTextReadable => !IsPdf && !IsImage;
         public string ProgressPercentText =>
     $"{Math.Clamp((int)Math.Round(ReadingProgress * 100), 0, 100)}%";
 
@@ -340,6 +344,9 @@ namespace E_Book.Models
             OnPropertyChanged(nameof(SelectionBackgroundColor));
             OnPropertyChanged(nameof(SelectionTextColor));
             OnPropertyChanged(nameof(SelectionBorderColor));
+            OnPropertyChanged(nameof(IsPdf));
+            OnPropertyChanged(nameof(IsImage));
+            OnPropertyChanged(nameof(IsTextReadable));
         }
 
         private void UpdateCover()

@@ -40,8 +40,8 @@ namespace E_Book.Pages
 
         private const string TextImportInProgress = "Import in progress...";
         private const string TextImportSuccessHelper = "Book added successfully.";
-        private const string TextImportFailHelper = "Import failed. Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.";
-        private const string TextImportSupportHelper = "Supports TXT, EPUB, PDF, HTML, DOCX, and RTF.";
+        private const string TextImportFailHelper = "Import failed. Supports TXT, EPUB, PDF, HTML, DOCX, RTF, and image files.";
+        private const string TextImportSupportHelper = "Supports TXT, EPUB, PDF, HTML, DOCX, RTF, and image files.";
 
         private const string TextEmptyImportWait = "Please keep this page open while your book is being imported.";
         private const string TextEmptyImportSuccess = "Nice — your first book has been added.";
@@ -935,33 +935,39 @@ Happy Reading.
         private static FilePickerFileType BuildPickerTypes()
         {
             return new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+    {
+        {
+            DevicePlatform.Android,
+            new[]
             {
-                {
-                    DevicePlatform.Android,
-                    new[]
-                    {
-                        "text/plain",
-                        "application/epub+zip",
-                        "application/pdf",
-                        "text/html",
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        "application/rtf",
-                        "*/*"
-                    }
-                },
-                {
-                    DevicePlatform.iOS,
-                    new[]
-                    {
-                        "public.plain-text",
-                        "org.idpf.epub-container",
-                        "com.adobe.pdf",
-                        "public.html",
-                        "org.openxmlformats.wordprocessingml.document",
-                        "public.rtf"
-                    }
-                }
-            });
+                "text/plain",
+                "application/epub+zip",
+                "application/pdf",
+                "text/html",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/rtf",
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "*/*"
+            }
+        },
+        {
+            DevicePlatform.iOS,
+            new[]
+            {
+                "public.plain-text",
+                "org.idpf.epub-container",
+                "com.adobe.pdf",
+                "public.html",
+                "org.openxmlformats.wordprocessingml.document",
+                "public.rtf",
+                "public.jpeg",
+                "public.png",
+                "org.webmproject.webp"
+            }
+        }
+    });
         }
 
         private async void OnAddFileClicked(object sender, EventArgs e)
@@ -976,7 +982,7 @@ Happy Reading.
                 var result = await FilePicker.PickAsync(new PickOptions
                 {
                     FileTypes = BuildPickerTypes(),
-                    PickerTitle = "Select a file (TXT/EPUB/PDF/HTML/DOCX/RTF)"
+                    PickerTitle = "Select a file (TXT/EPUB/PDF/HTML/DOCX/RTF/Image)"
                 });
 
                 if (result == null)
@@ -1232,11 +1238,30 @@ Happy Reading.
             _refreshOnNextAppear = false;
             _animateListOnNextAppear = false;
 
-            bool restart = book.IsCompleted;
-            string route =
-                $"reading?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
+            if (book.IsPdf)
+            {
+                string pdfRoute =
+                    $"{AppShell.RoutePdfReader}?filePath={Uri.EscapeDataString(book.FullPath)}";
 
-            await Shell.Current.GoToAsync(route);
+                await Shell.Current.GoToAsync(pdfRoute);
+                return;
+            }
+
+            string routeName = FileTypeHelper.GetRouteByPath(book.FullPath);
+
+            if (routeName == AppShell.RouteReading)
+            {
+                bool restart = book.IsCompleted;
+                string route =
+                    $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
+
+                await Shell.Current.GoToAsync(route);
+            }
+            else
+            {
+                string route = $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(route);
+            }
         }
 
         private void OnItemTapped(object sender, TappedEventArgs e)
