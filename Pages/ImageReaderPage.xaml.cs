@@ -1,97 +1,85 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using E_Book.Services;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace E_Book.Pages
 {
     [QueryProperty(nameof(FilePath), "filePath")]
     public partial class ImageReaderPage : ContentPage
     {
-        private const double DefaultScale = 0.68;
+        private const double DefaultScale = 1.0;
+        private const double DoubleTapScale = 2.0;
         private const double MaxScale = 4.0;
-        private const uint ZoomAnimMs = 160;
-        private const uint MenuAnimMs = 180;
-        private const double MenuRestY = 0;
-        private const double MenuHiddenY = 20;
-        private const uint ChromeAnimMs = 140;
+
+        private readonly List<string> _imagePaths = new();
+
+        private string _filePath = string.Empty;
+        private int _currentIndex = -1;
 
         private double _currentScale = DefaultScale;
         private double _startScale = DefaultScale;
 
-        private double _xOffset = 0;
-        private double _yOffset = 0;
-        private double _panStartX = 0;
-        private double _panStartY = 0;
+        private double _xOffset;
+        private double _yOffset;
+        private double _panStartX;
+        private double _panStartY;
 
-        private bool _menuAnimating;
-        private bool _chromeVisible = true;
-        private bool _chromeAnimating;
+        private double _pinchStartXOffset;
+        private double _pinchStartYOffset;
 
-        private string _filePath = string.Empty;
+        private bool _isPanning;
+        private bool _isPinching;
+        private bool _isLoadingImage;
+        private bool _isNavigating;
+        private bool _topBarVisible = true;
+
+        private bool _isThemeSheetOpen;
+        private string _readerTheme = "Beige";
+
         public string FilePath
         {
             get => _filePath;
-            set => _filePath = Uri.UnescapeDataString(value ?? string.Empty);
+            set
+            {
+                _filePath = Uri.UnescapeDataString(value ?? string.Empty);
+                _ = InitializeAsync();
+            }
         }
-
-        private string themeMode = "Dark";
-
-        private Color PageBgColor = Color.FromArgb("#101014");
-        private Color TextColorReader = Color.FromArgb("#EDEAF6");
-        private Color SubtleTextColor = Color.FromArgb("#BDB8C8");
-        private Color PrimaryAccent = Color.FromArgb("#EDEAF6");
-        private Color SurfaceColor = Color.FromArgb("#17171C");
-        private Color BorderColor = Color.FromArgb("#2A2A32");
 
         public ImageReaderPage()
         {
             InitializeComponent();
-            ApplyTheme("Dark");
-            ResetTransform(updateImage: false);
+            ApplyThemeColors();
         }
 
-        protected override async void OnAppearing()
-        {
-            base.OnAppearing();
-            await LoadImageAsync();
-        }
-
-        private async Task LoadImageAsync()
+        private async Task InitializeAsync()
         {
             try
             {
                 SetLoading(true);
                 ErrorState.IsVisible = false;
 
-                if (string.IsNullOrWhiteSpace(FilePath))
+                if (string.IsNullOrWhiteSpace(_filePath))
                 {
                     ShowError("No image file was provided.");
                     return;
                 }
 
-                if (!File.Exists(FilePath))
+                BuildGallery();
+                ResolveCurrentIndex();
+
+                if (_currentIndex < 0 || _currentIndex >= _imagePaths.Count)
                 {
-                    ShowError("The selected image file does not exist.");
+                    ShowError("The selected image could not be found.");
                     return;
                 }
 
-                TitleLabel.Text = Path.GetFileName(FilePath);
-
-                ReaderImage.Source = null;
-                await Task.Delay(40);
-
-                ReaderImage.Source = ImageSource.FromFile(FilePath);
-
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await Task.Delay(60);
-                    ResetTransform(updateImage: true);
-                });
-
-                ReadingMetaStore.UpdateLastOpened(FilePath);
+                await LoadCurrentImageAsync(animated: false);
             }
             catch (Exception ex)
             {
@@ -103,201 +91,350 @@ namespace E_Book.Pages
             }
         }
 
-        private void SetLoading(bool isLoading)
+        private void BuildGallery()
         {
-            LoadingOverlay.IsVisible = isLoading;
-            LoadingIndicator.IsRunning = isLoading;
+            _imagePaths.Clear();
+
+            var books = LibraryService.LoadBooks();
+
+            foreach (var book in books)
+            {
+                if (FileTypeHelper.IsImage(book.FullPath) && File.Exists(book.FullPath))
+                    _imagePaths.Add(book.FullPath);
+            }
+
+            _imagePaths.Sort((a, b) =>
+                string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(_filePath) &&
+                File.Exists(_filePath) &&
+                !_imagePaths.Contains(_filePath, StringComparer.OrdinalIgnoreCase))
+            {
+                _imagePaths.Insert(0, _filePath);
+            }
         }
 
-        private void ShowError(string message)
+        private void ResolveCurrentIndex()
         {
-            ErrorText.Text = message;
-            ErrorState.IsVisible = true;
-            ReaderImage.Source = null;
-            ResetTransform(updateImage: true);
+            _currentIndex = _imagePaths.FindIndex(x =>
+                string.Equals(x, _filePath, StringComparison.OrdinalIgnoreCase));
+
+            if (_currentIndex < 0 && _imagePaths.Count > 0)
+                _currentIndex = 0;
         }
 
-        private void ResetTransform(bool updateImage)
+        private async Task LoadCurrentImageAsync(bool animated)
+        {
+            if (_currentIndex < 0 || _currentIndex >= _imagePaths.Count)
+            {
+                ShowError("Unable to locate the image.");
+                return;
+            }
+
+            string path = _imagePaths[_currentIndex];
+
+            if (!File.Exists(path))
+            {
+                ShowError("The selected image file no longer exists.");
+                return;
+            }
+
+            try
+            {
+                _isLoadingImage = true;
+                SetLoading(true);
+                ErrorState.IsVisible = false;
+
+                _filePath = path;
+                TitleLabel.Text = Path.GetFileName(path);
+
+                ResetTransform();
+
+                if (animated)
+                {
+                    ReaderImage.Opacity = 0;
+                    ReaderImage.TranslationX = 18;
+                }
+                else
+                {
+                    ReaderImage.Opacity = 1;
+                    ReaderImage.TranslationX = 0;
+                }
+
+                ReaderImage.Source = null;
+                await Task.Delay(30);
+
+                ReaderImage.Source = ImageSource.FromFile(path);
+                await Task.Delay(50);
+
+                if (animated)
+                {
+                    await Task.WhenAll(
+                        ReaderImage.FadeTo(1, 150, Easing.CubicOut),
+                        ReaderImage.TranslateTo(0, 0, 150, Easing.CubicOut)
+                    );
+                }
+
+                ReadingMetaStore.UpdateLastOpened(path);
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                _isLoadingImage = false;
+                SetLoading(false);
+            }
+        }
+
+        private void ResetTransform()
         {
             _currentScale = DefaultScale;
             _startScale = DefaultScale;
+
             _xOffset = 0;
             _yOffset = 0;
             _panStartX = 0;
             _panStartY = 0;
 
-            if (updateImage)
+            _pinchStartXOffset = 0;
+            _pinchStartYOffset = 0;
+
+            _isPanning = false;
+            _isPinching = false;
+
+            ReaderImage.Scale = 1;
+            ReaderImage.TranslationX = 0;
+            ReaderImage.TranslationY = 0;
+            ReaderImage.AnchorX = 0.5;
+            ReaderImage.AnchorY = 0.5;
+        }
+
+        private void ApplyTransform()
+        {
+            ReaderImage.Scale = _currentScale;
+            ReaderImage.TranslationX = _xOffset;
+            ReaderImage.TranslationY = _yOffset;
+        }
+
+        private void ClampOffsets()
+        {
+            if (Viewport.Width <= 0 || Viewport.Height <= 0 || ReaderImage.Width <= 0 || ReaderImage.Height <= 0)
+                return;
+
+            if (_currentScale <= DefaultScale + 0.01)
             {
-                ReaderImage.Scale = _currentScale;
-                ReaderImage.TranslationX = 0;
-                ReaderImage.TranslationY = 0;
+                _xOffset = 0;
+                _yOffset = 0;
+                return;
             }
 
-            UpdateZoomButtonStyles();
+            double scaledWidth = ReaderImage.Width * _currentScale;
+            double scaledHeight = ReaderImage.Height * _currentScale;
+
+            double maxX = Math.Max(0, (scaledWidth - Viewport.Width) / 2);
+            double maxY = Math.Max(0, (scaledHeight - Viewport.Height) / 2);
+
+            _xOffset = Math.Clamp(_xOffset, -maxX, maxX);
+            _yOffset = Math.Clamp(_yOffset, -maxY, maxY);
+        }
+
+        private async Task AnimateBackToBoundsAsync()
+        {
+            ClampOffsets();
+
+            await Task.WhenAll(
+                ReaderImage.ScaleTo(_currentScale, 90, Easing.CubicOut),
+                ReaderImage.TranslateTo(_xOffset, _yOffset, 90, Easing.CubicOut)
+            );
+        }
+
+        private void SetLoading(bool isLoading)
+        {
+            LoadingOverlay.IsVisible = isLoading;
+        }
+
+        private void ShowError(string message)
+        {
+            ErrorState.IsVisible = true;
+            ErrorMessageLabel.Text = message;
+            SetLoading(false);
+        }
+
+        private async Task ShowPreviousImageAsync()
+        {
+            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _currentScale > 1.01 || _imagePaths.Count <= 1)
+                return;
+
+            if (_currentIndex <= 0)
+                return;
+
+            _isNavigating = true;
+
+            try
+            {
+                _currentIndex--;
+                await LoadCurrentImageAsync(animated: true);
+            }
+            finally
+            {
+                _isNavigating = false;
+            }
+        }
+
+        private async Task ShowNextImageAsync()
+        {
+            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _currentScale > 1.01 || _imagePaths.Count <= 1)
+                return;
+
+            if (_currentIndex >= _imagePaths.Count - 1)
+                return;
+
+            _isNavigating = true;
+
+            try
+            {
+                _currentIndex++;
+                await LoadCurrentImageAsync(animated: true);
+            }
+            finally
+            {
+                _isNavigating = false;
+            }
         }
 
         private async void OnBackClicked(object sender, EventArgs e)
         {
+            if (_isThemeSheetOpen)
+            {
+                await HideThemeSheetAsync();
+                return;
+            }
+
             try
             {
                 await Shell.Current.GoToAsync("..");
             }
             catch
             {
-                if (Navigation.ModalStack.Count > 0)
-                    await Navigation.PopModalAsync();
-                else
+                try
+                {
                     await Navigation.PopAsync();
-            }
-        }
-
-        private async void OnMenuClicked(object sender, EventArgs e)
-        {
-            if (_menuAnimating)
-                return;
-
-            if (!MenuPopup.IsVisible)
-                await ShowMenuAsync();
-            else
-                await HideMenuAsync();
-        }
-
-        private async void OnDismissTapped(object sender, TappedEventArgs e)
-        {
-            if (_menuAnimating)
-                return;
-
-            await HideMenuAsync();
-        }
-
-        private async Task ShowMenuAsync()
-        {
-            if (_menuAnimating)
-                return;
-
-            _menuAnimating = true;
-
-            try
-            {
-                UpdateZoomButtonStyles();
-                UpdateThemeButtonStyles();
-
-                Overlay.IsVisible = true;
-                Overlay.Opacity = 0;
-
-                MenuPopup.IsVisible = true;
-                MenuPopup.Opacity = 0;
-                MenuPopup.TranslationY = MenuHiddenY;
-
-                await Task.WhenAll(
-                    Overlay.FadeTo(1, 120, Easing.CubicOut),
-                    MenuPopup.FadeTo(1, MenuAnimMs, Easing.CubicOut),
-                    MenuPopup.TranslateTo(0, MenuRestY, MenuAnimMs, Easing.CubicOut)
-                );
-            }
-            finally
-            {
-                _menuAnimating = false;
-            }
-        }
-
-        private async Task HideMenuAsync()
-        {
-            if (_menuAnimating)
-                return;
-
-            if (!MenuPopup.IsVisible)
-            {
-                Overlay.IsVisible = false;
-                Overlay.Opacity = 0;
-                return;
-            }
-
-            _menuAnimating = true;
-
-            try
-            {
-                await Task.WhenAll(
-                    Overlay.FadeTo(0, 100, Easing.CubicIn),
-                    MenuPopup.FadeTo(0, 100, Easing.CubicIn),
-                    MenuPopup.TranslateTo(0, MenuHiddenY, 100, Easing.CubicIn)
-                );
-
-                MenuPopup.IsVisible = false;
-                Overlay.IsVisible = false;
-            }
-            finally
-            {
-                Overlay.Opacity = 0;
-                MenuPopup.Opacity = 0;
-                MenuPopup.TranslationY = MenuRestY;
-                _menuAnimating = false;
+                }
+                catch
+                {
+                    if (Navigation.ModalStack.Count > 0)
+                        await Navigation.PopModalAsync();
+                }
             }
         }
 
         private async void OnViewportTapped(object sender, TappedEventArgs e)
         {
-            if (MenuPopup.IsVisible)
-            {
-                await HideMenuAsync();
-                return;
-            }
-
-            await ToggleChromeAsync();
-        }
-
-        private async Task ToggleChromeAsync()
-        {
-            if (_chromeAnimating)
+            if (_isThemeSheetOpen)
                 return;
 
-            _chromeAnimating = true;
+            _topBarVisible = !_topBarVisible;
 
-            try
+            if (_topBarVisible)
             {
-                _chromeVisible = !_chromeVisible;
-
-                if (!_chromeVisible)
-                {
-                    await Task.WhenAll(
-                        TopBar.FadeTo(0, ChromeAnimMs, Easing.CubicIn),
-                        TopBar.TranslateTo(0, -10, ChromeAnimMs, Easing.CubicIn)
-                    );
-
-                    TopBar.IsVisible = false;
-                }
-                else
-                {
-                    TopBar.IsVisible = true;
-                    TopBar.Opacity = 0;
-                    TopBar.TranslationY = -10;
-
-                    await Task.WhenAll(
-                        TopBar.FadeTo(1, ChromeAnimMs, Easing.CubicOut),
-                        TopBar.TranslateTo(0, 0, ChromeAnimMs, Easing.CubicOut)
-                    );
-                }
+                TopBar.IsVisible = true;
+                await TopBar.FadeTo(1, 150, Easing.CubicOut);
             }
-            finally
+            else
             {
-                _chromeAnimating = false;
+                await TopBar.FadeTo(0, 150, Easing.CubicIn);
+                TopBar.IsVisible = false;
             }
         }
 
         private async void OnImageDoubleTapped(object sender, TappedEventArgs e)
         {
-            double target = _currentScale < 1.35 ? 1.8 : DefaultScale;
-            await AnimateScaleToAsync(target);
+            if (_isLoadingImage || _isThemeSheetOpen || _isPinching)
+                return;
+
+            if (_currentScale < 1.3)
+            {
+                _currentScale = DoubleTapScale;
+            }
+            else
+            {
+                _currentScale = DefaultScale;
+                _xOffset = 0;
+                _yOffset = 0;
+            }
+
+            ClampOffsets();
+
+            await Task.WhenAll(
+                ReaderImage.ScaleTo(_currentScale, 160, Easing.CubicOut),
+                ReaderImage.TranslateTo(_xOffset, _yOffset, 160, Easing.CubicOut)
+            );
         }
 
-        private void OnImagePanUpdated(object sender, PanUpdatedEventArgs e)
+        private void OnImagePinchUpdated(object sender, PinchGestureUpdatedEventArgs e)
         {
-            if (_currentScale <= DefaultScale + 0.01 || ReaderImage.Source == null)
+            if (_isLoadingImage || _isThemeSheetOpen)
+                return;
+
+            switch (e.Status)
+            {
+                case GestureStatus.Started:
+                    _isPinching = true;
+                    _startScale = _currentScale;
+                    _pinchStartXOffset = _xOffset;
+                    _pinchStartYOffset = _yOffset;
+                    break;
+
+                case GestureStatus.Running:
+                    if (Viewport.Width <= 0 || Viewport.Height <= 0)
+                        return;
+
+                    double targetScale = Math.Clamp(_startScale * e.Scale, DefaultScale, MaxScale);
+                    double scaleRatio = targetScale / _startScale;
+
+                    double originX = (e.ScaleOrigin.X - 0.5) * Viewport.Width;
+                    double originY = (e.ScaleOrigin.Y - 0.5) * Viewport.Height;
+
+                    _xOffset = (_pinchStartXOffset * scaleRatio) + originX * (scaleRatio - 1);
+                    _yOffset = (_pinchStartYOffset * scaleRatio) + originY * (scaleRatio - 1);
+
+                    _currentScale = targetScale;
+
+                    ClampOffsets();
+                    ApplyTransform();
+                    break;
+
+                case GestureStatus.Completed:
+                case GestureStatus.Canceled:
+                    _isPinching = false;
+
+                    if (_currentScale <= DefaultScale + 0.01)
+                    {
+                        _currentScale = DefaultScale;
+                        _xOffset = 0;
+                        _yOffset = 0;
+                    }
+
+                    ClampOffsets();
+                    ApplyTransform();
+                    break;
+            }
+        }
+
+        private async void OnImagePanUpdated(object sender, PanUpdatedEventArgs e)
+        {
+            if (_isLoadingImage || _isThemeSheetOpen || _isPinching)
+                return;
+
+            if (_currentScale <= DefaultScale + 0.01)
                 return;
 
             switch (e.StatusType)
             {
                 case GestureStatus.Started:
+                    _isPanning = true;
                     _panStartX = _xOffset;
                     _panStartY = _yOffset;
                     break;
@@ -305,327 +442,245 @@ namespace E_Book.Pages
                 case GestureStatus.Running:
                     _xOffset = _panStartX + e.TotalX;
                     _yOffset = _panStartY + e.TotalY;
+
                     ClampOffsets();
                     ApplyTransform();
                     break;
 
                 case GestureStatus.Completed:
                 case GestureStatus.Canceled:
-                    ClampOffsets();
-                    ApplyTransform();
+                    _isPanning = false;
+                    await AnimateBackToBoundsAsync();
                     break;
             }
         }
 
-        private void OnImagePinchUpdated(object sender, PinchGestureUpdatedEventArgs e)
+        private async void OnPreviousImageSwiped(object sender, SwipedEventArgs e)
         {
-            if (ReaderImage.Source == null)
-                return;
-
-            switch (e.Status)
-            {
-                case GestureStatus.Started:
-                    _startScale = _currentScale;
-                    break;
-
-                case GestureStatus.Running:
-                    double newScale = _startScale * e.Scale;
-                    newScale = Math.Clamp(newScale, DefaultScale, MaxScale);
-
-                    _currentScale = newScale;
-                    ClampOffsets();
-                    ApplyTransform(liveUpdate: true);
-                    break;
-
-                case GestureStatus.Completed:
-                case GestureStatus.Canceled:
-                    ClampOffsets();
-                    ApplyTransform(liveUpdate: false);
-                    break;
-            }
+            await ShowPreviousImageAsync();
         }
 
-        private async void OnZoomPresetClicked(object sender, EventArgs e)
+        private async void OnNextImageSwiped(object sender, SwipedEventArgs e)
         {
-            if (sender is not Button btn || btn.CommandParameter is null)
-                return;
-
-            if (!double.TryParse(btn.CommandParameter.ToString(), out double scale))
-                return;
-
-            if (Math.Abs(scale - 1.0) < 0.01)
-                scale = DefaultScale;
-
-            await AnimateScaleToAsync(scale);
-        }
-
-        private async Task AnimateScaleToAsync(double targetScale)
-        {
-            _currentScale = Math.Clamp(targetScale, DefaultScale, MaxScale);
-
-            if (_currentScale <= DefaultScale + 0.01)
-            {
-                _xOffset = 0;
-                _yOffset = 0;
-            }
-
-            ClampOffsets();
-
-            try
-            {
-                await Task.WhenAll(
-                    ReaderImage.ScaleTo(_currentScale, ZoomAnimMs, Easing.CubicOut),
-                    ReaderImage.TranslateTo(_xOffset, _yOffset, ZoomAnimMs, Easing.CubicOut)
-                );
-            }
-            catch
-            {
-                ReaderImage.Scale = _currentScale;
-                ReaderImage.TranslationX = _xOffset;
-                ReaderImage.TranslationY = _yOffset;
-            }
-
-            UpdateZoomButtonStyles();
-        }
-
-        private void ApplyTransform(bool liveUpdate = false)
-        {
-            ReaderImage.Scale = _currentScale;
-            ReaderImage.TranslationX = _xOffset;
-            ReaderImage.TranslationY = _yOffset;
-
-            if (!liveUpdate)
-                UpdateZoomButtonStyles();
-        }
-
-        private void ClampOffsets()
-        {
-            if (ReadingArea.Width <= 0 || ReadingArea.Height <= 0 ||
-                ReaderImage.Width <= 0 || ReaderImage.Height <= 0)
-                return;
-
-            double scaledWidth = ReaderImage.Width * _currentScale;
-            double scaledHeight = ReaderImage.Height * _currentScale;
-
-            double maxX = Math.Max(0, (scaledWidth - ReadingArea.Width * 0.88) / 2);
-            double maxY = Math.Max(0, (scaledHeight - ReadingArea.Height * 0.88) / 2);
-
-            _xOffset = Math.Clamp(_xOffset, -maxX, maxX);
-            _yOffset = Math.Clamp(_yOffset, -maxY, maxY);
-
-            if (_currentScale <= DefaultScale + 0.01)
-            {
-                _xOffset = 0;
-                _yOffset = 0;
-            }
-        }
-
-        private void UpdateZoomButtonStyles()
-        {
-            StyleZoomButton(Zoom1Btn, Math.Abs(_currentScale - DefaultScale) < 0.08);
-            StyleZoomButton(Zoom15Btn, Math.Abs(_currentScale - 1.5) < 0.12);
-            StyleZoomButton(Zoom2Btn, Math.Abs(_currentScale - 2.0) < 0.12);
-            StyleZoomButton(Zoom3Btn, Math.Abs(_currentScale - 3.0) < 0.12);
-        }
-
-        private void StyleZoomButton(Button button, bool selected)
-        {
-            if (selected)
-            {
-                button.BackgroundColor = themeMode == "Dark"
-                    ? Color.FromArgb("#2F2F39")
-                    : Color.FromArgb("#FFFFFF");
-
-                button.TextColor = themeMode == "Dark"
-                    ? Colors.White
-                    : Color.FromArgb("#111111");
-            }
-            else
-            {
-                button.BackgroundColor = themeMode == "Dark"
-                    ? Color.FromArgb("#20202A")
-                    : Color.FromArgb("#F1F1F3");
-
-                button.TextColor = themeMode == "Dark"
-                    ? Color.FromArgb("#E2E2E8")
-                    : Color.FromArgb("#111111");
-            }
-
-            button.BorderWidth = 0;
-            button.Shadow = null;
-        }
-
-        private void ApplyTheme(string modeValue)
-        {
-            themeMode = modeValue switch
-            {
-                "White" => "White",
-                "Beige" => "Beige",
-                "Green" => "Green",
-                "Blue" => "Blue",
-                "Dark" => "Dark",
-                _ => "Dark"
-            };
-
-            switch (themeMode)
-            {
-                case "White":
-                    PageBgColor = Color.FromArgb("#F7F6FB");
-                    TextColorReader = Color.FromArgb("#3E3A4A");
-                    SubtleTextColor = Color.FromArgb("#6A6577");
-                    PrimaryAccent = Color.FromArgb("#24145A");
-                    SurfaceColor = Color.FromArgb("#FFFFFF");
-                    BorderColor = Color.FromArgb("#E5E1F2");
-                    break;
-
-                case "Beige":
-                    PageBgColor = Color.FromArgb("#D8D2BE");
-                    TextColorReader = Color.FromArgb("#3F372B");
-                    SubtleTextColor = Color.FromArgb("#6E6659");
-                    PrimaryAccent = Color.FromArgb("#3F372B");
-                    SurfaceColor = Color.FromArgb("#F5F1E6");
-                    BorderColor = Color.FromArgb("#C8BEA7");
-                    break;
-
-                case "Green":
-                    PageBgColor = Color.FromArgb("#C9D5B9");
-                    TextColorReader = Color.FromArgb("#33402C");
-                    SubtleTextColor = Color.FromArgb("#61705B");
-                    PrimaryAccent = Color.FromArgb("#33402C");
-                    SurfaceColor = Color.FromArgb("#EEF4E6");
-                    BorderColor = Color.FromArgb("#B6C5A2");
-                    break;
-
-                case "Blue":
-                    PageBgColor = Color.FromArgb("#C4D2E2");
-                    TextColorReader = Color.FromArgb("#31404F");
-                    SubtleTextColor = Color.FromArgb("#617284");
-                    PrimaryAccent = Color.FromArgb("#31404F");
-                    SurfaceColor = Color.FromArgb("#EEF4FA");
-                    BorderColor = Color.FromArgb("#AFC2D8");
-                    break;
-
-                default:
-                    PageBgColor = Color.FromArgb("#101014");
-                    TextColorReader = Color.FromArgb("#EDEAF6");
-                    SubtleTextColor = Color.FromArgb("#BDB8C8");
-                    PrimaryAccent = Color.FromArgb("#EDEAF6");
-                    SurfaceColor = Color.FromArgb("#17171C");
-                    BorderColor = Color.FromArgb("#2A2A32");
-                    break;
-            }
-
-            ApplyThemeToVisuals();
-        }
-
-        private void ApplyThemeToVisuals()
-        {
-            BackgroundColor = PageBgColor;
-            ReadingArea.BackgroundColor = PageBgColor;
-
-            TitleLabel.TextColor = PrimaryAccent;
-            BackButton.TextColor = PrimaryAccent;
-            MenuButton.TextColor = PrimaryAccent;
-
-            TopBar.BackgroundColor = themeMode == "Dark"
-                ? Color.FromArgb("#66000000")
-                : Color.FromArgb("#55FFFFFF");
-
-            LoadingOverlay.BackgroundColor = themeMode == "Dark"
-                ? Color.FromArgb("#AA101014")
-                : Color.FromArgb("#AAF7F6FB");
-
-            LoadingText.TextColor = PrimaryAccent;
-            LoadingSubText.TextColor = SubtleTextColor;
-
-            MenuPopup.BackgroundColor = SurfaceColor;
-            HandleBar.BackgroundColor = BorderColor;
-            ErrorText.TextColor = SubtleTextColor;
-
-            UpdatePopupTextColors();
-            UpdateThemeButtonStyles();
-            UpdateZoomButtonStyles();
-        }
-
-        private void UpdatePopupTextColors()
-        {
-            foreach (var child in GetDescendants(MenuPopup))
-            {
-                if (child is Label lbl)
-                    lbl.TextColor = TextColorReader;
-
-                if (child is Button btn && btn == ThemeDarkBtn)
-                    btn.TextColor = Color.FromArgb("#A5A7AE");
-            }
-        }
-
-        private IEnumerable<Element> GetDescendants(Element parent)
-        {
-            foreach (var child in parent.LogicalChildren)
-            {
-                yield return child;
-
-                foreach (var grandChild in GetDescendants(child))
-                    yield return grandChild;
-            }
-        }
-
-        private void UpdateThemeButtonStyles()
-        {
-            StyleThemeChip(ThemeWhiteBtn, themeMode == "White", "#F7F6FB", false);
-            StyleThemeChip(ThemeBeigeBtn, themeMode == "Beige", "#D8D2BE", false);
-            StyleThemeChip(ThemeGreenBtn, themeMode == "Green", "#C9D5B9", false);
-            StyleThemeChip(ThemeBlueBtn, themeMode == "Blue", "#C4D2E2", false);
-            StyleThemeChip(ThemeDarkBtn, themeMode == "Dark", "#101014", true);
-        }
-
-        private void StyleThemeChip(Button button, bool selected, string bgHex, bool isDarkChip)
-        {
-            button.Shadow = null;
-            button.BackgroundColor = Color.FromArgb(bgHex);
-            button.BorderWidth = selected ? 2 : 0;
-            button.BorderColor = selected
-                ? (themeMode == "Dark"
-                    ? Color.FromArgb("#FFFFFF")
-                    : Color.FromArgb("#3A3A3A"))
-                : Colors.Transparent;
-
-            if (isDarkChip)
-            {
-                button.Text = "☾";
-                button.TextColor = Color.FromArgb("#A5A7AE");
-            }
-            else
-            {
-                button.Text = "";
-                button.TextColor = Colors.Transparent;
-            }
+            await ShowNextImageAsync();
         }
 
         private async void OnButtonPressed(object sender, EventArgs e)
         {
-            if (sender is VisualElement v)
-            {
-                try { await v.ScaleTo(0.97, 70, Easing.CubicOut); } catch { }
-            }
+            if (sender is VisualElement view)
+                await view.ScaleTo(0.92, 70, Easing.CubicOut);
         }
 
         private async void OnButtonReleased(object sender, EventArgs e)
         {
-            if (sender is VisualElement v)
-            {
-                try { await v.ScaleTo(1.0, 90, Easing.CubicOut); } catch { }
-            }
+            if (sender is VisualElement view)
+                await view.ScaleTo(1, 90, Easing.CubicOut);
         }
-        private async void OnThemeClicked(object sender, EventArgs e)
+
+        private async void OnMoreClicked(object sender, EventArgs e)
         {
-            if (sender is not Button btn || btn.CommandParameter is not string modeValue)
+            if (_isThemeSheetOpen)
+            {
+                await HideThemeSheetAsync();
+                return;
+            }
+
+            await ShowThemeSheetAsync();
+        }
+
+        private async void OnThemeOverlayTapped(object sender, TappedEventArgs e)
+        {
+            if (!_isThemeSheetOpen)
                 return;
 
-            ApplyTheme(modeValue);
-            UpdateThemeButtonStyles();
+            await HideThemeSheetAsync();
+        }
 
-            await HideMenuAsync();
+        private async Task ShowThemeSheetAsync()
+        {
+            if (_isThemeSheetOpen)
+                return;
+
+            _isThemeSheetOpen = true;
+
+            UpdateThemeSelectionUi();
+
+            ThemeOverlay.IsVisible = true;
+            ThemeOverlay.InputTransparent = false;
+            ThemeOverlay.Opacity = 0;
+            ThemeSheet.TranslationY = 240;
+
+            await Task.WhenAll(
+                ThemeOverlay.FadeTo(1, 180, Easing.CubicOut),
+                ThemeSheet.TranslateTo(0, 0, 220, Easing.CubicOut)
+            );
+        }
+
+        private async Task HideThemeSheetAsync()
+        {
+            if (!_isThemeSheetOpen)
+                return;
+
+            await Task.WhenAll(
+                ThemeOverlay.FadeTo(0, 160, Easing.CubicIn),
+                ThemeSheet.TranslateTo(0, 240, 180, Easing.CubicIn)
+            );
+
+            ThemeOverlay.IsVisible = false;
+            ThemeOverlay.InputTransparent = true;
+            _isThemeSheetOpen = false;
+        }
+
+        private async void OnThemeLightTapped(object sender, TappedEventArgs e)
+        {
+            await ApplyReaderThemeAsync("Light");
+        }
+
+        private async void OnThemeBeigeTapped(object sender, TappedEventArgs e)
+        {
+            await ApplyReaderThemeAsync("Beige");
+        }
+
+        private async void OnThemeGreenTapped(object sender, TappedEventArgs e)
+        {
+            await ApplyReaderThemeAsync("Green");
+        }
+
+        private async void OnThemeBlueTapped(object sender, TappedEventArgs e)
+        {
+            await ApplyReaderThemeAsync("Blue");
+        }
+
+        private async void OnThemeDarkTapped(object sender, TappedEventArgs e)
+        {
+            await ApplyReaderThemeAsync("Dark");
+        }
+
+        private async Task ApplyReaderThemeAsync(string theme)
+        {
+            _readerTheme = theme;
+            ApplyThemeColors();
+            UpdateThemeSelectionUi();
+            await HideThemeSheetAsync();
+        }
+
+        private void ApplyThemeColors()
+        {
+            Color pageBg;
+            Color barBg;
+            Color textColor;
+            Color secondaryText;
+            Color sheetBg;
+            Color handleColor;
+
+            switch (_readerTheme)
+            {
+                case "Light":
+                    pageBg = Color.FromArgb("#F3F0FA");
+                    barBg = Color.FromArgb("#F3F0FA");
+                    textColor = Color.FromArgb("#2E241A");
+                    secondaryText = Color.FromArgb("#5B5146");
+                    sheetBg = Colors.White;
+                    handleColor = Color.FromArgb("#DDD6EA");
+                    break;
+
+                case "Green":
+                    pageBg = Color.FromArgb("#C8D4B3");
+                    barBg = Color.FromArgb("#C8D4B3");
+                    textColor = Color.FromArgb("#223018");
+                    secondaryText = Color.FromArgb("#425235");
+                    sheetBg = Color.FromArgb("#F7F9F3");
+                    handleColor = Color.FromArgb("#C7D2B7");
+                    break;
+
+                case "Blue":
+                    pageBg = Color.FromArgb("#C8D5E8");
+                    barBg = Color.FromArgb("#C8D5E8");
+                    textColor = Color.FromArgb("#1E2B3C");
+                    secondaryText = Color.FromArgb("#475B73");
+                    sheetBg = Color.FromArgb("#F5F8FC");
+                    handleColor = Color.FromArgb("#D5DFEE");
+                    break;
+
+                case "Dark":
+                    pageBg = Color.FromArgb("#101014");
+                    barBg = Color.FromArgb("#101014");
+                    textColor = Colors.White;
+                    secondaryText = Color.FromArgb("#D4D4E2");
+                    sheetBg = Color.FromArgb("#1A1A22");
+                    handleColor = Color.FromArgb("#3A3A46");
+                    break;
+
+                default:
+                    pageBg = Color.FromArgb("#E8E1CF");
+                    barBg = Color.FromArgb("#E8E1CF");
+                    textColor = Color.FromArgb("#2E241A");
+                    secondaryText = Color.FromArgb("#5B5146");
+                    sheetBg = Colors.White;
+                    handleColor = Color.FromArgb("#DDD6EA");
+                    break;
+            }
+
+            BackgroundColor = pageBg;
+            RootGrid.BackgroundColor = pageBg;
+            ImageHost.BackgroundColor = pageBg;
+            TopBar.BackgroundColor = barBg;
+
+            TitleLabel.TextColor = textColor;
+            BackButton.TextColor = textColor;
+            MoreButton.TextColor = textColor;
+
+            ErrorTitleLabel.TextColor = textColor;
+            ErrorMessageLabel.TextColor = secondaryText;
+
+            ThemeSheet.BackgroundColor = sheetBg;
+            ThemeSheetTitle.TextColor = textColor;
+            ThemeLabel.TextColor = textColor;
+            ThemeHandle.BackgroundColor = handleColor;
+
+            ThemeDarkIcon.TextColor = _readerTheme == "Dark"
+                ? Colors.White
+                : Color.FromArgb("#FFFFFF");
+        }
+
+        private void UpdateThemeSelectionUi()
+        {
+            ResetThemeBorder(ThemeLightBorder);
+            ResetThemeBorder(ThemeBeigeBorder);
+            ResetThemeBorder(ThemeGreenBorder);
+            ResetThemeBorder(ThemeBlueBorder);
+            ResetThemeBorder(ThemeDarkBorder);
+
+            switch (_readerTheme)
+            {
+                case "Light":
+                    HighlightThemeBorder(ThemeLightBorder, "#3A332B");
+                    break;
+                case "Green":
+                    HighlightThemeBorder(ThemeGreenBorder, "#4D5E39");
+                    break;
+                case "Blue":
+                    HighlightThemeBorder(ThemeBlueBorder, "#506784");
+                    break;
+                case "Dark":
+                    HighlightThemeBorder(ThemeDarkBorder, "#AFA8FF");
+                    break;
+                default:
+                    HighlightThemeBorder(ThemeBeigeBorder, "#7B6E52");
+                    break;
+            }
+        }
+
+        private static void ResetThemeBorder(Border border)
+        {
+            border.StrokeThickness = 0;
+            border.Stroke = Colors.Transparent;
+        }
+
+        private static void HighlightThemeBorder(Border border, string strokeColor)
+        {
+            border.StrokeThickness = 3;
+            border.Stroke = Color.FromArgb(strokeColor);
         }
     }
 }

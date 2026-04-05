@@ -1238,6 +1238,15 @@ Happy Reading.
             _refreshOnNextAppear = false;
             _animateListOnNextAppear = false;
 
+            ReadingMetaStore.UpdateLastOpened(book.FullPath);
+
+            if (FileTypeHelper.IsImage(book.FullPath))
+            {
+                string route = $"{AppShell.RouteImageReader}?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(route);
+                return;
+            }
+
             if (book.IsPdf)
             {
                 string pdfRoute =

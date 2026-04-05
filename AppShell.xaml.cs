@@ -51,9 +51,9 @@ namespace E_Book
             Routing.RegisterRoute(RoutePassword, typeof(PasswordPage));
             Routing.RegisterRoute(RouteReading, typeof(ReadingPage));
             Routing.RegisterRoute(RoutePdfReader, typeof(PdfReaderPage));
-            Routing.RegisterRoute(RouteImageReader, typeof(ImageReaderPage));
             Routing.RegisterRoute(RouteForgotPassword, typeof(ForgotPasswordPage));
             Routing.RegisterRoute(RouteResetPassword, typeof(ResetPasswordPage));
+            Routing.RegisterRoute(RouteImageReader, typeof(ImageReaderPage));
         }
 
         private async void OnShellLoaded(object? sender, EventArgs e)

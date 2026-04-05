@@ -25,9 +25,6 @@ namespace E_Book.Services
 
         public static string GetRouteByPath(string? path)
         {
-            if (IsImage(path))
-                return AppShell.RouteImageReader;
-
             if (IsPdf(path))
                 return AppShell.RoutePdfReader;
 

@@ -435,17 +435,35 @@ namespace E_Book.Pages
             _skipAutoFocusOnce = true;
 
 #if ANDROID
-    MainThread.BeginInvokeOnMainThread(() =>
-    {
-        SearchEntry?.Unfocus();
-        MainActivity.Instance?.HideSoftKeyboard();
-    });
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SearchEntry?.Unfocus();
+                MainActivity.Instance?.HideSoftKeyboard();
+            });
 #endif
 
-            string routeName = FileTypeHelper.GetRouteByPath(book.FullPath);
-            string route = $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}";
+            if (FileTypeHelper.IsImage(book.FullPath))
+            {
+                string route = $"{AppShell.RouteImageReader}?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(route);
+                return;
+            }
 
-            await Shell.Current.GoToAsync(route);
+            string routeName = FileTypeHelper.GetRouteByPath(book.FullPath);
+
+            if (routeName == AppShell.RouteReading)
+            {
+                bool restart = book.IsCompleted;
+                string route =
+                    $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}&restart={restart.ToString().ToLowerInvariant()}";
+
+                await Shell.Current.GoToAsync(route);
+            }
+            else
+            {
+                string route = $"{routeName}?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(route);
+            }
         }
 
         private async Task PlayResultListAnimation()
