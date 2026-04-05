@@ -4,6 +4,7 @@ using Microsoft.Maui.Handlers;
 using Syncfusion.Licensing;
 using Syncfusion.Maui.Core.Hosting;
 using PhotoBrowsers;
+using E_Book.Services;
 
 #if ANDROID
 using Android.Graphics.Drawables;
@@ -31,6 +32,7 @@ namespace E_Book
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                     fonts.AddFont("Pacifico-Regular.ttf", "Pacifico");
                 });
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
 
             EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, view) =>
             {

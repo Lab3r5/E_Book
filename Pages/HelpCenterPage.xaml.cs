@@ -44,7 +44,8 @@ namespace E_Book.Pages
                 (Answer1, Arrow1),
                 (Answer2, Arrow2),
                 (Answer3, Arrow3),
-                (Answer4, Arrow4)
+                (Answer4, Arrow4),
+                (Answer5, Arrow5)
             };
 
             foreach (var item in items)
@@ -103,6 +104,11 @@ namespace E_Book.Pages
         private async void OnFaq4Tapped(object sender, TappedEventArgs e)
         {
             await ToggleAnswer(Answer4, Arrow4, FaqItem4);
+        }
+
+        private async void OnFaq5Tapped(object sender, TappedEventArgs e)
+        {
+            await ToggleAnswer(Answer5, Arrow5, FaqItem5);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -167,6 +168,7 @@ namespace E_Book.Pages
                 await SaveReadingProgress();
                 SaveReadingDuration();
                 await SaveCurrentReadingSettings();
+                SaveContinueReadingReminderState();
             }
             catch { }
         }
@@ -522,6 +524,33 @@ namespace E_Book.Pages
             {
                 _sessionOpened = false;
                 _sessionStartUtc = DateTime.UtcNow;
+            }
+        }
+
+        private void SaveContinueReadingReminderState()
+        {
+            try
+            {
+                bool continueEnabled = Preferences.Get(NotificationPrefs.ContinueReadingEnabled, true);
+                if (!continueEnabled)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(FilePath))
+                    return;
+
+                int totalPages = GetTotalPages();
+                if (totalPages <= 0)
+                    return;
+
+                string bookTitle = Path.GetFileNameWithoutExtension(FilePath);
+                int pageNumber = Math.Max(1, currentPage + 1);
+
+                Preferences.Set(NotificationPrefs.PendingBookTitle, bookTitle);
+                Preferences.Set(NotificationPrefs.PendingBookPage, pageNumber);
+                Preferences.Set(NotificationPrefs.PendingBookTime, DateTime.Now.ToString("O"));
+            }
+            catch
+            {
             }
         }
 
@@ -2529,6 +2558,7 @@ namespace E_Book.Pages
                 await SaveReadingProgress();
                 SaveReadingDuration();
                 await SaveCurrentReadingSettings();
+                SaveContinueReadingReminderState();
             }
             catch { }
 

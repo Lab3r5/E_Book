@@ -49,7 +49,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                                <Label Text="A quick overview of how E_Book stores and uses your information in Version 1.09."
+                                <Label Text="A quick overview of how E_Book stores and uses your information in Version 1.10."
                                        FontSize="13"
                                        LineBreakMode="WordWrap"
                                        TextColor="{AppThemeBinding Light=#5A4B8A, Dark=#D7D0F1}" />
@@ -60,7 +60,7 @@
                                  Opacity="0.35"
                                  Color="{AppThemeBinding Light=#CFC2F6, Dark=#5A4C92}" />
 
-                        <Label Text="E_Book is designed as a lightweight academic reading application. This policy explains what information may be stored by the app, why it is needed, and how it supports your reading experience while remaining on your device."
+                        <Label Text="E_Book is designed as a lightweight academic reading application. This policy explains what information may be stored by the app, why it is needed, and how it supports your reading experience while remaining primarily on your device."
                                FontSize="13"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#2A1A62, Dark=#F2EEFF}" />
@@ -94,7 +94,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, reading progress, reading time, theme preferences, interface settings, and account-related preferences."
+                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, reading progress, reading time, notification preferences, theme preferences, interface settings, and account-related preferences."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -207,6 +207,41 @@
                     </Grid>
                 </Border>
 
+                <!-- Section: Notifications -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#26262C}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                        StrokeShape="RoundRectangle 22"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14">
+
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="{AppThemeBinding Light=#EEE8FF, Dark=#2A214F}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                VerticalOptions="Start">
+                            <Label Text="🔔"
+                                   FontSize="18"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="Notifications &amp; Reminder Preferences"
+                                   FontSize="17"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+
+                            <Label Text="If notifications are enabled, E_Book may locally store notification preferences and reminder-related data, such as whether notifications are enabled, whether import alerts or continue-reading reminders are enabled, the last reminder time, and the most recent saved book title or page number used to generate reminder messages."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
                 <!-- Section: Quick Login -->
                 <Border StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#EEEAF7, Dark=#26262C}"
@@ -269,7 +304,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="This academic prototype does not intentionally transmit your personal reading data or account data to external servers for analytics, advertising, or commercial profiling. Core user data is primarily handled on-device."
+                            <Label Text="This academic prototype does not intentionally transmit your personal reading data or account data to external servers for analytics, advertising, commercial profiling, or third-party marketing. Core user data is primarily handled on-device."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -304,7 +339,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="All stored information remains on your device. You may remove locally stored data by deleting imported books, resetting account-related data, clearing application storage, or uninstalling the application, depending on your device settings."
+                            <Label Text="All stored information remains on your device. You may remove locally stored data by deleting imported books, clearing reading and reminder data, resetting account-related data, clearing application storage, or uninstalling the application, depending on your device settings."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -323,7 +358,7 @@
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=#5D5872, Dark=#D2CDE0}" />
 
-                        <Label Text="This privacy policy applies to the current academic prototype and may be updated as new features such as account recovery, personalization, or data controls are introduced in future versions."
+                        <Label Text="This privacy policy applies to the current academic prototype and may be updated as new features such as notifications, account recovery, personalization, or data controls are introduced in future versions."
                                FontSize="12"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#8F8AA3, Dark=#AAA5BA}" />
@@ -331,7 +366,7 @@
                 </Border>
 
                 <!-- Version -->
-                <Label Text="Last updated · Version 1.09"
+                <Label Text="Last updated · Version 1.10"
                        FontSize="12"
                        HorizontalOptions="Center"
                        Margin="0,2,0,0"

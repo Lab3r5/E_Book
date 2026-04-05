@@ -12,6 +12,7 @@ using E_Book.Services;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace E_Book.Pages
 {
@@ -932,6 +933,29 @@ Happy Reading.
 
         #region File Import
 
+        private async Task NotifyImportSuccessAsync(string fileName)
+        {
+            try
+            {
+                bool notificationsEnabled = Preferences.Get(NotificationPrefs.NotificationsEnabled, true);
+                bool importEnabled = Preferences.Get(NotificationPrefs.ImportAlertEnabled, true);
+
+                if (!notificationsEnabled || !importEnabled)
+                    return;
+
+                var notificationService = Application.Current?.Handler?.MauiContext?.Services.GetService<INotificationService>();
+                if (notificationService == null)
+                    return;
+
+                await notificationService.ShowNowAsync(
+                    "Book imported successfully",
+                    $"\"{fileName}\" has been added to your library.");
+            }
+            catch
+            {
+            }
+        }
+
         private static FilePickerFileType BuildPickerTypes()
         {
             return new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -1040,6 +1064,7 @@ Happy Reading.
                 });
 
                 await ShowToast(TextImportedSuccessfully);
+                await NotifyImportSuccessAsync(importedBook.FileName);
                 _ = SetTransientImportFeedbackAsync(ImportFeedbackState.Success);
 
                 _refreshOnNextAppear = false;

@@ -8,7 +8,7 @@ namespace E_Book.Services
 {
     public static class SearchHistoryStore
     {
-        private const int MaxItems = 10;
+        private const int MaxItems = 6;
 
         private static string Key(string userId)
             => $"search_history_{UserSession.BuildSafeStorageKey(userId)}";

@@ -1,5 +1,7 @@
 using E_Book.Services;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Storage;
 
 namespace E_Book.Pages
 {
@@ -47,6 +49,45 @@ namespace E_Book.Pages
             AvatarLetterLabel.Text = GetAvatarLetter(displayName);
         }
 
+        private async void OnNotificationsToggled(object sender, ToggledEventArgs e)
+        {
+            Preferences.Set(NotificationPrefs.NotificationsEnabled, e.Value);
+
+            if (e.Value)
+            {
+                try
+                {
+                    var notificationService = Application.Current?.Handler?.MauiContext?.Services.GetService<INotificationService>();
+                    if (notificationService != null)
+                        await notificationService.RequestPermissionAsync();
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private async void OnNotificationsTapped(object sender, TappedEventArgs e)
+        {
+            await RowTapAsync(
+                NotificationsRow,
+                NotificationsRipple,
+                NotificationsChevron,
+                NotificationsBubble);
+
+            await Shell.Current.GoToAsync("notifications");
+        }
+
+        private void OnImportAlertToggled(object sender, ToggledEventArgs e)
+        {
+            Preferences.Set(NotificationPrefs.ImportAlertEnabled, e.Value);
+        }
+
+        private void OnContinueReadingToggled(object sender, ToggledEventArgs e)
+        {
+            Preferences.Set(NotificationPrefs.ContinueReadingEnabled, e.Value);
+        }
+
         private static string GetAvatarLetter(string? name)
         {
             var text = (name ?? string.Empty).Trim();
@@ -69,6 +110,7 @@ namespace E_Book.Pages
             await UIAnimationService.FadeScaleCardInAsync(MenuCard, 14, 0.995, 240, 10);
             await UIAnimationService.FadeSlideInAsync(AppearanceRow, 8, 190, 10);
             await UIAnimationService.FadeSlideInAsync(HelpRow, 8, 190, 20);
+            await UIAnimationService.FadeSlideInAsync(NotificationsRow, 8, 190, 30);
             await UIAnimationService.FadeSlideInAsync(FooterLabel, 6, 190, 20);
         }
 

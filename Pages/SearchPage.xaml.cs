@@ -20,6 +20,9 @@ namespace E_Book.Pages
         private bool _skipAutoFocusOnce;
         private bool _hasAppearedOnce;
 
+        private string? _pendingHistoryKeyword;
+        private bool _shouldCommitHistoryOnReturn;
+
         public SearchPage()
         {
             InitializeComponent();
@@ -31,6 +34,14 @@ namespace E_Book.Pages
             base.OnAppearing();
 
             LoadBooksToCache();
+
+            if (_shouldCommitHistoryOnReturn && !string.IsNullOrWhiteSpace(_pendingHistoryKeyword))
+            {
+                SearchHistoryStore.AddOnRead(UserSession.UserId, _pendingHistoryKeyword);
+                _pendingHistoryKeyword = null;
+                _shouldCommitHistoryOnReturn = false;
+            }
+
             RenderHistory();
             RestoreStateFromCurrentInput();
 
@@ -128,12 +139,14 @@ namespace E_Book.Pages
                 return;
             }
 
+            HistorySection.IsVisible = false;
             DoSearch(keyword, saveHistory: false);
         }
 
         private void OnSearchPressed(object sender, EventArgs e)
         {
-            DoSearch(SearchEntry.Text ?? string.Empty, saveHistory: true);
+            HistorySection.IsVisible = false;
+            DoSearch(SearchEntry.Text ?? string.Empty, saveHistory: false);
         }
 
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
@@ -149,11 +162,13 @@ namespace E_Book.Pages
             {
                 Results.Clear();
                 ShowInitialState();
+                RenderHistory();
                 _ = PlayEmptyAnimation();
                 return;
             }
 
-            DoSearch(keyword, saveHistory: true);
+            HistorySection.IsVisible = false;
+            DoSearch(keyword, saveHistory: false);
         }
 
         private void UpdateClearButtonVisibility()
@@ -173,12 +188,6 @@ namespace E_Book.Pages
             {
                 ShowInitialState();
                 return;
-            }
-
-            if (saveHistory)
-            {
-                SearchHistoryStore.Add(UserSession.UserId, keyword);
-                RenderHistory();
             }
 
             var result = LibraryService.SearchFromCache(_allBooks, keyword);
@@ -201,6 +210,8 @@ namespace E_Book.Pages
             ResultList.IsVisible = false;
 
             EmptyStateLayout.IsVisible = true;
+            HistorySection.IsVisible = SearchHistoryStore.Get(UserSession.UserId).Count > 0;
+
             EmptyTitleLabel.Text = "Search your books";
             EmptySubLabel.Text = "Find books you added to your library.";
 
@@ -213,6 +224,8 @@ namespace E_Book.Pages
             ResultList.IsVisible = false;
 
             EmptyStateLayout.IsVisible = true;
+            HistorySection.IsVisible = false;
+
             EmptyTitleLabel.Text = "No search results";
             EmptySubLabel.Text = $"No books matched \"{keyword}\". Try another title or file format.";
 
@@ -225,6 +238,7 @@ namespace E_Book.Pages
             ResultTitleLabel.IsVisible = true;
             ResultList.IsVisible = true;
             EmptyStateLayout.IsVisible = false;
+            HistorySection.IsVisible = false;
 
             _ = PlayResultListAnimation();
         }
@@ -316,7 +330,8 @@ namespace E_Book.Pages
             tap.Tapped += (_, __) =>
             {
                 SearchEntry.Text = keyword;
-                DoSearch(keyword, saveHistory: true);
+                HistorySection.IsVisible = false;
+                DoSearch(keyword, saveHistory: false);
             };
             keywordFrame.GestureRecognizers.Add(tap);
 
@@ -372,6 +387,7 @@ namespace E_Book.Pages
 #endif
 
             UpdateClearButtonVisibility();
+            RenderHistory();
             _ = PlayEmptyAnimation();
         }
 
@@ -426,8 +442,8 @@ namespace E_Book.Pages
             var keywordToSave = (SearchEntry.Text ?? "").Trim();
             if (!string.IsNullOrWhiteSpace(keywordToSave))
             {
-                SearchHistoryStore.AddOnRead(UserSession.UserId, keywordToSave);
-                RenderHistory();
+                _pendingHistoryKeyword = keywordToSave;
+                _shouldCommitHistoryOnReturn = true;
             }
 
             ReadingMetaStore.UpdateLastOpened(book.FullPath);

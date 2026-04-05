@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:E_Book.Controls"
+    x:Class="E_Book.Pages.NotificationsPage"
+    Shell.TabBarIsVisible="False"
+    Shell.NavBarIsVisible="False"
+    Shell.PresentationMode="ModalAnimated"
+    NavigationPage.HasNavigationBar="False"
+    Padding="0"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource OffBlack}}">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <controls:AppHeader Title="Notifications"
+                            BackCommand="{Binding BackCommand}" />
+
+        <ScrollView Grid.Row="1">
+
+            <VerticalStackLayout Padding="18,10,18,24"
+                                 Spacing="20">
+
+                <!-- Intro -->
+                <VerticalStackLayout Spacing="4"
+                                     Padding="2,0,2,0">
+                    <Label Text="Manage notification preferences"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                    <Label Text="Control reading reminders and library alerts."
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#8F8AA5, Dark=#A6A1B9}" />
+                </VerticalStackLayout>
+
+                <!-- Notification master -->
+                <Label Text="General"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+                       CornerRadius="22"
+                       Padding="16"
+                       HasShadow="True">
+
+                    <Frame.Shadow>
+                        <Shadow Brush="#18000000"
+                                Offset="0,10"
+                                Radius="24"
+                                Opacity="0.18" />
+                    </Frame.Shadow>
+
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12"
+                          MinimumHeightRequest="64">
+
+                        <VerticalStackLayout Spacing="4"
+                                             VerticalOptions="Center">
+                            <Label Text="Enable Notifications"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                            <Label Text="Allow E_Book to send reminders and alerts."
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                        </VerticalStackLayout>
+
+                        <Switch x:Name="NotificationsSwitch"
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Toggled="OnNotificationsToggled" />
+                    </Grid>
+                </Frame>
+
+                <!-- Reading reminders -->
+                <Label Text="Reading"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+                       CornerRadius="22"
+                       Padding="0"
+                       HasShadow="True">
+
+                    <Frame.Shadow>
+                        <Shadow Brush="#18000000"
+                                Offset="0,10"
+                                Radius="24"
+                                Opacity="0.18" />
+                    </Frame.Shadow>
+
+                    <VerticalStackLayout Spacing="0">
+
+                        <Grid Padding="16"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12"
+                              MinimumHeightRequest="64">
+
+                            <VerticalStackLayout Spacing="4"
+                                                 VerticalOptions="Center">
+                                <Label Text="Continue Reading Reminder"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                                <Label Text="Remind you to continue from your last saved page."
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                            </VerticalStackLayout>
+
+                            <Switch x:Name="ContinueReadingSwitch"
+                                    Grid.Column="1"
+                                    VerticalOptions="Center"
+                                    Toggled="OnContinueReadingToggled" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Library alerts -->
+                <Label Text="Library"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+                       CornerRadius="22"
+                       Padding="0"
+                       HasShadow="True">
+
+                    <Frame.Shadow>
+                        <Shadow Brush="#18000000"
+                                Offset="0,10"
+                                Radius="24"
+                                Opacity="0.18" />
+                    </Frame.Shadow>
+
+                    <VerticalStackLayout Spacing="0">
+
+                        <Grid Padding="16"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12"
+                              MinimumHeightRequest="64">
+
+                            <VerticalStackLayout Spacing="4"
+                                                 VerticalOptions="Center">
+                                <Label Text="Import Success Alert"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                                <Label Text="Show a notification when a new book is added successfully."
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}" />
+                            </VerticalStackLayout>
+
+                            <Switch x:Name="ImportAlertSwitch"
+                                    Grid.Column="1"
+                                    VerticalOptions="Center"
+                                    Toggled="OnImportAlertToggled" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Frame>
+                <!-- DEBUG -->
+                <VerticalStackLayout x:Name="DebugSection"
+                     IsVisible="False"
+                     Spacing="10">
+
+                    <Label Text="Debug"
+           FontSize="13"
+           FontAttributes="Bold"
+           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
+
+                    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
+           CornerRadius="22"
+           Padding="16"
+           HasShadow="True">
+
+                        <VerticalStackLayout Spacing="10">
+
+                            <Button Text="Test Import Notification"
+                    Clicked="OnDebugImportNotificationClicked"
+                    HeightRequest="42"
+                    CornerRadius="14"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    BackgroundColor="{AppThemeBinding Light=#F1EBFF, Dark=#2A214F}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                            <Button Text="Test Continue Reading Notification"
+                    Clicked="OnDebugContinueReadingClicked"
+                    HeightRequest="42"
+                    CornerRadius="14"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    BackgroundColor="{AppThemeBinding Light=#F1EBFF, Dark=#2A214F}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
+
+                        </VerticalStackLayout>
+
+                    </Frame>
+
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

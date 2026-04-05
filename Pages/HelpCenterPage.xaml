@@ -194,6 +194,40 @@
                             <TapGestureRecognizer Tapped="OnFaq4Tapped" />
                         </Border.GestureRecognizers>
                     </Border>
+
+                    <!-- FAQ 5 -->
+                    <Border x:Name="FaqItem5"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="How do notifications work?"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                                <Label x:Name="Arrow5"
+                                       Grid.Column="1"
+                                       Text="⌄"
+                                       FontSize="20"
+                                       TextColor="{AppThemeBinding Light=#8A869E, Dark=#B7B3C6}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Label x:Name="Answer5"
+                                   IsVisible="False"
+                                   Opacity="0"
+                                   Text="You can manage notification settings from the Notifications page in Settings. E_Book can show import alerts and continue-reading reminders when enabled."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFaq5Tapped" />
+                        </Border.GestureRecognizers>
+                    </Border>
                 </VerticalStackLayout>
 
                 <!-- Guide Section -->
@@ -262,6 +296,22 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
                             <Label Text="Your last reading position can be stored automatically so you can continue later."
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1A1A1E}"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Notifications"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
+                            <Label Text="Go to the Notifications page in Settings to enable or disable reminders and library alerts."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />

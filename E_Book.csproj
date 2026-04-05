@@ -84,6 +84,9 @@
     <Compile Update="Pages\HelpSupportPage.xaml.cs">
       <DependentUpon>HelpSupportPage.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Pages\NotificationsPage.xaml.cs">
+     <DependentUpon>NotificationsPage.xaml</DependentUpon>
+   </Compile>
     <Compile Update="Pages\SettingsHomePage.xaml.cs">
       <DependentUpon>SettingsHomePage.xaml</DependentUpon>
     </Compile>
@@ -115,6 +118,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\PrivacyPolicyPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Pages\NotificationsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\ResetPasswordPage.xaml">
