@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using E_Book.Models;
 using E_Book.Services;
@@ -15,13 +17,13 @@ namespace E_Book.Pages
         public ObservableCollection<BookItem> Results { get; } = new();
 
         private readonly List<BookItem> _allBooks = new();
+
         private bool _isLoaded;
         private bool _hasPlayedEntrance;
         private bool _skipAutoFocusOnce;
-        private bool _hasAppearedOnce;
+        private bool _isEmptyAnimationRunning;
 
-        private string? _pendingHistoryKeyword;
-        private bool _shouldCommitHistoryOnReturn;
+        private CancellationTokenSource? _searchDebounceCts;
 
         public SearchPage()
         {
@@ -34,14 +36,6 @@ namespace E_Book.Pages
             base.OnAppearing();
 
             LoadBooksToCache();
-
-            if (_shouldCommitHistoryOnReturn && !string.IsNullOrWhiteSpace(_pendingHistoryKeyword))
-            {
-                SearchHistoryStore.AddOnRead(UserSession.UserId, _pendingHistoryKeyword);
-                _pendingHistoryKeyword = null;
-                _shouldCommitHistoryOnReturn = false;
-            }
-
             RenderHistory();
             RestoreStateFromCurrentInput();
 
@@ -61,15 +55,15 @@ namespace E_Book.Pages
 
             if (string.IsNullOrWhiteSpace(SearchEntry?.Text))
             {
-                await PlayEmptyAnimation();
+                await PlayEmptyAnimationIfNeeded();
             }
-
-            _hasAppearedOnce = true;
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+
+            _searchDebounceCts?.Cancel();
 
             try
             {
@@ -85,14 +79,6 @@ namespace E_Book.Pages
                 MainActivity.Instance?.HideSoftKeyboard();
             });
 #endif
-        }
-
-        private bool IsOnSearchTab()
-        {
-            string location = Shell.Current?.CurrentState?.Location?.ToString() ?? string.Empty;
-
-            return location.StartsWith($"//{AppShell.RouteTabs}/{AppShell.RouteSearch}", StringComparison.OrdinalIgnoreCase) ||
-                   location.Equals($"//{AppShell.RouteTabs}/{AppShell.RouteSearch}", StringComparison.OrdinalIgnoreCase);
         }
 
         private void LoadBooksToCache()
@@ -111,14 +97,14 @@ namespace E_Book.Pages
 
         private async void FocusSearchLater()
         {
-            await Task.Delay(260);
+            await Task.Delay(220);
 
             MainThread.BeginInvokeOnMainThread(async () =>
             {
                 try
                 {
                     SearchEntry?.Unfocus();
-                    await Task.Delay(30);
+                    await Task.Delay(25);
                     SearchEntry?.Focus();
                 }
                 catch
@@ -129,7 +115,7 @@ namespace E_Book.Pages
 
         private void RestoreStateFromCurrentInput()
         {
-            var keyword = (SearchEntry.Text ?? "").Trim();
+            string keyword = (SearchEntry.Text ?? string.Empty).Trim();
 
             if (string.IsNullOrWhiteSpace(keyword))
             {
@@ -140,35 +126,61 @@ namespace E_Book.Pages
             }
 
             HistorySection.IsVisible = false;
-            DoSearch(keyword, saveHistory: false);
+            DoSearch(keyword);
         }
 
         private void OnSearchPressed(object sender, EventArgs e)
         {
+            string keyword = (SearchEntry.Text ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                Results.Clear();
+                ShowInitialState();
+                _ = PlayEmptyAnimationIfNeeded();
+                return;
+            }
+
             HistorySection.IsVisible = false;
-            DoSearch(SearchEntry.Text ?? string.Empty, saveHistory: false);
+            DoSearch(keyword);
         }
 
-        private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+        private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             UpdateClearButtonVisibility();
 
-            var keyword = (e.NewTextValue ?? string.Empty).Trim();
+            string keyword = (e.NewTextValue ?? string.Empty).Trim();
 
             if (!_isLoaded)
                 return;
+
+            _searchDebounceCts?.Cancel();
+            _searchDebounceCts = new CancellationTokenSource();
+            var token = _searchDebounceCts.Token;
 
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 Results.Clear();
                 ShowInitialState();
                 RenderHistory();
-                _ = PlayEmptyAnimation();
+                await PlayEmptyAnimationIfNeeded();
                 return;
             }
 
+            try
+            {
+                await Task.Delay(220, token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+
+            if (token.IsCancellationRequested)
+                return;
+
             HistorySection.IsVisible = false;
-            DoSearch(keyword, saveHistory: false);
+            DoSearch(keyword);
         }
 
         private void UpdateClearButtonVisibility()
@@ -179,7 +191,7 @@ namespace E_Book.Pages
             ClearTextLabel.IsVisible = !string.IsNullOrWhiteSpace(SearchEntry.Text);
         }
 
-        private void DoSearch(string keyword, bool saveHistory)
+        private void DoSearch(string keyword)
         {
             keyword = (keyword ?? string.Empty).Trim();
             Results.Clear();
@@ -190,11 +202,40 @@ namespace E_Book.Pages
                 return;
             }
 
-            var result = LibraryService.SearchFromCache(_allBooks, keyword);
+            var rawResults = LibraryService.SearchFromCache(_allBooks, keyword);
 
-            foreach (var book in result)
+            var orderedResults = rawResults
+                .Select(book =>
+                {
+                    ReadingMetaStore.ApplyToBook(book);
+
+                    string fileName = (book.DisplayFileName ?? Path.GetFileNameWithoutExtension(book.FileName) ?? string.Empty).Trim();
+                    string compareName = fileName.ToLowerInvariant();
+                    string compareKeyword = keyword.ToLowerInvariant();
+
+                    int prefixScore = compareName.StartsWith(compareKeyword) ? 0 : 1;
+                    int containsScore = compareName.Contains(compareKeyword) ? 0 : 1;
+                    int progressScore = book.HasProgress ? 0 : 1;
+                    long recentScore = book.LastOpenedTicks > 0 ? -book.LastOpenedTicks : long.MaxValue;
+
+                    return new
+                    {
+                        Book = book,
+                        prefixScore,
+                        containsScore,
+                        progressScore,
+                        recentScore
+                    };
+                })
+                .OrderBy(x => x.prefixScore)
+                .ThenBy(x => x.containsScore)
+                .ThenBy(x => x.progressScore)
+                .ThenBy(x => x.recentScore)
+                .Select(x => x.Book)
+                .ToList();
+
+            foreach (var book in orderedResults)
             {
-                ReadingMetaStore.ApplyToBook(book);
                 Results.Add(book);
             }
 
@@ -230,7 +271,7 @@ namespace E_Book.Pages
             EmptySubLabel.Text = $"No books matched \"{keyword}\". Try another title or file format.";
 
             ResetEmptyVisualState();
-            _ = PlayEmptyAnimation();
+            _ = PlayEmptyAnimationIfNeeded();
         }
 
         private void ShowResultState()
@@ -258,27 +299,39 @@ namespace E_Book.Pages
                 EmptySubLabel.Opacity = 0;
         }
 
-        private async Task PlayEmptyAnimation()
+        private async Task PlayEmptyAnimationIfNeeded()
         {
+            if (_isEmptyAnimationRunning)
+                return;
+
             if (EmptyImage == null || !EmptyStateLayout.IsVisible)
                 return;
 
-            ResetEmptyVisualState();
+            _isEmptyAnimationRunning = true;
 
-            await Task.Delay(90);
+            try
+            {
+                ResetEmptyVisualState();
 
-            if (!EmptyStateLayout.IsVisible)
-                return;
+                await Task.Delay(70);
 
-            await Task.WhenAll(
-                EmptyImage.FadeTo(1, 250, Easing.CubicOut),
-                EmptyImage.ScaleTo(1, 300, Easing.SpringOut)
-            );
+                if (!EmptyStateLayout.IsVisible)
+                    return;
 
-            await Task.WhenAll(
-                EmptyTitleLabel.FadeTo(1, 190, Easing.CubicOut),
-                EmptySubLabel.FadeTo(1, 210, Easing.CubicOut)
-            );
+                await Task.WhenAll(
+                    EmptyImage.FadeTo(1, 230, Easing.CubicOut),
+                    EmptyImage.ScaleTo(1, 280, Easing.SpringOut)
+                );
+
+                await Task.WhenAll(
+                    EmptyTitleLabel.FadeTo(1, 180, Easing.CubicOut),
+                    EmptySubLabel.FadeTo(1, 200, Easing.CubicOut)
+                );
+            }
+            finally
+            {
+                _isEmptyAnimationRunning = false;
+            }
         }
 
         private void RenderHistory()
@@ -286,7 +339,7 @@ namespace E_Book.Pages
             var list = SearchHistoryStore.Get(UserSession.UserId);
 
             HistoryContainer.Children.Clear();
-            HistorySection.IsVisible = list.Count > 0;
+            HistorySection.IsVisible = list.Count > 0 && string.IsNullOrWhiteSpace(SearchEntry.Text);
 
             foreach (var keyword in list)
             {
@@ -308,19 +361,21 @@ namespace E_Book.Pages
                 Margin = new Thickness(0, 0, 8, 8)
             };
 
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+
             var keywordFrame = new Frame
             {
                 Padding = new Thickness(12, 6),
                 CornerRadius = 14,
                 HasShadow = false,
-                BackgroundColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                BackgroundColor = isDark
                     ? Color.FromArgb("#2B2B2F")
                     : Color.FromArgb("#F4F1FF"),
                 Content = new Label
                 {
                     Text = keyword,
                     FontSize = 12.5,
-                    TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                    TextColor = isDark
                         ? Colors.White
                         : Color.FromArgb("#4A426F")
                 }
@@ -331,7 +386,7 @@ namespace E_Book.Pages
             {
                 SearchEntry.Text = keyword;
                 HistorySection.IsVisible = false;
-                DoSearch(keyword, saveHistory: false);
+                DoSearch(keyword);
             };
             keywordFrame.GestureRecognizers.Add(tap);
 
@@ -340,7 +395,7 @@ namespace E_Book.Pages
                 Text = "✕",
                 FontSize = 13,
                 VerticalOptions = LayoutOptions.Center,
-                TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                TextColor = isDark
                     ? Color.FromArgb("#C8C1E3")
                     : Color.FromArgb("#8D86B2")
             };
@@ -349,7 +404,8 @@ namespace E_Book.Pages
             deleteTap.Tapped += async (_, __) =>
             {
                 bool ok = await DisplayAlert("Delete", $"Delete history \"{keyword}\"?", "Yes", "No");
-                if (!ok) return;
+                if (!ok)
+                    return;
 
                 SearchHistoryStore.Delete(UserSession.UserId, keyword);
                 RenderHistory();
@@ -364,16 +420,21 @@ namespace E_Book.Pages
 
         private void OnClearTapped(object sender, TappedEventArgs e)
         {
+            _searchDebounceCts?.Cancel();
+
             SearchEntry.Text = string.Empty;
             Results.Clear();
             ShowInitialState();
             SearchEntry.Focus();
             UpdateClearButtonVisibility();
-            _ = PlayEmptyAnimation();
+            RenderHistory();
+            _ = PlayEmptyAnimationIfNeeded();
         }
 
         private void OnCancelTapped(object sender, TappedEventArgs e)
         {
+            _searchDebounceCts?.Cancel();
+
             SearchEntry.Text = string.Empty;
             Results.Clear();
             ShowInitialState();
@@ -388,13 +449,14 @@ namespace E_Book.Pages
 
             UpdateClearButtonVisibility();
             RenderHistory();
-            _ = PlayEmptyAnimation();
+            _ = PlayEmptyAnimationIfNeeded();
         }
 
         private async void OnClearHistoryTapped(object sender, TappedEventArgs e)
         {
             bool ok = await DisplayAlert("Clear history", "Delete all recent searches?", "Yes", "No");
-            if (!ok) return;
+            if (!ok)
+                return;
 
             SearchHistoryStore.Clear(UserSession.UserId);
             RenderHistory();
@@ -424,26 +486,25 @@ namespace E_Book.Pages
 
                 LoadBooksToCache();
 
-                var keyword = (SearchEntry.Text ?? "").Trim();
+                string keyword = (SearchEntry.Text ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(keyword))
                 {
                     Results.Clear();
                     ShowInitialState();
-                    await PlayEmptyAnimation();
+                    await PlayEmptyAnimationIfNeeded();
                 }
                 else
                 {
-                    DoSearch(keyword, saveHistory: false);
+                    DoSearch(keyword);
                 }
 
                 return;
             }
 
-            var keywordToSave = (SearchEntry.Text ?? "").Trim();
+            string keywordToSave = (SearchEntry.Text ?? string.Empty).Trim();
             if (!string.IsNullOrWhiteSpace(keywordToSave))
             {
-                _pendingHistoryKeyword = keywordToSave;
-                _shouldCommitHistoryOnReturn = true;
+                SearchHistoryStore.AddOnRead(UserSession.UserId, keywordToSave);
             }
 
             ReadingMetaStore.UpdateLastOpened(book.FullPath);
@@ -460,8 +521,8 @@ namespace E_Book.Pages
 
             if (FileTypeHelper.IsImage(book.FullPath))
             {
-                string route = $"{AppShell.RouteImageReader}?filePath={Uri.EscapeDataString(book.FullPath)}";
-                await Shell.Current.GoToAsync(route);
+                string imageRoute = $"{AppShell.RouteImageReader}?filePath={Uri.EscapeDataString(book.FullPath)}";
+                await Shell.Current.GoToAsync(imageRoute);
                 return;
             }
 

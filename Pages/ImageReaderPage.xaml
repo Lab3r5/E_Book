@@ -68,22 +68,26 @@
 
                 <Grid.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnViewportTapped" />
-                    <SwipeGestureRecognizer Direction="Left" Swiped="OnNextImageSwiped" />
-                    <SwipeGestureRecognizer Direction="Right" Swiped="OnPreviousImageSwiped" />
                 </Grid.GestureRecognizers>
 
-                <Image x:Name="ReaderImage"
-                       Aspect="AspectFit"
-                       HorizontalOptions="Fill"
-                       VerticalOptions="Fill"
-                       BackgroundColor="Transparent">
-                    <Image.GestureRecognizers>
+                <Grid x:Name="ImageTransformHost"
+                      BackgroundColor="Transparent"
+                      HorizontalOptions="Fill"
+                      VerticalOptions="Fill">
+
+                    <Grid.GestureRecognizers>
                         <TapGestureRecognizer NumberOfTapsRequired="2"
                                               Tapped="OnImageDoubleTapped" />
                         <PanGestureRecognizer PanUpdated="OnImagePanUpdated" />
                         <PinchGestureRecognizer PinchUpdated="OnImagePinchUpdated" />
-                    </Image.GestureRecognizers>
-                </Image>
+                    </Grid.GestureRecognizers>
+
+                    <Image x:Name="ReaderImage"
+                           Aspect="AspectFit"
+                           HorizontalOptions="Fill"
+                           VerticalOptions="Fill"
+                           BackgroundColor="Transparent" />
+                </Grid>
             </Grid>
 
             <!-- Loading -->
@@ -166,7 +170,8 @@
                            FontAttributes="Bold"
                            TextColor="#2E241A" />
 
-                    <Grid Padding="18,0,18,0"
+                    <Grid x:Name="ThemeRow"
+                          Padding="18,0,18,0"
                           ColumnDefinitions="Auto,*"
                           ColumnSpacing="12">
 
@@ -176,7 +181,8 @@
                                FontSize="13"
                                TextColor="#2E241A" />
 
-                        <HorizontalStackLayout Grid.Column="1"
+                        <HorizontalStackLayout x:Name="ThemeOptionsRow"
+                                               Grid.Column="1"
                                                Spacing="8"
                                                HorizontalOptions="Fill">
 

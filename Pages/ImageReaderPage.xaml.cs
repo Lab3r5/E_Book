@@ -13,8 +13,10 @@ namespace E_Book.Pages
     public partial class ImageReaderPage : ContentPage
     {
         private const double DefaultScale = 1.0;
-        private const double DoubleTapScale = 2.0;
-        private const double MaxScale = 4.0;
+        private const double DoubleTapScale = 2.2;
+        private const double MaxScale = 4.5;
+        private const double OverPanResistance = 0.28;
+        private const double SwipeNavigateThreshold = 72;
 
         private readonly List<string> _imagePaths = new();
 
@@ -41,6 +43,13 @@ namespace E_Book.Pages
         private bool _isThemeSheetOpen;
         private string _readerTheme = "Beige";
 
+        private DateTime _lastDoubleTapAt = DateTime.MinValue;
+        private bool _isTopBarAnimating;
+
+        private double _freePanTotalX;
+        private double _freePanTotalY;
+        private bool _hasTriggeredSwipeNavigation;
+
         public string FilePath
         {
             get => _filePath;
@@ -55,6 +64,9 @@ namespace E_Book.Pages
         {
             InitializeComponent();
             ApplyThemeColors();
+
+            TopBar.Opacity = 1;
+            TopBar.TranslationY = 0;
         }
 
         private async Task InitializeAsync()
@@ -152,26 +164,25 @@ namespace E_Book.Pages
 
                 if (animated)
                 {
-                    ReaderImage.Opacity = 0;
-                    ReaderImage.TranslationX = 18;
+                    ImageTransformHost.Opacity = 0;
+                    ImageTransformHost.TranslationX = 16;
                 }
                 else
                 {
-                    ReaderImage.Opacity = 1;
-                    ReaderImage.TranslationX = 0;
+                    ImageTransformHost.Opacity = 1;
+                    ImageTransformHost.TranslationX = 0;
                 }
 
                 ReaderImage.Source = null;
-                await Task.Delay(30);
+                await Task.Yield();
 
                 ReaderImage.Source = ImageSource.FromFile(path);
-                await Task.Delay(50);
 
                 if (animated)
                 {
                     await Task.WhenAll(
-                        ReaderImage.FadeTo(1, 150, Easing.CubicOut),
-                        ReaderImage.TranslateTo(0, 0, 150, Easing.CubicOut)
+                        ImageTransformHost.FadeTo(1, 160, Easing.CubicOut),
+                        ImageTransformHost.TranslateTo(0, 0, 160, Easing.CubicOut)
                     );
                 }
 
@@ -204,21 +215,25 @@ namespace E_Book.Pages
             _isPanning = false;
             _isPinching = false;
 
-            ReaderImage.Scale = 1;
-            ReaderImage.TranslationX = 0;
-            ReaderImage.TranslationY = 0;
-            ReaderImage.AnchorX = 0.5;
-            ReaderImage.AnchorY = 0.5;
+            _freePanTotalX = 0;
+            _freePanTotalY = 0;
+            _hasTriggeredSwipeNavigation = false;
+
+            ImageTransformHost.Scale = 1;
+            ImageTransformHost.TranslationX = 0;
+            ImageTransformHost.TranslationY = 0;
+            ImageTransformHost.AnchorX = 0.5;
+            ImageTransformHost.AnchorY = 0.5;
         }
 
         private void ApplyTransform()
         {
-            ReaderImage.Scale = _currentScale;
-            ReaderImage.TranslationX = _xOffset;
-            ReaderImage.TranslationY = _yOffset;
+            ImageTransformHost.Scale = _currentScale;
+            ImageTransformHost.TranslationX = _xOffset;
+            ImageTransformHost.TranslationY = _yOffset;
         }
 
-        private void ClampOffsets()
+        private void ClampOffsets(bool withResistance = false)
         {
             if (Viewport.Width <= 0 || Viewport.Height <= 0 || ReaderImage.Width <= 0 || ReaderImage.Height <= 0)
                 return;
@@ -236,8 +251,22 @@ namespace E_Book.Pages
             double maxX = Math.Max(0, (scaledWidth - Viewport.Width) / 2);
             double maxY = Math.Max(0, (scaledHeight - Viewport.Height) / 2);
 
-            _xOffset = Math.Clamp(_xOffset, -maxX, maxX);
-            _yOffset = Math.Clamp(_yOffset, -maxY, maxY);
+            if (!withResistance)
+            {
+                _xOffset = Math.Clamp(_xOffset, -maxX, maxX);
+                _yOffset = Math.Clamp(_yOffset, -maxY, maxY);
+                return;
+            }
+
+            if (_xOffset < -maxX)
+                _xOffset = -maxX + (_xOffset + maxX) * OverPanResistance;
+            else if (_xOffset > maxX)
+                _xOffset = maxX + (_xOffset - maxX) * OverPanResistance;
+
+            if (_yOffset < -maxY)
+                _yOffset = -maxY + (_yOffset + maxY) * OverPanResistance;
+            else if (_yOffset > maxY)
+                _yOffset = maxY + (_yOffset - maxY) * OverPanResistance;
         }
 
         private async Task AnimateBackToBoundsAsync()
@@ -245,8 +274,8 @@ namespace E_Book.Pages
             ClampOffsets();
 
             await Task.WhenAll(
-                ReaderImage.ScaleTo(_currentScale, 90, Easing.CubicOut),
-                ReaderImage.TranslateTo(_xOffset, _yOffset, 90, Easing.CubicOut)
+                ImageTransformHost.ScaleTo(_currentScale, 110, Easing.CubicOut),
+                ImageTransformHost.TranslateTo(_xOffset, _yOffset, 110, Easing.CubicOut)
             );
         }
 
@@ -264,7 +293,7 @@ namespace E_Book.Pages
 
         private async Task ShowPreviousImageAsync()
         {
-            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _currentScale > 1.01 || _imagePaths.Count <= 1)
+            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _isPinching || _imagePaths.Count <= 1)
                 return;
 
             if (_currentIndex <= 0)
@@ -285,7 +314,7 @@ namespace E_Book.Pages
 
         private async Task ShowNextImageAsync()
         {
-            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _currentScale > 1.01 || _imagePaths.Count <= 1)
+            if (_isNavigating || _isLoadingImage || _isThemeSheetOpen || _isPinching || _imagePaths.Count <= 1)
                 return;
 
             if (_currentIndex >= _imagePaths.Count - 1)
@@ -332,29 +361,62 @@ namespace E_Book.Pages
 
         private async void OnViewportTapped(object sender, TappedEventArgs e)
         {
-            if (_isThemeSheetOpen)
+            if (_isThemeSheetOpen || _isLoadingImage || _isPinching || _isPanning || _isTopBarAnimating)
                 return;
 
-            _topBarVisible = !_topBarVisible;
+            if ((DateTime.UtcNow - _lastDoubleTapAt).TotalMilliseconds < 280)
+                return;
 
-            if (_topBarVisible)
+            await ToggleTopBarAsync();
+        }
+
+        private async Task ToggleTopBarAsync()
+        {
+            if (_isTopBarAnimating)
+                return;
+
+            _isTopBarAnimating = true;
+
+            try
             {
-                TopBar.IsVisible = true;
-                await TopBar.FadeTo(1, 150, Easing.CubicOut);
+                _topBarVisible = !_topBarVisible;
+
+                if (_topBarVisible)
+                {
+                    TopBar.IsVisible = true;
+                    TopBar.Opacity = 0;
+                    TopBar.TranslationY = -10;
+
+                    await Task.WhenAll(
+                        TopBar.FadeTo(1, 160, Easing.CubicOut),
+                        TopBar.TranslateTo(0, 0, 160, Easing.CubicOut)
+                    );
+                }
+                else
+                {
+                    await Task.WhenAll(
+                        TopBar.FadeTo(0, 140, Easing.CubicIn),
+                        TopBar.TranslateTo(0, -10, 140, Easing.CubicIn)
+                    );
+
+                    TopBar.IsVisible = false;
+                    TopBar.TranslationY = 0;
+                }
             }
-            else
+            finally
             {
-                await TopBar.FadeTo(0, 150, Easing.CubicIn);
-                TopBar.IsVisible = false;
+                _isTopBarAnimating = false;
             }
         }
 
         private async void OnImageDoubleTapped(object sender, TappedEventArgs e)
         {
-            if (_isLoadingImage || _isThemeSheetOpen || _isPinching)
+            if (_isLoadingImage || _isThemeSheetOpen || _isPinching || _isPanning)
                 return;
 
-            if (_currentScale < 1.3)
+            _lastDoubleTapAt = DateTime.UtcNow;
+
+            if (_currentScale < 1.25)
             {
                 _currentScale = DoubleTapScale;
             }
@@ -368,8 +430,8 @@ namespace E_Book.Pages
             ClampOffsets();
 
             await Task.WhenAll(
-                ReaderImage.ScaleTo(_currentScale, 160, Easing.CubicOut),
-                ReaderImage.TranslateTo(_xOffset, _yOffset, 160, Easing.CubicOut)
+                ImageTransformHost.ScaleTo(_currentScale, 170, Easing.CubicOut),
+                ImageTransformHost.TranslateTo(_xOffset, _yOffset, 170, Easing.CubicOut)
             );
         }
 
@@ -388,19 +450,18 @@ namespace E_Book.Pages
                     break;
 
                 case GestureStatus.Running:
-                    if (Viewport.Width <= 0 || Viewport.Height <= 0)
+                    if (Viewport.Width <= 0 || Viewport.Height <= 0 || _startScale <= 0)
                         return;
 
-                    double targetScale = Math.Clamp(_startScale * e.Scale, DefaultScale, MaxScale);
-                    double scaleRatio = targetScale / _startScale;
+                    double newScale = Math.Clamp(_startScale * e.Scale, DefaultScale, MaxScale);
+                    double scaleRatio = newScale / _startScale;
 
                     double originX = (e.ScaleOrigin.X - 0.5) * Viewport.Width;
                     double originY = (e.ScaleOrigin.Y - 0.5) * Viewport.Height;
 
-                    _xOffset = (_pinchStartXOffset * scaleRatio) + originX * (scaleRatio - 1);
-                    _yOffset = (_pinchStartYOffset * scaleRatio) + originY * (scaleRatio - 1);
-
-                    _currentScale = targetScale;
+                    _currentScale = newScale;
+                    _xOffset = _pinchStartXOffset - (originX * (scaleRatio - 1) * _startScale);
+                    _yOffset = _pinchStartYOffset - (originY * (scaleRatio - 1) * _startScale);
 
                     ClampOffsets();
                     ApplyTransform();
@@ -428,41 +489,60 @@ namespace E_Book.Pages
             if (_isLoadingImage || _isThemeSheetOpen || _isPinching)
                 return;
 
-            if (_currentScale <= DefaultScale + 0.01)
-                return;
-
             switch (e.StatusType)
             {
                 case GestureStatus.Started:
                     _isPanning = true;
                     _panStartX = _xOffset;
                     _panStartY = _yOffset;
+                    _freePanTotalX = 0;
+                    _freePanTotalY = 0;
+                    _hasTriggeredSwipeNavigation = false;
                     break;
 
                 case GestureStatus.Running:
-                    _xOffset = _panStartX + e.TotalX;
-                    _yOffset = _panStartY + e.TotalY;
+                    if (_currentScale > DefaultScale + 0.01)
+                    {
+                        _xOffset = _panStartX + e.TotalX;
+                        _yOffset = _panStartY + e.TotalY;
 
-                    ClampOffsets();
-                    ApplyTransform();
+                        ClampOffsets(withResistance: true);
+                        ApplyTransform();
+                    }
+                    else
+                    {
+                        _freePanTotalX = e.TotalX;
+                        _freePanTotalY = e.TotalY;
+                    }
                     break;
 
                 case GestureStatus.Completed:
                 case GestureStatus.Canceled:
                     _isPanning = false;
-                    await AnimateBackToBoundsAsync();
+
+                    if (_currentScale > DefaultScale + 0.01)
+                    {
+                        await AnimateBackToBoundsAsync();
+                    }
+                    else
+                    {
+                        if (!_hasTriggeredSwipeNavigation &&
+                            Math.Abs(_freePanTotalX) > SwipeNavigateThreshold &&
+                            Math.Abs(_freePanTotalX) > Math.Abs(_freePanTotalY))
+                        {
+                            _hasTriggeredSwipeNavigation = true;
+
+                            if (_freePanTotalX < 0)
+                                await ShowNextImageAsync();
+                            else
+                                await ShowPreviousImageAsync();
+                        }
+                    }
+
+                    _freePanTotalX = 0;
+                    _freePanTotalY = 0;
                     break;
             }
-        }
-
-        private async void OnPreviousImageSwiped(object sender, SwipedEventArgs e)
-        {
-            await ShowPreviousImageAsync();
-        }
-
-        private async void OnNextImageSwiped(object sender, SwipedEventArgs e)
-        {
-            await ShowNextImageAsync();
         }
 
         private async void OnButtonPressed(object sender, EventArgs e)
@@ -572,6 +652,7 @@ namespace E_Book.Pages
             Color secondaryText;
             Color sheetBg;
             Color handleColor;
+            Color overlayColor;
 
             switch (_readerTheme)
             {
@@ -582,6 +663,7 @@ namespace E_Book.Pages
                     secondaryText = Color.FromArgb("#5B5146");
                     sheetBg = Colors.White;
                     handleColor = Color.FromArgb("#DDD6EA");
+                    overlayColor = Color.FromArgb("#66000000");
                     break;
 
                 case "Green":
@@ -589,8 +671,9 @@ namespace E_Book.Pages
                     barBg = Color.FromArgb("#C8D4B3");
                     textColor = Color.FromArgb("#223018");
                     secondaryText = Color.FromArgb("#425235");
-                    sheetBg = Color.FromArgb("#F7F9F3");
+                    sheetBg = Color.FromArgb("#F4F7EE");
                     handleColor = Color.FromArgb("#C7D2B7");
+                    overlayColor = Color.FromArgb("#66000000");
                     break;
 
                 case "Blue":
@@ -598,17 +681,19 @@ namespace E_Book.Pages
                     barBg = Color.FromArgb("#C8D5E8");
                     textColor = Color.FromArgb("#1E2B3C");
                     secondaryText = Color.FromArgb("#475B73");
-                    sheetBg = Color.FromArgb("#F5F8FC");
+                    sheetBg = Color.FromArgb("#F4F8FD");
                     handleColor = Color.FromArgb("#D5DFEE");
+                    overlayColor = Color.FromArgb("#66000000");
                     break;
 
                 case "Dark":
                     pageBg = Color.FromArgb("#101014");
                     barBg = Color.FromArgb("#101014");
                     textColor = Colors.White;
-                    secondaryText = Color.FromArgb("#D4D4E2");
+                    secondaryText = Color.FromArgb("#C9CBD6");
                     sheetBg = Color.FromArgb("#1A1A22");
                     handleColor = Color.FromArgb("#3A3A46");
+                    overlayColor = Color.FromArgb("#99000000");
                     break;
 
                 default:
@@ -616,14 +701,16 @@ namespace E_Book.Pages
                     barBg = Color.FromArgb("#E8E1CF");
                     textColor = Color.FromArgb("#2E241A");
                     secondaryText = Color.FromArgb("#5B5146");
-                    sheetBg = Colors.White;
-                    handleColor = Color.FromArgb("#DDD6EA");
+                    sheetBg = Color.FromArgb("#F7F1E3");
+                    handleColor = Color.FromArgb("#CDBE9C");
+                    overlayColor = Color.FromArgb("#66000000");
                     break;
             }
 
             BackgroundColor = pageBg;
             RootGrid.BackgroundColor = pageBg;
             ImageHost.BackgroundColor = pageBg;
+            Viewport.BackgroundColor = pageBg;
             TopBar.BackgroundColor = barBg;
 
             TitleLabel.TextColor = textColor;
@@ -633,14 +720,14 @@ namespace E_Book.Pages
             ErrorTitleLabel.TextColor = textColor;
             ErrorMessageLabel.TextColor = secondaryText;
 
-            ThemeSheet.BackgroundColor = sheetBg;
+            ThemeOverlay.BackgroundColor = overlayColor;
+
+            ThemeSheet.Background = new SolidColorBrush(sheetBg);
+            ThemeHandle.Background = new SolidColorBrush(handleColor);
+
             ThemeSheetTitle.TextColor = textColor;
             ThemeLabel.TextColor = textColor;
-            ThemeHandle.BackgroundColor = handleColor;
-
-            ThemeDarkIcon.TextColor = _readerTheme == "Dark"
-                ? Colors.White
-                : Color.FromArgb("#FFFFFF");
+            ThemeDarkIcon.TextColor = Colors.White;
         }
 
         private void UpdateThemeSelectionUi()
