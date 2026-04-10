@@ -10,6 +10,8 @@ namespace E_Book.Data
 {
     public class Database
     {
+        #region Constants / Paths
+
         private const string NewDbName = "E_Book.db";
         private const string OldDbName = "userData.db";
         private const string MigrationFlag = "db_migrated_to_multi_user_v1";
@@ -20,8 +22,16 @@ namespace E_Book.Data
         private static readonly string oldDbPath =
             Path.Combine(FileSystem.AppDataDirectory, OldDbName);
 
+        #endregion
+
+        #region Fields
+
         private readonly SQLiteAsyncConnection database;
         private readonly Task initializeTask;
+
+        #endregion
+
+        #region Constructor
 
         public Database()
         {
@@ -29,6 +39,10 @@ namespace E_Book.Data
             database = new SQLiteAsyncConnection(newDbPath);
             initializeTask = InitializeDatabaseAsync();
         }
+
+        #endregion
+
+        #region Initialization / Migration
 
         private static void MigrateOldDbIfNeeded()
         {
@@ -49,6 +63,7 @@ namespace E_Book.Data
             await database.CreateTableAsync<AppUser>();
             await database.CreateTableAsync<UserSettings>();
             await database.CreateTableAsync<ReadingSettings>();
+            await database.CreateTableAsync<BookReadingSettings>();
             await database.CreateTableAsync<ReadingProgress>();
 
             await EnsureAppUserColumnsAsync();
@@ -227,12 +242,23 @@ namespace E_Book.Data
             }
         }
 
+        #endregion
+
+        #region Key Builders
+
         private static string BuildProgressKey(string userId, string fileName)
         {
             return $"{UserSession.NormalizeUserId(userId)}|{fileName}";
         }
 
-        // ================= User Account =================
+        private static string BuildBookReadingSettingsKey(string userId, string filePath)
+        {
+            return $"{UserSession.NormalizeUserId(userId)}|{filePath.Trim().ToLowerInvariant()}";
+        }
+
+        #endregion
+
+        #region User Account
 
         public async Task<bool> UserExistsAsync(string userId)
         {
@@ -247,11 +273,11 @@ namespace E_Book.Data
         }
 
         public async Task<(bool Success, string Message)> RegisterUserAsync(
-    string userId,
-    string displayName,
-    string password,
-    string securityQuestion,
-    string securityAnswer)
+            string userId,
+            string displayName,
+            string password,
+            string securityQuestion,
+            string securityAnswer)
         {
             await EnsureInitializedAsync();
 
@@ -324,7 +350,10 @@ namespace E_Book.Data
             if (user == null)
                 return;
 
-            user.DisplayName = string.IsNullOrWhiteSpace(displayName) ? user.DisplayName : displayName.Trim();
+            user.DisplayName = string.IsNullOrWhiteSpace(displayName)
+                ? user.DisplayName
+                : displayName.Trim();
+
             await database.UpdateAsync(user);
         }
 
@@ -346,7 +375,9 @@ namespace E_Book.Data
             return rows > 0;
         }
 
-        // ================= Password (compatibility) =================
+        #endregion
+
+        #region Password Compatibility
 
         public async Task SavePasswordAsync(string password)
         {
@@ -388,7 +419,9 @@ namespace E_Book.Data
             return user?.Password;
         }
 
-        // ================= Settings =================
+        #endregion
+
+        #region User Settings
 
         public async Task SaveSettingsAsync(bool keepScreenOn, bool startupPassword, bool exitLock)
         {
@@ -430,12 +463,64 @@ namespace E_Book.Data
             if (settings != null)
                 return settings;
 
-            settings = new UserSettings { UserId = userId };
+            settings = new UserSettings
+            {
+                UserId = userId
+            };
+
             await database.InsertAsync(settings);
             return settings;
         }
 
-        // ================= Reading Settings =================
+        #endregion
+
+        #region Reading Settings
+
+        public async Task<BookReadingSettings?> GetBookReadingSettingsAsync(string filePath)
+        {
+            await EnsureInitializedAsync();
+
+            string userId = UserSession.UserId;
+            string key = BuildBookReadingSettingsKey(userId, filePath);
+
+            return await database.Table<BookReadingSettings>()
+                                 .FirstOrDefaultAsync(x => x.SettingKey == key);
+        }
+
+        public async Task SaveBookReadingSettingsAsync(
+            string filePath,
+            int fontSize,
+            string backgroundColor,
+            double lineSpacing)
+        {
+            await EnsureInitializedAsync();
+
+            string userId = UserSession.UserId;
+            string key = BuildBookReadingSettingsKey(userId, filePath);
+
+            var existing = await database.Table<BookReadingSettings>()
+                                         .FirstOrDefaultAsync(x => x.SettingKey == key);
+
+            if (existing != null)
+            {
+                existing.FontSize = fontSize;
+                existing.BackgroundColor = backgroundColor;
+                existing.LineSpacing = lineSpacing;
+                await database.UpdateAsync(existing);
+            }
+            else
+            {
+                await database.InsertAsync(new BookReadingSettings
+                {
+                    SettingKey = key,
+                    UserId = userId,
+                    FilePath = filePath,
+                    FontSize = fontSize,
+                    BackgroundColor = backgroundColor,
+                    LineSpacing = lineSpacing
+                });
+            }
+        }
 
         public async Task SaveReadingSettingsAsync(int fontSize, string backgroundColor, double lineSpacing)
         {
@@ -491,7 +576,9 @@ namespace E_Book.Data
             return settings;
         }
 
-        // ================= Reading Progress =================
+        #endregion
+
+        #region Reading Progress
 
         public async Task SaveReadingProgressAsync(string fileName, int page, int totalPages)
         {
@@ -559,6 +646,8 @@ namespace E_Book.Data
                 TotalPages = 0
             };
         }
+
+        #endregion
     }
 
     [Table("AppUsers")]
@@ -625,8 +714,11 @@ namespace E_Book.Data
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
+
         public bool StartupPasswordEnabled { get; set; }
+
         public bool ExitLockEnabled { get; set; }
+
         public bool KeepScreenOn { get; set; }
     }
 
@@ -635,8 +727,11 @@ namespace E_Book.Data
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
+
         public int FontSize { get; set; }
+
         public string BackgroundColor { get; set; } = "Light";
+
         public double LineSpacing { get; set; } = 1.65;
     }
 
@@ -649,5 +744,23 @@ namespace E_Book.Data
         public int LastPage { get; set; }
 
         public int TotalPages { get; set; }
+    }
+
+    [Table("BookReadingSettings")]
+    public class BookReadingSettings
+    {
+        [PrimaryKey]
+        public string SettingKey { get; set; } = string.Empty;
+
+        [Indexed]
+        public string UserId { get; set; } = string.Empty;
+
+        public string FilePath { get; set; } = string.Empty;
+
+        public int FontSize { get; set; } = 18;
+
+        public string BackgroundColor { get; set; } = "Light";
+
+        public double LineSpacing { get; set; } = 1.65;
     }
 }

@@ -16,7 +16,11 @@ namespace E_Book.Services
 {
     public static class DocumentContentService
     {
-        public static async Task<ParsedReadingContent> ParseAsync(string filePath, CancellationToken cancellationToken = default)
+        #region Entry
+
+        public static async Task<ParsedReadingContent> ParseAsync(
+            string filePath,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("File path is empty.", nameof(filePath));
@@ -34,7 +38,13 @@ namespace E_Book.Services
             };
         }
 
-        private static async Task<ParsedReadingContent> ParseTxtAsync(string filePath, CancellationToken cancellationToken)
+        #endregion
+
+        #region TXT
+
+        private static async Task<ParsedReadingContent> ParseTxtAsync(
+            string filePath,
+            CancellationToken cancellationToken)
         {
             var paragraphs = new List<string>();
 
@@ -52,8 +62,10 @@ namespace E_Book.Services
                 if (string.IsNullOrWhiteSpace(trimmed))
                 {
                     FlushEnglishBuffer(paragraphs, englishBuffer);
+
                     if (paragraphs.Count == 0 || paragraphs[^1] != string.Empty)
                         paragraphs.Add(string.Empty);
+
                     continue;
                 }
 
@@ -84,6 +96,7 @@ namespace E_Book.Services
                 {
                     if (englishBuffer.Length > 0)
                         englishBuffer.Append(' ');
+
                     englishBuffer.Append(trimmed);
                 }
                 else
@@ -110,7 +123,22 @@ namespace E_Book.Services
             };
         }
 
-        private static async Task<ParsedReadingContent> ParseHtmlAsync(string filePath, CancellationToken cancellationToken)
+        private static void FlushEnglishBuffer(List<string> paragraphs, StringBuilder buffer)
+        {
+            if (buffer.Length <= 0)
+                return;
+
+            paragraphs.Add(buffer.ToString().Trim());
+            buffer.Clear();
+        }
+
+        #endregion
+
+        #region HTML
+
+        private static async Task<ParsedReadingContent> ParseHtmlAsync(
+            string filePath,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -126,7 +154,13 @@ namespace E_Book.Services
                 sections.Add("<p>(Empty HTML)</p>");
 
             var titles = sections
-                .Select(ExtractDocumentHeadingForService)
+                .Select(s =>
+                {
+                    string t = ExtractBestTitleFromHtml(s);
+                    if (string.IsNullOrWhiteSpace(t))
+                        t = ExtractDocumentHeadingForService(s);
+                    return t;
+                })
                 .ToList();
 
             return new ParsedReadingContent
@@ -142,7 +176,13 @@ namespace E_Book.Services
             };
         }
 
-        private static async Task<ParsedReadingContent> ParseEpubAsync(string filePath, CancellationToken cancellationToken)
+        #endregion
+
+        #region EPUB
+
+        private static async Task<ParsedReadingContent> ParseEpubAsync(
+            string filePath,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -165,6 +205,9 @@ namespace E_Book.Services
 
                 string sanitized = SimplifyForReader(content, removeImages: true);
 
+                if (string.IsNullOrWhiteSpace(StripHtmlTags(sanitized)))
+                    continue;
+
                 string key =
                     GetStringProperty(item!, "Href") ??
                     GetStringProperty(item!, "FileName") ??
@@ -172,15 +215,17 @@ namespace E_Book.Services
                     GetStringProperty(item!, "Path") ??
                     string.Empty;
 
-                string title = ExtractBestTitleFromHtml(sanitized);
+                string title = ExtractDocumentHeadingForService(sanitized);
 
                 if (string.IsNullOrWhiteSpace(title))
-                    title = ExtractDocumentHeadingForService(sanitized);
+                    title = ExtractBestTitleFromHtml(sanitized);
 
                 if (string.IsNullOrWhiteSpace(title))
-                {
-                    title = $"Chapter {sections.Count + 1}";
-                }
+                    title = string.Empty;
+
+                sections.Add(sanitized);
+                keys.Add(NormalizeKey(key));
+                titles.Add(title);
             }
 
             if (sections.Count == 0)
@@ -207,7 +252,13 @@ namespace E_Book.Services
             };
         }
 
-        private static async Task<ParsedReadingContent> ParseDocxAsync(string filePath, CancellationToken cancellationToken)
+        #endregion
+
+        #region DOCX
+
+        private static async Task<ParsedReadingContent> ParseDocxAsync(
+            string filePath,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -229,7 +280,13 @@ namespace E_Book.Services
                 sections.Add("<p>(Empty DOCX)</p>");
 
             var titles = sections
-                .Select(ExtractDocumentHeadingForService)
+                .Select(s =>
+                {
+                    string t = ExtractBestTitleFromHtml(s);
+                    if (string.IsNullOrWhiteSpace(t))
+                        t = ExtractDocumentHeadingForService(s);
+                    return t;
+                })
                 .ToList();
 
             return new ParsedReadingContent
@@ -245,7 +302,13 @@ namespace E_Book.Services
             };
         }
 
-        private static async Task<ParsedReadingContent> ParseRtfAsync(string filePath, CancellationToken cancellationToken)
+        #endregion
+
+        #region RTF
+
+        private static async Task<ParsedReadingContent> ParseRtfAsync(
+            string filePath,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -268,7 +331,13 @@ namespace E_Book.Services
                 sections.Add("<p>(Empty RTF)</p>");
 
             var titles = sections
-                .Select(ExtractDocumentHeadingForService)
+                .Select(s =>
+                {
+                    string t = ExtractBestTitleFromHtml(s);
+                    if (string.IsNullOrWhiteSpace(t))
+                        t = ExtractDocumentHeadingForService(s);
+                    return t;
+                })
                 .ToList();
 
             return new ParsedReadingContent
@@ -284,14 +353,9 @@ namespace E_Book.Services
             };
         }
 
-        private static void FlushEnglishBuffer(List<string> paragraphs, StringBuilder buffer)
-        {
-            if (buffer.Length <= 0)
-                return;
+        #endregion
 
-            paragraphs.Add(buffer.ToString().Trim());
-            buffer.Clear();
-        }
+        #region Text Detection / Chapter Detection
 
         private static bool LooksLikeEnglishText(string text)
         {
@@ -336,12 +400,18 @@ namespace E_Book.Services
                 RegexOptions.IgnoreCase);
         }
 
+        #endregion
+
+        #region Reflection / Key Helpers
+
         private static string? GetStringProperty(object obj, string propName)
         {
             try
             {
                 var p = obj.GetType().GetProperty(propName);
-                if (p == null) return null;
+                if (p == null)
+                    return null;
+
                 var v = p.GetValue(obj);
                 return v?.ToString();
             }
@@ -358,7 +428,13 @@ namespace E_Book.Services
 
             s = s.Trim();
 
-            try { s = Uri.UnescapeDataString(s); } catch { }
+            try
+            {
+                s = Uri.UnescapeDataString(s);
+            }
+            catch
+            {
+            }
 
             s = s.Replace('\\', '/');
 
@@ -374,6 +450,10 @@ namespace E_Book.Services
 
             return s.Trim();
         }
+
+        #endregion
+
+        #region HTML / Entity Helpers
 
         private static string HtmlEntityDecodeLite(string input)
         {
@@ -391,6 +471,18 @@ namespace E_Book.Services
                 .Replace("&#160;", " ")
                 .Replace("&#xa0;", " ");
         }
+
+        private static string StripHtmlTags(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            return Regex.Replace(input, "<.*?>", string.Empty, RegexOptions.Singleline).Trim();
+        }
+
+        #endregion
+
+        #region HTML Simplify
 
         private static string SimplifyForReader(string html, bool removeImages)
         {
@@ -424,6 +516,11 @@ namespace E_Book.Services
             html = Regex.Replace(html, @"javascript\s*:", "", RegexOptions.IgnoreCase);
             html = Regex.Replace(html, @"style\s*=\s*['""][^'""]*['""]", "", RegexOptions.IgnoreCase);
             html = Regex.Replace(html, @"class\s*=\s*['""][^'""]*['""]", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"\s+xmlns(:\w+)?\s*=\s*['""][^'""]*['""]", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"\s+lang\s*=\s*['""][^'""]*['""]", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"\s+dir\s*=\s*['""][^'""]*['""]", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<span>\s*</span>", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<div>\s*</div>", "", RegexOptions.IgnoreCase);
 
             html = Regex.Replace(html, @"<(span|font)[^>]*>", "", RegexOptions.IgnoreCase);
             html = Regex.Replace(html, @"</(span|font)>", "", RegexOptions.IgnoreCase);
@@ -454,6 +551,10 @@ namespace E_Book.Services
             return html.Trim();
         }
 
+        #endregion
+
+        #region Title / Garbled Detection
+
         private static bool IsLikelyGarbledTitle(string title)
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -472,6 +573,10 @@ namespace E_Book.Services
 
             return false;
         }
+
+        #endregion
+
+        #region HTML Section Split
 
         private static List<string> SplitHtmlIntoSections(string html)
         {
@@ -508,9 +613,9 @@ namespace E_Book.Services
             }
 
             var blocks = Regex.Matches(
-                html,
-                @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline)
+                    html,
+                    @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline)
                 .Select(m => m.Value.Trim())
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .ToList();
@@ -518,11 +623,12 @@ namespace E_Book.Services
             if (blocks.Count == 0)
             {
                 blocks = Regex.Matches(
-                    html,
-                    @"(<div[^>]*>.*?</div>)",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline)
+                        html,
+                        @"(<div[^>]*>.*?</div>)",
+                        RegexOptions.IgnoreCase | RegexOptions.Singleline)
                     .Select(m => m.Value.Trim())
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Where(s => !string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(StripHtmlTags(s)))
+                    .Take(2000)
                     .ToList();
             }
 
@@ -532,7 +638,7 @@ namespace E_Book.Services
                 return SplitLargeSections(sections);
             }
 
-            const int blocksPerSection = 32;
+            const int blocksPerSection = 56;
 
             for (int i = 0; i < blocks.Count; i += blocksPerSection)
             {
@@ -553,16 +659,16 @@ namespace E_Book.Services
                 if (string.IsNullOrWhiteSpace(section))
                     continue;
 
-                if (section.Length <= 7800)
+                if (section.Length <= 11000)
                 {
                     output.Add(section);
                     continue;
                 }
 
                 var blocks = Regex.Matches(
-                    section,
-                    @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline)
+                        section,
+                        @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
+                        RegexOptions.IgnoreCase | RegexOptions.Singleline)
                     .Select(m => m.Value.Trim())
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .ToList();
@@ -617,6 +723,7 @@ namespace E_Book.Services
                 trimmed = bodyMatch.Groups["inner"].Value.Trim();
 
             bool changed = true;
+
             while (changed)
             {
                 changed = false;
@@ -645,6 +752,10 @@ namespace E_Book.Services
 
             return trimmed;
         }
+
+        #endregion
+
+        #region Title Extraction
 
         private static string ExtractDocumentHeadingForService(string html)
         {
@@ -702,11 +813,14 @@ namespace E_Book.Services
                 {
                     if (t.Length > 60)
                         t = t.Substring(0, 60).Trim() + "…";
+
                     return t;
                 }
             }
 
             return string.Empty;
         }
+
+        #endregion
     }
 }

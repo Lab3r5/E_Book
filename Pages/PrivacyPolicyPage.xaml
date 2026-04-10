@@ -49,7 +49,7 @@
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                                <Label Text="A quick overview of how E_Book stores and uses your information in Version 1.10."
+                                <Label Text="Overview of how E_Book stores reading preferences, account data, and usage information locally in Version 1.10."
                                        FontSize="13"
                                        LineBreakMode="WordWrap"
                                        TextColor="{AppThemeBinding Light=#5A4B8A, Dark=#D7D0F1}" />
@@ -60,7 +60,7 @@
                                  Opacity="0.35"
                                  Color="{AppThemeBinding Light=#CFC2F6, Dark=#5A4C92}" />
 
-                        <Label Text="E_Book is designed as a lightweight academic reading application. This policy explains what information may be stored by the app, why it is needed, and how it supports your reading experience while remaining primarily on your device."
+                        <Label Text="E_Book is designed as a lightweight academic reading application. Most data is stored locally on your device to support features such as reading progress, per-book preferences, and a personalized reading experience."
                                FontSize="13"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#2A1A62, Dark=#F2EEFF}" />
@@ -94,7 +94,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, reading progress, reading time, notification preferences, theme preferences, interface settings, and account-related preferences."
+                            <Label Text="The application stores data locally on your device to support core features. This may include imported books, per-book reading preferences such as font size, theme, and line spacing, reading progress, reading time, notification preferences, interface settings, and account-related preferences."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -199,7 +199,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="E_Book may locally store reading-related information such as the last opened time, current page, total pages, reading progress, and total reading duration. This helps restore your reading state and improve your experience across sessions."
+                            <Label Text="E_Book stores reading-related information locally, including last opened page, total pages, reading progress percentage, reading duration, and table-of-contents navigation position. This allows the app to restore reading state and provide resume functionality across sessions."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -234,7 +234,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="If notifications are enabled, E_Book may locally store notification preferences and reminder-related data, such as whether notifications are enabled, whether import alerts or continue-reading reminders are enabled, the last reminder time, and the most recent saved book title or page number used to generate reminder messages."
+                            <Label Text="If notifications are enabled, E_Book stores reminder preferences locally, including reading reminder settings, continue-reading prompts, and recent reading activity used to generate notification messages."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -304,7 +304,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#221551, Dark=White}" />
 
-                            <Label Text="This academic prototype does not intentionally transmit your personal reading data or account data to external servers for analytics, advertising, commercial profiling, or third-party marketing. Core user data is primarily handled on-device."
+                            <Label Text="This academic prototype does not transmit personal reading data or account information to external analytics, advertising, or third-party tracking services. Core user data is processed and stored locally on your device."
                                    FontSize="13"
                                    LineBreakMode="WordWrap"
                                    TextColor="{AppThemeBinding Light=#6F6B82, Dark=#C7C3D6}" />
@@ -358,7 +358,7 @@
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=#5D5872, Dark=#D2CDE0}" />
 
-                        <Label Text="This privacy policy applies to the current academic prototype and may be updated as new features such as notifications, account recovery, personalization, or data controls are introduced in future versions."
+                        <Label Text="This privacy policy applies to Version 1.10 of the academic prototype and may be updated as features such as enhanced reading analytics, synchronization options, or personalization improvements are introduced."
                                FontSize="12"
                                LineBreakMode="WordWrap"
                                TextColor="{AppThemeBinding Light=#8F8AA3, Dark=#AAA5BA}" />

@@ -506,7 +506,7 @@ During registration, you will:
 • Select a security question
 • Provide an answer for recovery
 
-✅ Your credentials are securely stored locally.
+✅ Credentials are stored securely on your device.
 
 
 --------------------------------------------------
@@ -520,7 +520,7 @@ If you forget your password:
 ③ Answer your security question
 ④ Create a new password
 
-⚠️ Only correct answers allow password reset.
+⚠️ Password reset requires correct answer verification.
 
 
 --------------------------------------------------
@@ -531,24 +531,25 @@ After login, you will enter:
 
 📚 My Library
 
-This is your personal reading space.
+Your personal digital bookshelf.
 
 Features:
 
 • View imported books
-• Continue reading from last page
-• Track reading progress
-• View recently opened files
+• Continue reading from last position
+• Display reading progress
+• Show last opened time
+• Track reading duration
 
-💡 If empty:
-Tap "Add Book" to import your first file.
+💡 If library is empty:
+Tap "Add Book" to import files.
 
 
 --------------------------------------------------
 Chapter 4 · 📄 Supported File Formats
 --------------------------------------------------
 
-E_Book supports:
+E_Book supports multiple formats:
 
 TXT
 EPUB
@@ -557,31 +558,31 @@ HTML
 DOCX
 RTF
 JPG
-PNG
-WEBP
 
-📖 Text → Reader mode
-📑 PDF → PDF Reader
-🖼 Image → Image Viewer
+Reader behavior:
+
+📖 Text-based → Reader Mode
+📑 PDF → PDF Viewer
+🖼 Images → Image Viewer
 
 
 --------------------------------------------------
 Chapter 5 · ➕ Importing Books
 --------------------------------------------------
 
-To import a book:
+To import a file:
 
 ① Tap "Add Book"
-② Select a supported file
+② Select supported format
 ③ Wait for processing
 
 Notes:
 
-• Duplicate files are ignored
-• Unsupported formats are blocked
-• Import progress is displayed
+• Duplicate files are skipped
+• Unsupported files are blocked
+• Import progress indicator is shown
 
-✅ Book appears in library after import.
+After import, books appear in My Library.
 
 
 --------------------------------------------------
@@ -593,46 +594,46 @@ To start reading:
 ① Tap a book card
 ② Reader opens automatically
 
-📍 If previously opened:
-Reading resumes from last position.
+Reading session remembers:
 
-Saved information:
-
-• Last opened time
-• Current page
+• Last opened page
 • Reading progress
 • Reading duration
+• Last opened timestamp
+
+Resume reading continues from last position.
 
 
 --------------------------------------------------
 Chapter 7 · 📝 Text Reader
 --------------------------------------------------
 
-TXT / EPUB / DOCX / RTF open in Reader mode.
+TXT / EPUB / DOCX / RTF open in Reader Mode.
 
-Gestures:
+Supported gestures:
 
 ⬅ Swipe left → next page
 ➡ Swipe right → previous page
-👆 Tap → show menu
+👆 Tap → open reading menu
 
-Optimized for comfortable reading.
+Reader automatically paginates content
+based on screen size and typography.
 
 
 --------------------------------------------------
 Chapter 8 · 📑 PDF Reader
 --------------------------------------------------
 
-PDF files open in integrated PDF Reader.
+PDF files open in PDF Reader.
 
 Features:
 
-• Accurate page navigation
-• Real page count
-• Smooth scrolling
+• True page count
+• Page navigation
 • Resume last page
+• Reading progress tracking
 
-📊 Reading progress is saved automatically.
+Progress is saved automatically.
 
 
 --------------------------------------------------
@@ -643,19 +644,18 @@ Image files open in Image Viewer.
 
 Gestures:
 
-🤏 Pinch → zoom
-🖐 Drag → move image
-👆 Double tap → quick zoom
+👆 Double tap → quick zoom In/Out
 ➡ Swipe → next image
 
-Images in same folder form a gallery view.
+Images in same directory are grouped
+into a gallery experience.
 
 
 --------------------------------------------------
 Chapter 10 · 🎨 Reader Appearance
 --------------------------------------------------
 
-Customize reading experience:
+Customize reading style:
 
 • Font size
 • Line spacing
@@ -669,14 +669,14 @@ Themes:
 💙 Blue
 🌙 Dark
 
-Changes apply instantly.
+Settings are saved per book.
 
 
 --------------------------------------------------
 Chapter 11 · 📊 Reading Progress
 --------------------------------------------------
 
-E_Book automatically tracks:
+E_Book tracks reading activity:
 
 • Current page
 • Total pages
@@ -684,18 +684,20 @@ E_Book automatically tracks:
 • Reading duration
 • Last opened time
 
-📍 Continue reading appears when progress exists.
+Books with progress display:
+
+📖 Continue reading
 
 
 --------------------------------------------------
 Chapter 12 · 📈 Progress Indicator
 --------------------------------------------------
 
-Progress display:
+Progress indicators include:
 
-Page number
-Completion percentage
-Reading status
+• Page position
+• Completion percentage
+• Reading status
 
 Status examples:
 
@@ -705,54 +707,65 @@ Status examples:
 
 
 --------------------------------------------------
-Chapter 13 · 🔍 Search
+Chapter 13 · 📑 Table of Contents
 --------------------------------------------------
 
-Use Search tab to find books quickly.
+Supported formats provide navigation:
+
+• EPUB table of contents
+• Detected document headings
+• Chapter-based navigation
+
+Selecting a chapter jumps directly
+to the relevant reading position.
+
+
+--------------------------------------------------
+Chapter 14 · 🔍 Search
+--------------------------------------------------
+
+Use Search tab to locate books quickly.
 
 Search supports:
 
 • File name
-• Title
 • Keywords
+• Partial matching
 
 Recent searches:
 
-• Saved after opening a book
-• Maximum 6 records
-• Oldest removed automatically
-• Individual deletion supported
-• Clear all history available
+• Stored automatically
+• Up to 6 records
+• Individual removal supported
+• Clear history available
 
 
 --------------------------------------------------
-Chapter 14 · 🔔 Notifications
+Chapter 15 · 🔔 Notifications
 --------------------------------------------------
 
-E_Book supports local notifications.
+E_Book supports reading reminders.
 
 Manage in:
 
 Settings → Notifications
 
-Options:
+Options include:
 
 • Reading reminders
 • Continue reading alerts
 • Library notifications
 
-🔔 Helps maintain reading habits.
-
 
 --------------------------------------------------
-Chapter 15 · ⚙ Settings
+Chapter 16 · ⚙ Settings
 --------------------------------------------------
 
-Customize your experience:
+Customize application behavior:
 
-• Appearance settings
-• Notification preferences
-• Account management
+• Appearance
+• Notifications
+• Account settings
 • Help center
 • Privacy policy
 
@@ -760,53 +773,57 @@ Changes apply immediately.
 
 
 --------------------------------------------------
-Chapter 16 · 🗂 Library Management
+Chapter 17 · 🗂 Library Management
 --------------------------------------------------
 
-Manage books easily:
+Manage books:
 
 ① Enter selection mode
 ② Select books
 ③ Confirm deletion
 
-⚠ Deleted books are permanently removed.
+Deleted books are permanently removed.
 
 
 --------------------------------------------------
-Chapter 17 · ⚡ Performance
+Chapter 18 · ⚡ Performance
 --------------------------------------------------
 
-Optimized reading engine:
+Reader engine supports:
 
-• Fast pagination
-• Smooth animation
-• Efficient caching
-• Stable performance
+• Dynamic pagination
+• Content caching
+• Smooth page transitions
+• Stable reading performance
 
-Large files load efficiently.
+Large documents may require
+additional loading time.
 
 
 --------------------------------------------------
-Chapter 18 · 💡 Tips for Best Experience
+Chapter 19 · 💡 Tips
 --------------------------------------------------
 
-• Organize your library
-• Adjust reading settings
-• Enable reminders
-• Use search frequently
-• Keep app updated
+For best experience:
 
-📖 Enjoy distraction-free reading.
+• Organize library regularly
+• Adjust font size if needed
+• Use search for large collections
+• Enable reminders for consistency
+• Keep application updated
+
+Enjoy a focused reading experience.
 
 
 --------------------------------------------------
 Final Message
 --------------------------------------------------
 
-E_Book is designed to provide a modern,
-comfortable, and focused reading experience.
+E_Book is designed to provide
+a modern digital reading experience.
 
-Build your digital library and enjoy reading anytime.
+Build your personal library and
+read anytime, anywhere.
 
 ✨ Happy Reading ✨
 
