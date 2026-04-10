@@ -15,10 +15,7 @@ using System.Net;
 using System.Globalization;
 using E_Book.Data;
 using E_Book.Services;
-
-using VersOne.Epub;
-using Mammoth;
-using RtfPipe;
+using E_Book.Models;
 
 namespace E_Book.Pages
 {
@@ -84,9 +81,23 @@ namespace E_Book.Pages
 
         private const uint ChromeAnimMs = 140;
 
-        private const int InitialTxtPreloadParagraphCount = 300;
+        private const int InitialTxtPreloadParagraphCount = 1200;
 
-        private enum ReaderMode { TxtPaged, HtmlPaged, PdfExternal, Unknown }
+        private bool _documentParseRunning;
+        private int _documentParseVersion = 0;
+
+        private const double TxtWidthPadding = 64;
+        private const double TxtHeightPaddingChinese = 190;
+        private const double TxtHeightPaddingEnglish = 132;
+
+        private const double HtmlWidthPadding = 58;
+        private const double HtmlHeightPadding = 210;
+
+        private readonly List<string> _rawHtmlChapterTitles = new();
+
+        private CancellationTokenSource? _documentLoadCts;
+
+        private enum ReaderMode { TxtPaged, DocumentPaged, Unknown }
         private ReaderMode mode = ReaderMode.Unknown;
 
         private string _loadedFilePath = string.Empty;
@@ -160,6 +171,7 @@ namespace E_Book.Pages
         {
             base.OnDisappearing();
 
+            _documentLoadCts?.Cancel();
             _repaginateCts?.Cancel();
             _progressSaveCts?.Cancel();
 
@@ -199,6 +211,8 @@ namespace E_Book.Pages
         private async Task InitializeReaderAsync()
         {
             TitleLabel.Text = Path.GetFileNameWithoutExtension(FilePath);
+            _documentLoadCts?.Cancel();
+            _documentLoadCts = new CancellationTokenSource();
 
             try
             {
@@ -236,26 +250,34 @@ namespace E_Book.Pages
 
                 ShowLoadingPage();
 
-                await LoadByTypeAsync(FilePath);
+                await LoadByTypeAsync(FilePath, _documentLoadCts.Token);
 
                 var progress = await dbHelper.GetReadingProgressRecordAsync(GetReadingKey());
                 _pendingRestorePage = progress.LastPage;
 
-                _pendingRestoreProgress =
-                    progress.TotalPages > 0
-                        ? progress.LastPage / (double)progress.TotalPages
-                        : 0;
-
-                if (GetTotalPages() > 0 && _pendingRestoreProgress > 0)
+                if (mode == ReaderMode.TxtPaged)
                 {
-                    currentPage = Math.Clamp(
-                        (int)Math.Round(_pendingRestoreProgress * Math.Max(0, GetTotalPages() - 1)),
-                        0,
-                        Math.Max(0, GetTotalPages() - 1));
+                    _pendingRestoreProgress =
+                        progress.TotalPages > 0
+                            ? progress.LastPage / (double)progress.TotalPages
+                            : 0;
+
+                    if (GetTotalPages() > 0 && _pendingRestoreProgress > 0)
+                    {
+                        currentPage = Math.Clamp(
+                            (int)Math.Round(_pendingRestoreProgress * Math.Max(0, GetTotalPages() - 1)),
+                            0,
+                            Math.Max(0, GetTotalPages() - 1));
+                    }
+                    else
+                    {
+                        currentPage = progress.LastPage;
+                    }
                 }
                 else
                 {
-                    currentPage = progress.LastPage;
+                    _pendingRestoreProgress = 0;
+                    currentPage = Math.Clamp(progress.LastPage, 0, Math.Max(0, GetTotalPages() - 1));
                 }
 
                 ClampCurrentPage();
@@ -282,6 +304,7 @@ namespace E_Book.Pages
                     TrimRenderedPageCache();
                     ShowReaderContent();
                     _hasDisplayedInitialPage = true;
+                    await SaveReadingProgress();
                 }
 
                 ReadingMetaStore.UpdateLastOpened(FilePath);
@@ -375,7 +398,29 @@ namespace E_Book.Pages
 
         private string GetReadingKey()
         {
-            return Path.GetFileName(FilePath ?? string.Empty).Trim().ToLowerInvariant();
+            return FilePath?.Trim().ToLowerInvariant() ?? string.Empty;
+        }
+
+        private void ClearAllReaderState()
+        {
+            txtParagraphs.Clear();
+            txtPages.Clear();
+            txtParagraphStartPageIndices.Clear();
+
+            htmlPages.Clear();
+            _rawHtmlChapters.Clear();
+            _rawHtmlChapterKeys.Clear();
+            _rawHtmlChapterTitles.Clear();
+            _chapterStartPageIndices.Clear();
+
+            tocItems.Clear();
+            currentPage = 0;
+
+            _txtPaginationIsPartial = false;
+            _txtPreloadedParagraphCount = 0;
+            _isFullTxtPaginationRunning = false;
+
+            ClearRenderedPageCache();
         }
 
         private double GetReaderAreaWidth()
@@ -396,6 +441,9 @@ namespace E_Book.Pages
 
         private void RequestRepaginate()
         {
+            if (_documentParseRunning)
+                return;
+
             _repaginateCts?.Cancel();
             _repaginateCts = new CancellationTokenSource();
             var token = _repaginateCts.Token;
@@ -411,26 +459,41 @@ namespace E_Book.Pages
 
                     if (mode == ReaderMode.TxtPaged)
                     {
-                        var result = BuildTxtPaginationResult(GetReaderAreaWidth(), GetReaderAreaHeight(), null);
+                        int oldPage = currentPage;
+
+                        var result = await Task.Run(() =>
+                            BuildTxtPaginationResult(GetReaderAreaWidth(), GetReaderAreaHeight(), null));
+
+                        if (token.IsCancellationRequested) return;
+
                         ApplyTxtPaginationResult(result);
                         BuildTxtToc();
+
+                        currentPage = Math.Min(oldPage, Math.Max(0, txtPages.Count - 1));
                     }
-                    else if (mode == ReaderMode.HtmlPaged)
+                    else if (mode == ReaderMode.DocumentPaged)
                     {
-                        RebuildHtmlPagination();
+                        int oldPage = currentPage;
+
+                        await Task.Run(() => RebuildHtmlPagination());
+
+                        if (token.IsCancellationRequested) return;
+
+                        tocItems.Clear();
 
                         if (Path.GetExtension(FilePath)?.Equals(".epub", StringComparison.OrdinalIgnoreCase) == true)
                             BuildEpubTocPreferNcxOrNav(FilePath);
-                        else
-                            BuildHtmlTocFromRawHtmlTitles();
+
+                        if (tocItems.Count == 0)
+                            BuildDocumentTocFromPages();
+
+                        currentPage = Math.Min(oldPage, Math.Max(0, htmlPages.Count - 1));
                     }
 
                     ClampCurrentPage();
 
                     if (!_isReaderLoading || _hasDisplayedInitialPage)
-                    {
                         RefreshCurrentPage();
-                    }
                 }
                 catch (TaskCanceledException) { }
             });
@@ -636,103 +699,104 @@ namespace E_Book.Pages
             await PrevPageAsync();
         }
 
-        private async Task LoadByTypeAsync(string filePath)
+        private async Task LoadByTypeAsync(string filePath, CancellationToken token)
         {
             _readerInitialized = false;
 
-            txtParagraphs.Clear();
-            txtPages.Clear();
-            txtParagraphStartPageIndices.Clear();
+            ClearAllReaderState();
 
-            htmlPages.Clear();
-            _rawHtmlChapters.Clear();
-            _rawHtmlChapterKeys.Clear();
-            _chapterStartPageIndices.Clear();
-
-            tocItems.Clear();
-            currentPage = 0;
-            ClearRenderedPageCache();
-
-            _txtPaginationIsPartial = false;
-            _txtPreloadedParagraphCount = 0;
-            _isFullTxtPaginationRunning = false;
-
-            var ext = Path.GetExtension(filePath)?.ToLowerInvariant() ?? "";
+            string ext = Path.GetExtension(filePath)?.ToLowerInvariant() ?? string.Empty;
+            int version = ++_documentParseVersion;
 
             try
             {
                 switch (ext)
                 {
                     case ".txt":
-                        mode = ReaderMode.TxtPaged;
-                        await LoadTxtAsync(filePath);
+                        {
+                            mode = ReaderMode.TxtPaged;
 
-                        double txtWidth = GetReaderAreaWidth();
-                        double txtHeight = GetReaderAreaHeight();
+                            ParsedReadingContent parsed =
+                                await DocumentContentService.ParseAsync(filePath, token);
 
-                        var preloadResult = await Task.Run(() =>
-                            BuildTxtPaginationResult(txtWidth, txtHeight, InitialTxtPreloadParagraphCount));
+                            token.ThrowIfCancellationRequested();
 
-                        ApplyTxtPaginationResult(preloadResult);
-                        ShowWebView();
-                        break;
+                            if (version != _documentParseVersion)
+                                return;
 
-                    case ".html":
-                    case ".htm":
-                        mode = ReaderMode.HtmlPaged;
-                        await LoadHtmlFileAsync(filePath);
-                        RebuildHtmlPagination();
-                        ShowWebView();
-                        break;
+                            txtParagraphs.Clear();
+                            txtParagraphs.AddRange(parsed.TxtParagraphs);
+
+                            double width = GetReaderAreaWidth();
+                            double height = GetReaderAreaHeight();
+
+                            var pagination = await Task.Run(() =>
+                                BuildTxtPaginationResult(
+                                    width,
+                                    height,
+                                    InitialTxtPreloadParagraphCount), token);
+
+                            token.ThrowIfCancellationRequested();
+
+                            ApplyTxtPaginationResult(pagination);
+                            BuildTxtToc();
+
+                            break;
+                        }
 
                     case ".epub":
-                        mode = ReaderMode.HtmlPaged;
-                        await LoadEpubAsync(filePath);
-                        RebuildHtmlPagination();
-                        ShowWebView();
-                        break;
-
+                    case ".html":
+                    case ".htm":
                     case ".docx":
-                        mode = ReaderMode.HtmlPaged;
-                        await LoadDocxAsync(filePath);
-                        RebuildHtmlPagination();
-                        ShowWebView();
-                        break;
-
                     case ".rtf":
-                        mode = ReaderMode.HtmlPaged;
-                        await LoadRtfAsync(filePath);
-                        RebuildHtmlPagination();
-                        ShowWebView();
-                        break;
-
-                    case ".pdf":
-                        mode = ReaderMode.Unknown;
-                        ShowWebView();
-                        ContentWebView.Source = new HtmlWebViewSource
                         {
-                            Html = WrapHtml("<p>PDF is now opened through the dedicated PDF reader page.</p>")
-                        };
-                        break;
+                            mode = ReaderMode.DocumentPaged;
+                            _documentParseRunning = true;
+
+                            ParsedReadingContent parsed =
+                                await DocumentContentService.ParseAsync(filePath, token);
+
+                            token.ThrowIfCancellationRequested();
+
+                            if (version != _documentParseVersion)
+                                return;
+
+                            _rawHtmlChapters.Clear();
+                            _rawHtmlChapterKeys.Clear();
+                            _rawHtmlChapterTitles.Clear();
+
+                            _rawHtmlChapters.AddRange(parsed.RawHtmlChapters);
+                            _rawHtmlChapterKeys.AddRange(parsed.RawHtmlChapterKeys);
+                            _rawHtmlChapterTitles.AddRange(parsed.RawHtmlChapterTitles);
+
+                            await Task.Run(() => RebuildHtmlPagination(), token);
+
+                            token.ThrowIfCancellationRequested();
+
+                            if (ext == ".epub")
+                                BuildEpubTocPreferNcxOrNav(filePath);
+                            else
+                                BuildDocumentTocFromPages();
+
+                            _documentParseRunning = false;
+                            break;
+                        }
 
                     default:
-                        mode = ReaderMode.Unknown;
-                        ShowWebView();
-                        ContentWebView.Source = new HtmlWebViewSource
-                        {
-                            Html = WrapHtml($"<p>Unsupported format: {WebUtility.HtmlEncode(ext)}</p>")
-                        };
-                        break;
+                        throw new NotSupportedException("Unsupported file type");
                 }
+
+                _readerInitialized = true;
+            }
+            catch (OperationCanceledException)
+            {
+                _documentParseRunning = false;
+                throw;
             }
             catch (Exception ex)
             {
-                mode = ReaderMode.Unknown;
-                ShowWebView();
-                ContentWebView.Source = new HtmlWebViewSource
-                {
-                    Html = WrapHtml($"<p>Unable to load file: {WebUtility.HtmlEncode(ex.Message)}</p>")
-                };
+                _documentParseRunning = false;
+                await DisplayAlert("Error", ex.Message, "OK");
             }
         }
 
@@ -740,71 +804,6 @@ namespace E_Book.Pages
         {
             ContentWebView.IsVisible = true;
             fileContentLabel.IsVisible = false;
-        }
-
-        private async Task LoadTxtAsync(string filePath)
-        {
-            txtParagraphs.Clear();
-
-            using var reader = new StreamReader(filePath);
-            var buffer = new StringBuilder();
-            bool previousLineLooksEnglish = false;
-
-            while (!reader.EndOfStream)
-            {
-                string line = await reader.ReadLineAsync() ?? "";
-                string trimmed = line.Trim();
-
-                if (string.IsNullOrWhiteSpace(trimmed))
-                {
-                    if (buffer.Length > 0)
-                    {
-                        txtParagraphs.Add(buffer.ToString().Trim());
-                        buffer.Clear();
-                    }
-
-                    txtParagraphs.Add(string.Empty);
-                    previousLineLooksEnglish = false;
-                    continue;
-                }
-
-                if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
-                {
-                    if (buffer.Length > 0)
-                    {
-                        txtParagraphs.Add(buffer.ToString().Trim());
-                        buffer.Clear();
-                    }
-
-                    txtParagraphs.Add(trimmed);
-                    previousLineLooksEnglish = false;
-                    continue;
-                }
-
-                if (Regex.IsMatch(trimmed, @"^\s*#{1,6}\s+"))
-                {
-                    if (buffer.Length > 0)
-                    {
-                        txtParagraphs.Add(buffer.ToString().Trim());
-                        buffer.Clear();
-                    }
-
-                    txtParagraphs.Add(trimmed);
-                    previousLineLooksEnglish = false;
-                    continue;
-                }
-
-                bool currentLineLooksEnglish = LooksLikeEnglishText(trimmed);
-
-                if (buffer.Length > 0 && previousLineLooksEnglish && currentLineLooksEnglish)
-                    buffer.Append(' ');
-
-                buffer.Append(line.Trim());
-                previousLineLooksEnglish = currentLineLooksEnglish;
-            }
-
-            if (buffer.Length > 0)
-                txtParagraphs.Add(buffer.ToString().Trim());
         }
 
         private bool LooksLikeEnglishText(string text)
@@ -838,11 +837,11 @@ namespace E_Book.Pages
 
             bool mostlyChinese = ContainsMostlyChinese(string.Join("", txtParagraphs.Take(80)));
 
-            double usableWidth = Math.Max(180, areaWidth - 52);
+            double usableWidth = Math.Max(180, areaWidth - TxtWidthPadding);
 
             double usableHeight = mostlyChinese
-                ? Math.Max(180, areaHeight - 148)
-                : Math.Max(180, areaHeight - 96);
+                ? Math.Max(180, areaHeight - TxtHeightPaddingChinese)
+                : Math.Max(180, areaHeight - TxtHeightPaddingEnglish);
 
             double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing * 1.04;
 
@@ -985,6 +984,7 @@ namespace E_Book.Pages
                     ShowReaderContent();
                     _hasDisplayedInitialPage = true;
                     _deferFirstDisplayUntilFullPagination = false;
+                    _ = SaveReadingProgress();
                 });
             }
             catch
@@ -1158,7 +1158,7 @@ namespace E_Book.Pages
 
             string trimmed = paragraph.Trim();
 
-            if (Regex.IsMatch(trimmed, @"^第.{1,12}章"))
+            if (Regex.IsMatch(trimmed, @"^第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇]"))
                 return lineHeightPx * 2.0 + 26;
 
             if (Regex.IsMatch(trimmed, @"^[_\-─—=·•\.]{5,}$"))
@@ -1227,7 +1227,7 @@ namespace E_Book.Pages
                     continue;
                 }
 
-                if (Regex.IsMatch(trimmed, @"^第.{1,12}章"))
+                if (Regex.IsMatch(trimmed, @"^第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇]"))
                 {
                     sb.Append($"<p class='chapter-title'>{WebUtility.HtmlEncode(trimmed)}</p>");
                     continue;
@@ -1267,104 +1267,6 @@ namespace E_Book.Pages
             };
         }
 
-        private async Task LoadHtmlFileAsync(string filePath)
-        {
-            var html = await File.ReadAllTextAsync(filePath);
-
-            _rawHtmlChapters.Clear();
-            _rawHtmlChapterKeys.Clear();
-
-            _rawHtmlChapters.Add(string.IsNullOrWhiteSpace(html) ? "<p>(Empty HTML)</p>" : html);
-            _rawHtmlChapterKeys.Add(NormalizeKey(Path.GetFileName(filePath)));
-        }
-
-        private async Task LoadEpubAsync(string filePath)
-        {
-            var book = await EpubReader.ReadBookAsync(filePath);
-            var readingOrder = book.ReadingOrder?.ToList() ?? new List<EpubLocalTextContentFile>();
-
-            _rawHtmlChapters.Clear();
-            _rawHtmlChapterKeys.Clear();
-
-            foreach (var item in readingOrder)
-            {
-                var content = item?.Content;
-                if (string.IsNullOrWhiteSpace(content))
-                    continue;
-
-                _rawHtmlChapters.Add(content);
-
-                string key =
-                    GetStringProperty(item!, "Href") ??
-                    GetStringProperty(item!, "FileName") ??
-                    GetStringProperty(item!, "FilePath") ??
-                    GetStringProperty(item!, "Path") ??
-                    "";
-
-                _rawHtmlChapterKeys.Add(NormalizeKey(key));
-            }
-
-            if (_rawHtmlChapters.Count == 0)
-            {
-                _rawHtmlChapters.Add("<p>(No readable chapters found)</p>");
-                _rawHtmlChapterKeys.Add("");
-            }
-        }
-
-        private static string? GetStringProperty(object obj, string propName)
-        {
-            try
-            {
-                var p = obj.GetType().GetProperty(propName);
-                if (p == null) return null;
-                var v = p.GetValue(obj);
-                return v?.ToString();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private Task LoadDocxAsync(string filePath)
-        {
-            var converter = new DocumentConverter();
-            var result = converter.ConvertToHtml(filePath);
-            var html = result?.Value;
-
-            _rawHtmlChapters.Clear();
-            _rawHtmlChapterKeys.Clear();
-
-            _rawHtmlChapters.Add(string.IsNullOrWhiteSpace(html) ? "<p>(Empty DOCX)</p>" : html!);
-            _rawHtmlChapterKeys.Add(NormalizeKey(Path.GetFileName(filePath)));
-
-            return Task.CompletedTask;
-        }
-
-        private async Task LoadRtfAsync(string filePath)
-        {
-            var rtfText = await File.ReadAllTextAsync(filePath);
-            var html = Rtf.ToHtml(rtfText);
-
-            _rawHtmlChapters.Clear();
-            _rawHtmlChapterKeys.Clear();
-
-            _rawHtmlChapters.Add(string.IsNullOrWhiteSpace(html) ? "<p>(Empty RTF)</p>" : html);
-            _rawHtmlChapterKeys.Add(NormalizeKey(Path.GetFileName(filePath)));
-        }
-
-        private async Task OpenPdfExternalAsync(string filePath)
-        {
-            try
-            {
-                await Launcher.Default.OpenAsync(new OpenFileRequest
-                {
-                    File = new ReadOnlyFile(filePath)
-                });
-            }
-            catch { }
-        }
-
         private List<string> PaginateHtmlContent(string html)
         {
             var pages = new List<string>();
@@ -1386,11 +1288,11 @@ namespace E_Book.Pages
             double areaWidth = GetReaderAreaWidth();
             double areaHeight = GetReaderAreaHeight();
 
-            double usableWidth = Math.Max(180, areaWidth - 44);
-            double usableHeight = Math.Max(180, areaHeight - 104);
+            double usableWidth = Math.Max(180, areaWidth - HtmlWidthPadding);
+            double usableHeight = Math.Max(180, areaHeight - HtmlHeightPadding);
 
-            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing * 1.12;
-            int maxLinesPerPage = Math.Max(5, (int)Math.Floor(usableHeight / lineHeightPx));
+            double lineHeightPx = GetReaderCssFontSize() * currentLineSpacing * 1.18;
+            int maxLinesPerPage = Math.Max(4, (int)Math.Floor(usableHeight / lineHeightPx));
 
             int currentLines = 0;
             var currentPageBlocks = new List<string>();
@@ -1724,7 +1626,7 @@ namespace E_Book.Pages
 
         private void RebuildHtmlPagination()
         {
-            if (mode != ReaderMode.HtmlPaged)
+            if (mode != ReaderMode.DocumentPaged)
                 return;
 
             htmlPages.Clear();
@@ -1751,7 +1653,7 @@ namespace E_Book.Pages
             return mode switch
             {
                 ReaderMode.TxtPaged => txtPages.Count == 0 ? 0 : txtPages.Count,
-                ReaderMode.HtmlPaged => htmlPages.Count == 0 ? 0 : htmlPages.Count,
+                ReaderMode.DocumentPaged => htmlPages.Count == 0 ? 0 : htmlPages.Count,
                 _ => 0
             };
         }
@@ -1783,7 +1685,7 @@ namespace E_Book.Pages
             bool isLastPage = mode switch
             {
                 ReaderMode.TxtPaged => txtPages.Count > 0 && currentPage == txtPages.Count - 1,
-                ReaderMode.HtmlPaged => htmlPages.Count > 0 && currentPage == htmlPages.Count - 1,
+                ReaderMode.DocumentPaged => htmlPages.Count > 0 && currentPage == htmlPages.Count - 1,
                 _ => false
             };
 
@@ -1804,7 +1706,7 @@ namespace E_Book.Pages
                 else
                     pageHtml = BuildTxtPageHtmlFromParagraphs(txtPages[Math.Clamp(currentPage, 0, txtPages.Count - 1)]);
             }
-            else if (mode == ReaderMode.HtmlPaged)
+            else if (mode == ReaderMode.DocumentPaged)
             {
                 pageHtml = BuildHtmlPageHtml();
             }
@@ -1832,6 +1734,9 @@ namespace E_Book.Pages
 
         private void WarmupNearbyPages()
         {
+            if (mode == ReaderMode.DocumentPaged)
+                return;
+
             int total = GetTotalPages();
             int original = currentPage;
 
@@ -1855,7 +1760,7 @@ namespace E_Book.Pages
                 bool isLastPage = mode switch
                 {
                     ReaderMode.TxtPaged => txtPages.Count > 0 && index == txtPages.Count - 1,
-                    ReaderMode.HtmlPaged => htmlPages.Count > 0 && index == htmlPages.Count - 1,
+                    ReaderMode.DocumentPaged => htmlPages.Count > 0 && index == htmlPages.Count - 1,
                     _ => false
                 };
 
@@ -1908,7 +1813,7 @@ namespace E_Book.Pages
     }}
 
     .wrap {{
-        padding: 12px 14px 42px 14px;
+        padding: 24px 22px 56px 22px;
         max-width: 900px;
         margin: auto;
         box-sizing: border-box;
@@ -2054,12 +1959,13 @@ namespace E_Book.Pages
             {
                 if (mode == ReaderMode.TxtPaged)
                     BuildTxtToc();
-                else if (mode == ReaderMode.HtmlPaged)
+                else if (mode == ReaderMode.DocumentPaged)
                 {
                     if (Path.GetExtension(FilePath)?.Equals(".epub", StringComparison.OrdinalIgnoreCase) == true)
                         BuildEpubTocPreferNcxOrNav(FilePath);
-                    else
-                        BuildHtmlTocFromRawHtmlTitles();
+
+                    if (tocItems.Count == 0)
+                        BuildDocumentTocFromPages();
                 }
             }
 
@@ -2069,7 +1975,7 @@ namespace E_Book.Pages
                 return;
             }
 
-            const int MaxItems = 22;
+            const int MaxItems = 60;
             var show = tocItems.Take(MaxItems).ToList();
 
             var map = new Dictionary<string, int>();
@@ -2134,77 +2040,40 @@ namespace E_Book.Pages
         {
             tocItems.Clear();
 
-            if (txtParagraphs.Count == 0)
-                return;
+            var chapterRegex =
+                new Regex(
+                    @"^(第.{1,9}[章回节卷篇部]|chapter\s+\d+)",
+                    RegexOptions.IgnoreCase);
 
-            var rxMd = new Regex(@"^\s*#{1,6}\s+(?<t>.+?)\s*$", RegexOptions.Compiled);
-            var rxEn = new Regex(
-                @"^\s*(chapter|ch)\s+(\d+|[ivxlcdm]+)\b[:.\- ]*\s*(?<t>.*)$",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            int paragraphCountForToc = _txtPaginationIsPartial
-                ? Math.Min(txtParagraphs.Count, _txtPreloadedParagraphCount)
-                : txtParagraphs.Count;
-
-            for (int i = 0; i < paragraphCountForToc; i++)
+            for (int i = 0; i < txtParagraphs.Count; i++)
             {
-                string paragraph = (txtParagraphs[i] ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(paragraph))
+                string paragraph = txtParagraphs[i].Trim();
+
+                if (!chapterRegex.IsMatch(paragraph))
                     continue;
-
-                string? title = null;
-
-                if (Regex.IsMatch(paragraph, @"^第.{1,12}章"))
-                    title = paragraph;
-
-                if (title == null)
-                {
-                    var m1 = rxMd.Match(paragraph);
-                    if (m1.Success)
-                        title = m1.Groups["t"].Value.Trim();
-                }
-
-                if (title == null)
-                {
-                    var m2 = rxEn.Match(paragraph);
-                    if (m2.Success)
-                    {
-                        var tail = m2.Groups["t"].Value.Trim();
-                        title = string.IsNullOrWhiteSpace(tail)
-                            ? $"Chapter {m2.Groups[2].Value}"
-                            : $"Chapter {m2.Groups[2].Value}: {tail}";
-                    }
-                }
-
-                if (title == null)
-                    continue;
-
-                if (title.Length > 60)
-                    title = title.Substring(0, 60).Trim() + "…";
 
                 int pageIndex = FindParagraphStartPageIndex(i);
+
+                if (pageIndex < 0)
+                    continue;
 
                 if (tocItems.Any(x => x.PageIndex == pageIndex))
                     continue;
 
                 tocItems.Add(new TocItem
                 {
-                    Title = title,
+                    Title = paragraph,
                     PageIndex = pageIndex
                 });
             }
 
             if (tocItems.Count == 0)
             {
-                int total = GetTotalPages();
-                for (int p = 0; p < total; p++)
+                tocItems.Add(new TocItem
                 {
-                    tocItems.Add(new TocItem
-                    {
-                        Title = $"Page {p + 1}",
-                        PageIndex = p
-                    });
-                }
+                    Title = "Start",
+                    PageIndex = 0
+                });
             }
         }
 
@@ -2244,41 +2113,127 @@ namespace E_Book.Pages
             }
         }
 
+        private void BuildDocumentTocFromPages()
+        {
+            tocItems.Clear();
+
+            if (_rawHtmlChapters.Count == 0)
+                return;
+
+            for (int i = 0; i < _rawHtmlChapters.Count; i++)
+            {
+                string html = _rawHtmlChapters[i] ?? "";
+                string title = ExtractDocumentHeading(html);
+
+                if (string.IsNullOrWhiteSpace(title))
+                    continue;
+
+                if (!IsLikelyRealHeading(title))
+                    continue;
+
+                if (IsFrontMatterTitle(title) && tocItems.Count == 0)
+                    continue;
+
+                if (title.Length > 60)
+                    title = title.Substring(0, 60).Trim() + "…";
+
+                int pageIndex = i < _chapterStartPageIndices.Count
+                    ? _chapterStartPageIndices[i]
+                    : 0;
+
+                if (tocItems.Any(x => x.PageIndex == pageIndex))
+                    continue;
+
+                tocItems.Add(new TocItem
+                {
+                    Title = title,
+                    PageIndex = pageIndex
+                });
+            }
+
+            if (tocItems.Count == 0)
+            {
+                tocItems.Add(new TocItem
+                {
+                    Title = "Start",
+                    PageIndex = 0
+                });
+            }
+        }
+
         private void BuildEpubTocPreferNcxOrNav(string epubPath)
         {
             tocItems.Clear();
 
-            var raw = TryParseEpubTocFromZip(epubPath);
+            var tocFromFile = TryParseEpubTocFromZip(epubPath);
 
-            if (raw.Count > 0 && _rawHtmlChapterKeys.Count == _rawHtmlChapters.Count)
+            if (tocFromFile.Count > 0 &&
+                _rawHtmlChapterKeys.Count == _rawHtmlChapters.Count)
             {
-                foreach (var (title, href) in raw)
+                foreach (var (title, href) in tocFromFile)
                 {
-                    int chapterIdx = MapHrefToRawChapterIndex(href);
-                    if (chapterIdx < 0)
+                    int chapterIndex =
+                        MapHrefToRawChapterIndex(href);
+
+                    if (chapterIndex < 0)
                         continue;
 
-                    int pageIndex = chapterIdx < _chapterStartPageIndices.Count
-                        ? _chapterStartPageIndices[chapterIdx]
-                        : 0;
+                    int pageIndex =
+                        chapterIndex < _chapterStartPageIndices.Count
+                            ? _chapterStartPageIndices[chapterIndex]
+                            : 0;
 
-                    string t = HtmlEntityDecodeLite(title).Trim();
-                    if (t.Length > 60)
-                        t = t.Substring(0, 60).Trim() + "…";
+                    if (string.IsNullOrWhiteSpace(title))
+                        continue;
 
-                    if (tocItems.Any(x => x.PageIndex == pageIndex && x.Title.Equals(t, StringComparison.OrdinalIgnoreCase)))
+                    if (tocItems.Any(x => x.PageIndex == pageIndex))
                         continue;
 
                     tocItems.Add(new TocItem
                     {
-                        Title = t,
+                        Title = HtmlEntityDecodeLite(title),
+                        PageIndex = pageIndex
+                    });
+                }
+            }
+
+            if (tocItems.Count == 0 &&
+                _rawHtmlChapterTitles.Count == _rawHtmlChapters.Count)
+            {
+                for (int i = 0; i < _rawHtmlChapterTitles.Count; i++)
+                {
+                    string title = _rawHtmlChapterTitles[i];
+
+                    if (string.IsNullOrWhiteSpace(title))
+                        continue;
+
+                    int pageIndex =
+                        i < _chapterStartPageIndices.Count
+                            ? _chapterStartPageIndices[i]
+                            : 0;
+
+                    if (tocItems.Any(x => x.PageIndex == pageIndex))
+                        continue;
+
+                    tocItems.Add(new TocItem
+                    {
+                        Title = title,
                         PageIndex = pageIndex
                     });
                 }
             }
 
             if (tocItems.Count == 0)
-                BuildHtmlTocFromRawHtmlTitles();
+                BuildDocumentTocFromPages();
+
+            if (tocItems.Count == 0)
+            {
+                tocItems.Add(new TocItem
+                {
+                    Title = "Start",
+                    PageIndex = 0
+                });
+            }
         }
 
         private int MapHrefToRawChapterIndex(string href)
@@ -2289,27 +2244,21 @@ namespace E_Book.Pages
             string key = NormalizeKey(href);
             string fileOnly = NormalizeKey(Path.GetFileName(key));
 
-            if (!string.IsNullOrWhiteSpace(fileOnly))
-            {
-                for (int i = 0; i < _rawHtmlChapterKeys.Count; i++)
-                {
-                    var kFile = NormalizeKey(Path.GetFileName(_rawHtmlChapterKeys[i] ?? ""));
-                    if (fileOnly.Equals(kFile, StringComparison.OrdinalIgnoreCase))
-                        return i;
-                }
-            }
-
             for (int i = 0; i < _rawHtmlChapterKeys.Count; i++)
             {
-                var k = NormalizeKey(_rawHtmlChapterKeys[i] ?? "");
-                if (string.IsNullOrWhiteSpace(k))
+                string rawKey = NormalizeKey(_rawHtmlChapterKeys[i] ?? "");
+                if (string.IsNullOrWhiteSpace(rawKey))
                     continue;
 
-                if (key.EndsWith(k, StringComparison.OrdinalIgnoreCase) || k.EndsWith(key, StringComparison.OrdinalIgnoreCase))
+                if (rawKey.Equals(key, StringComparison.OrdinalIgnoreCase))
                     return i;
 
+                if (rawKey.EndsWith(key, StringComparison.OrdinalIgnoreCase))
+                    return i;
+
+                string rawFileOnly = NormalizeKey(Path.GetFileName(rawKey));
                 if (!string.IsNullOrWhiteSpace(fileOnly) &&
-                    k.IndexOf(fileOnly, StringComparison.OrdinalIgnoreCase) >= 0)
+                    rawFileOnly.Equals(fileOnly, StringComparison.OrdinalIgnoreCase))
                     return i;
             }
 
@@ -2364,7 +2313,10 @@ namespace E_Book.Pages
                         var href = (srcAttr?.Value ?? "").Trim();
 
                         if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(href))
+                        {
+                            href = CombineRelativeEpubPath(ncxEntry.FullName, href);
                             result.Add((title, href));
+                        }
                     }
 
                     if (result.Count > 0)
@@ -2394,7 +2346,10 @@ namespace E_Book.Pages
                         title = HtmlEntityDecodeLite(title).Trim();
 
                         if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(href))
+                        {
+                            href = CombineRelativeEpubPath(navEntry.FullName, href);
                             result.Add((title, href));
+                        }
                     }
                 }
             }
@@ -2434,6 +2389,37 @@ namespace E_Book.Pages
             }
 
             return "";
+        }
+
+        private static string ExtractDocumentHeading(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return string.Empty;
+
+            string[] patterns =
+            {
+        @"<h1[^>]*>\s*(?<t>.*?)\s*</h1>",
+        @"<h2[^>]*>\s*(?<t>.*?)\s*</h2>",
+        @"<h3[^>]*>\s*(?<t>.*?)\s*</h3>",
+        @"<p[^>]*>\s*(?<t>第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇](?:[\s　:：、\.\-—_]*[^<]{0,30})?)\s*</p>",
+        @"^\s*(?<t>第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇](?:[\s　:：、\.\-—_]*[^<]{0,30})?)",
+        @"<p[^>]*>\s*(?<t>(chapter|part|section)\s+(\d+|[ivxlcdm]+)(?:[:：\.\- ]*[^<]{0,30})?)\s*</p>"
+    };
+
+            foreach (var pat in patterns)
+            {
+                var m = Regex.Match(html, pat, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                if (!m.Success)
+                    continue;
+
+                string t = StripHtmlTags(m.Groups["t"].Value);
+                t = HtmlEntityDecodeLite(t).Trim();
+
+                if (IsLikelyRealHeading(t))
+                    return t;
+            }
+
+            return string.Empty;
         }
 
         private static string StripHtmlTags(string input)
@@ -2550,21 +2536,16 @@ namespace E_Book.Pages
 
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
-            SetReaderLoading(false);
+            _documentLoadCts?.Cancel();
+            _repaginateCts?.Cancel();
             _progressSaveCts?.Cancel();
 
             try
             {
-                await SaveReadingProgress();
+                _ = SaveReadingProgress();
                 SaveReadingDuration();
-                await SaveCurrentReadingSettings();
+                _ = SaveCurrentReadingSettings();
                 SaveContinueReadingReminderState();
-            }
-            catch { }
-
-            try
-            {
-                await PlayExitAnimationAsync();
             }
             catch { }
 
@@ -2815,7 +2796,7 @@ namespace E_Book.Pages
             UpdateAllButtonStyles();
             ClearRenderedPageCache();
 
-            if (mode == ReaderMode.HtmlPaged || mode == ReaderMode.TxtPaged)
+            if (mode == ReaderMode.DocumentPaged || mode == ReaderMode.TxtPaged)
                 DisplayPage();
         }
 
@@ -2969,6 +2950,86 @@ namespace E_Book.Pages
                 button.Text = "";
                 button.TextColor = Colors.Transparent;
             }
+        }
+
+        private static string CombineRelativeEpubPath(string basePath, string href)
+        {
+            if (string.IsNullOrWhiteSpace(href))
+                return "";
+
+            href = href.Replace('\\', '/').Trim();
+
+            int hash = href.IndexOf('#');
+            if (hash >= 0)
+                href = href.Substring(0, hash);
+
+            if (string.IsNullOrWhiteSpace(basePath))
+                return NormalizeKey(href);
+
+            basePath = basePath.Replace('\\', '/');
+            string baseDir = "";
+
+            int lastSlash = basePath.LastIndexOf('/');
+            if (lastSlash >= 0)
+                baseDir = basePath.Substring(0, lastSlash + 1);
+
+            var combined = baseDir + href;
+            var parts = new List<string>();
+
+            foreach (var part in combined.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (part == ".")
+                    continue;
+
+                if (part == "..")
+                {
+                    if (parts.Count > 0)
+                        parts.RemoveAt(parts.Count - 1);
+                    continue;
+                }
+
+                parts.Add(part);
+            }
+
+            return NormalizeKey(string.Join("/", parts));
+        }
+
+        private static bool IsLikelyRealHeading(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            text = text.Trim();
+
+            if (text.Length > 40)
+                return false;
+
+            if (Regex.IsMatch(text, @"^第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇]"))
+                return true;
+
+            if (Regex.IsMatch(text, @"^(chapter|part|section)\s+(\d+|[ivxlcdm]+)\b", RegexOptions.IgnoreCase))
+                return true;
+
+            if (text.Length <= 24 && !Regex.IsMatch(text, @"[。！？；，,]"))
+                return true;
+
+            return false;
+        }
+
+        private static bool IsFrontMatterTitle(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            text = text.Trim();
+
+            if (text.Contains("作者") || text.Contains("简介"))
+                return true;
+
+            if (text.Length > 18 && !Regex.IsMatch(text, @"^第[0-9一二三四五六七八九十百千两〇零]+[章节回卷部篇]"))
+                return true;
+
+            return false;
         }
     }
 }

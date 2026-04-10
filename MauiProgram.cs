@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Text;
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
 using Microsoft.Maui.Handlers;
 using Syncfusion.Licensing;
@@ -16,6 +17,8 @@ namespace E_Book
     {
         public static MauiApp CreateMauiApp()
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             var builder = MauiApp.CreateBuilder();
 
             SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCe0xyWmFZfVhgd19HZVZTQ2YuP1ZhSXxVdkFjXX9dcXFWQmFVU0x9XEE=");
@@ -32,6 +35,7 @@ namespace E_Book
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                     fonts.AddFont("Pacifico-Regular.ttf", "Pacifico");
                 });
+
             builder.Services.AddSingleton<INotificationService, NotificationService>();
 
             EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, view) =>
