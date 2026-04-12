@@ -286,7 +286,7 @@ public partial class SignUpPage : ContentPage
         await AnimateBackAndGoAsync();
     }
 
-    private void OnEntryFocused(object sender, FocusEventArgs e)
+    private void OnEntryFocused(object? sender, FocusEventArgs e)
     {
         if (sender == NameEntry)
             NameBorder.Stroke = Color.FromArgb("#A48BFF");
@@ -301,7 +301,7 @@ public partial class SignUpPage : ContentPage
             SecurityAnswerBorder.Stroke = Color.FromArgb("#A48BFF");
     }
 
-    private void OnEntryUnfocused(object sender, FocusEventArgs e)
+    private void OnEntryUnfocused(object? sender, FocusEventArgs e)
     {
         NameBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
             ? Color.FromArgb("#2D2D35")
@@ -320,13 +320,13 @@ public partial class SignUpPage : ContentPage
             : Color.FromArgb("#E8E0F8");
     }
 
-    private void OnPickerFocused(object sender, FocusEventArgs e)
+    private void OnPickerFocused(object? sender, FocusEventArgs e)
     {
         if (sender == SecurityQuestionPicker)
             SecurityQuestionBorder.Stroke = Color.FromArgb("#A48BFF");
     }
 
-    private void OnPickerUnfocused(object sender, FocusEventArgs e)
+    private void OnPickerUnfocused(object? sender, FocusEventArgs e)
     {
         if (sender == SecurityQuestionPicker)
         {
@@ -336,7 +336,7 @@ public partial class SignUpPage : ContentPage
         }
     }
 
-    private async void OnInputFocused(object sender, FocusEventArgs e)
+    private async void OnInputFocused(object? sender, FocusEventArgs e)
     {
         await ScrollEntryIntoViewAsync(sender as VisualElement);
     }

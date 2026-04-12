@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
@@ -14,6 +14,7 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
     <!-- 应用显示名 -->
     <ApplicationTitle>E_Book</ApplicationTitle>
@@ -33,6 +34,11 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Resources\Fonts\FluentUI.cs" />
+    <MauiFont Remove="Resources\Fonts\FluentUI.cs" />
+    <None Include="Resources\Fonts\FluentUI.cs" />
+  </ItemGroup>
   <ItemGroup>
     <!-- 恢复默认 Adaptive Icon 结构 -->
     <MauiIcon Include="Resources\AppIcon\appicon.png" />

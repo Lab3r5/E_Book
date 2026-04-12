@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using E_Book.Models;
-using Mammoth;
 using RtfPipe;
 using VersOne.Epub;
 
@@ -107,20 +108,7 @@ namespace E_Book.Services
             }
 
             FlushEnglishBuffer(paragraphs, englishBuffer);
-
-            while (paragraphs.Count > 0 && string.IsNullOrWhiteSpace(paragraphs[^1]))
-                paragraphs.RemoveAt(paragraphs.Count - 1);
-
-            if (paragraphs.Count == 0)
-                paragraphs.Add("(Empty TXT)");
-
-            return new ParsedReadingContent
-            {
-                Title = Path.GetFileNameWithoutExtension(filePath),
-                SourcePath = filePath,
-                ContentKind = "txt",
-                TxtParagraphs = paragraphs
-            };
+            return BuildTxtContent(Path.GetFileNameWithoutExtension(filePath), filePath, paragraphs, "(Empty TXT)");
         }
 
         private static void FlushEnglishBuffer(List<string> paragraphs, StringBuilder buffer)
@@ -145,35 +133,12 @@ namespace E_Book.Services
             string html = await File.ReadAllTextAsync(filePath, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            html = SimplifyForReader(html, removeImages: true);
+            string title = ExtractBestTitleFromHtml(html);
+            if (string.IsNullOrWhiteSpace(title))
+                title = Path.GetFileNameWithoutExtension(filePath);
 
-            string displayTitle = Path.GetFileNameWithoutExtension(filePath);
-            var sections = SplitHtmlIntoSections(html);
-
-            if (sections.Count == 0)
-                sections.Add("<p>(Empty HTML)</p>");
-
-            var titles = sections
-                .Select(s =>
-                {
-                    string t = ExtractBestTitleFromHtml(s);
-                    if (string.IsNullOrWhiteSpace(t))
-                        t = ExtractDocumentHeadingForService(s);
-                    return t;
-                })
-                .ToList();
-
-            return new ParsedReadingContent
-            {
-                Title = displayTitle,
-                SourcePath = filePath,
-                ContentKind = "html",
-                RawHtmlChapters = sections,
-                RawHtmlChapterKeys = sections
-                    .Select((_, i) => $"{NormalizeKey(Path.GetFileName(filePath))}#sec{i}")
-                    .ToList(),
-                RawHtmlChapterTitles = titles
-            };
+            var paragraphs = ConvertHtmlToParagraphs(html);
+            return BuildTxtContent(title, filePath, paragraphs, "(Empty HTML)");
         }
 
         #endregion
@@ -262,44 +227,87 @@ namespace E_Book.Services
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            string html = await Task.Run(() =>
+            var extracted = await Task.Run(() => ExtractDocxParagraphs(filePath, cancellationToken), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return BuildTxtContent(extracted.Title, filePath, extracted.Paragraphs, "(Empty DOCX)");
+        }
+
+        private static (string Title, List<string> Paragraphs) ExtractDocxParagraphs(
+            string filePath,
+            CancellationToken cancellationToken)
+        {
+            using var archive = ZipFile.OpenRead(filePath);
+            var documentEntry = archive.GetEntry("word/document.xml")
+                ?? throw new InvalidDataException("DOCX file does not contain word/document.xml.");
+
+            XDocument documentXml;
+            using (var stream = documentEntry.Open())
+            {
+                documentXml = XDocument.Load(stream, LoadOptions.None);
+            }
+
+            XDocument? coreXml = null;
+            var coreEntry = archive.GetEntry("docProps/core.xml");
+            if (coreEntry != null)
+            {
+                using var stream = coreEntry.Open();
+                coreXml = XDocument.Load(stream, LoadOptions.None);
+            }
+
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            XNamespace dc = "http://purl.org/dc/elements/1.1/";
+
+            var paragraphs = new List<string>();
+
+            foreach (var paragraph in documentXml.Descendants(w + "p"))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var converter = new DocumentConverter();
-                var result = converter.ConvertToHtml(filePath);
-                return result?.Value ?? "<p>(Empty DOCX)</p>";
-            }, cancellationToken);
+                string text = ExtractDocxParagraphText(paragraph, w);
+                text = NormalizeExtractedParagraph(text);
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            html = SimplifyForReader(html, removeImages: true);
-
-            var sections = SplitHtmlIntoSections(html);
-            if (sections.Count == 0)
-                sections.Add("<p>(Empty DOCX)</p>");
-
-            var titles = sections
-                .Select(s =>
+                if (string.IsNullOrWhiteSpace(text))
                 {
-                    string t = ExtractBestTitleFromHtml(s);
-                    if (string.IsNullOrWhiteSpace(t))
-                        t = ExtractDocumentHeadingForService(s);
-                    return t;
-                })
-                .ToList();
+                    if (paragraphs.Count == 0 || paragraphs[^1] != string.Empty)
+                        paragraphs.Add(string.Empty);
 
-            return new ParsedReadingContent
+                    continue;
+                }
+
+                paragraphs.Add(text);
+            }
+
+            string title = coreXml?.Descendants(dc + "title").FirstOrDefault()?.Value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(title))
+                title = paragraphs.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p)) ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(title))
+                title = Path.GetFileNameWithoutExtension(filePath);
+
+            return (title, paragraphs);
+        }
+
+        private static string ExtractDocxParagraphText(XElement paragraph, XNamespace wordNs)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var node in paragraph.Descendants())
             {
-                Title = Path.GetFileNameWithoutExtension(filePath),
-                SourcePath = filePath,
-                ContentKind = "html",
-                RawHtmlChapters = sections,
-                RawHtmlChapterKeys = sections
-                    .Select((_, i) => $"{NormalizeKey(Path.GetFileName(filePath))}#sec{i}")
-                    .ToList(),
-                RawHtmlChapterTitles = titles
-            };
+                if (node.Name == wordNs + "t")
+                {
+                    sb.Append(node.Value);
+                }
+                else if (node.Name == wordNs + "tab")
+                {
+                    sb.Append(' ');
+                }
+                else if (node.Name == wordNs + "br" || node.Name == wordNs + "cr")
+                {
+                    sb.Append('\n');
+                }
+            }
+
+            return sb.ToString();
         }
 
         #endregion
@@ -318,39 +326,19 @@ namespace E_Book.Services
             string html = await Task.Run(() =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                return Rtf.ToHtml(rtfText);
+                return Rtf.ToHtml(new RtfSource(new StringReader(rtfText)), new RtfHtmlSettings());
             }, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             html = string.IsNullOrWhiteSpace(html) ? "<p>(Empty RTF)</p>" : html;
-            html = SimplifyForReader(html, removeImages: true);
 
-            var sections = SplitHtmlIntoSections(html);
-            if (sections.Count == 0)
-                sections.Add("<p>(Empty RTF)</p>");
+            string title = ExtractBestTitleFromHtml(html);
+            if (string.IsNullOrWhiteSpace(title))
+                title = Path.GetFileNameWithoutExtension(filePath);
 
-            var titles = sections
-                .Select(s =>
-                {
-                    string t = ExtractBestTitleFromHtml(s);
-                    if (string.IsNullOrWhiteSpace(t))
-                        t = ExtractDocumentHeadingForService(s);
-                    return t;
-                })
-                .ToList();
-
-            return new ParsedReadingContent
-            {
-                Title = Path.GetFileNameWithoutExtension(filePath),
-                SourcePath = filePath,
-                ContentKind = "html",
-                RawHtmlChapters = sections,
-                RawHtmlChapterKeys = sections
-                    .Select((_, i) => $"{NormalizeKey(Path.GetFileName(filePath))}#sec{i}")
-                    .ToList(),
-                RawHtmlChapterTitles = titles
-            };
+            var paragraphs = ConvertHtmlToParagraphs(html);
+            return BuildTxtContent(title, filePath, paragraphs, "(Empty RTF)");
         }
 
         #endregion
@@ -398,6 +386,385 @@ namespace E_Book.Services
                 text.Trim(),
                 @"^(chapter|ch|part|section|prologue|epilogue)\s+(\d+|[ivxlcdm]+)\b.*$",
                 RegexOptions.IgnoreCase);
+        }
+
+        #endregion
+
+        #region Fast Text Conversion Helpers
+
+        private static ParsedReadingContent BuildTxtContent(
+            string title,
+            string sourcePath,
+            IEnumerable<string> paragraphs,
+            string emptyPlaceholder)
+        {
+            var normalized = NormalizeParagraphs(paragraphs, emptyPlaceholder);
+
+            return new ParsedReadingContent
+            {
+                Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(sourcePath) : title,
+                SourcePath = sourcePath,
+                ContentKind = "txt",
+                TxtParagraphs = normalized
+            };
+        }
+
+        private static List<string> NormalizeParagraphs(IEnumerable<string> paragraphs, string emptyPlaceholder)
+        {
+            var normalized = new List<string>();
+
+            foreach (string paragraph in paragraphs)
+            {
+                string cleaned = NormalizeExtractedParagraph(paragraph);
+
+                if (string.IsNullOrWhiteSpace(cleaned))
+                {
+                    if (normalized.Count == 0 || normalized[^1] != string.Empty)
+                        normalized.Add(string.Empty);
+
+                    continue;
+                }
+
+                normalized.Add(cleaned);
+            }
+
+            while (normalized.Count > 0 && string.IsNullOrWhiteSpace(normalized[^1]))
+                normalized.RemoveAt(normalized.Count - 1);
+
+            if (normalized.Count == 0)
+                normalized.Add(emptyPlaceholder);
+
+            return normalized;
+        }
+
+        private static string NormalizeExtractedParagraph(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            text = text.Replace("\r", "\n");
+            text = HtmlEntityDecodeLite(text);
+            text = Regex.Replace(text, @"\u00A0", " ");
+            text = Regex.Replace(text, @"[ \t]+", " ");
+            text = Regex.Replace(text, @"\n{2,}", "\n");
+            return text.Trim();
+        }
+
+        private static List<string> ConvertHtmlToParagraphs(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return new List<string>();
+
+            html = html.Replace("\r", "\n");
+            html = Regex.Replace(html, @"<!--.*?-->", "", RegexOptions.Singleline);
+            html = Regex.Replace(html, @"<script\b[^<]*(?:(?!</script>)<[^<]*)*</script>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            html = Regex.Replace(html, @"<style\b[^<]*(?:(?!</style>)<[^<]*)*</style>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            html = Regex.Replace(html, @"<head\b[^<]*(?:(?!</head>)<[^<]*)*</head>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            html = Regex.Replace(html, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"</(p|div|section|article|blockquote|li|ul|ol|table|tr|td|h1|h2|h3|h4|h5|h6)>", "\n\n", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<(li|h1|h2|h3|h4|h5|h6)\b[^>]*>", "\n", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<[^>]+>", " ", RegexOptions.Singleline);
+            html = WebUtility.HtmlDecode(html);
+            html = Regex.Replace(html, @"\u00A0", " ");
+            html = Regex.Replace(html, @"[ \t]+", " ");
+            html = Regex.Replace(html, @"\n[ \t]+", "\n");
+            html = Regex.Replace(html, @"\n{3,}", "\n\n");
+
+            return html
+                .Split(new[] { "\n\n" }, StringSplitOptions.None)
+                .Select(part => NormalizeExtractedParagraph(part))
+                .ToList();
+        }
+
+        private static List<string> SplitPlainTextIntoParagraphs(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return new List<string>();
+
+            text = text.Replace("\r", "\n");
+            text = Regex.Replace(text, @"\n{3,}", "\n\n");
+
+            return text
+                .Split(new[] { "\n\n" }, StringSplitOptions.None)
+                .Select(part => NormalizeExtractedParagraph(part))
+                .ToList();
+        }
+
+        private static string ConvertRtfToPlainText(string rtf, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(rtf))
+                return string.Empty;
+
+            TryRegisterCodePages();
+
+            var output = new StringBuilder(rtf.Length);
+            var skipStack = new Stack<(bool SkipGroup, int UnicodeSkipCount, Encoding AnsiEncoding)>();
+            bool skipGroup = false;
+            bool markNextDestination = false;
+            int unicodeSkipCount = 1;
+            int pendingFallbackSkip = 0;
+            Encoding ansiEncoding = GetEncodingOrFallback(1252);
+
+            for (int i = 0; i < rtf.Length; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                char c = rtf[i];
+
+                if (pendingFallbackSkip > 0 && c != '{' && c != '}')
+                {
+                    pendingFallbackSkip--;
+
+                    if (c == '\\')
+                    {
+                        i = SkipRtfControlToken(rtf, i);
+                        continue;
+                    }
+
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    skipStack.Push((skipGroup, unicodeSkipCount, ansiEncoding));
+                    continue;
+                }
+
+                if (c == '}')
+                {
+                    if (skipStack.Count > 0)
+                    {
+                        var state = skipStack.Pop();
+                        skipGroup = state.SkipGroup;
+                        unicodeSkipCount = state.UnicodeSkipCount;
+                        ansiEncoding = state.AnsiEncoding;
+                    }
+
+                    markNextDestination = false;
+                    continue;
+                }
+
+                if (c != '\\')
+                {
+                    if (!skipGroup)
+                        output.Append(c);
+
+                    continue;
+                }
+
+                if (i == rtf.Length - 1)
+                    break;
+
+                char next = rtf[i + 1];
+                if (next == '\\' || next == '{' || next == '}')
+                {
+                    if (!skipGroup)
+                        output.Append(next);
+
+                    i++;
+                    continue;
+                }
+
+                if (next == '\'')
+                {
+                    if (i + 3 < rtf.Length && !skipGroup)
+                    {
+                        string hex = rtf.Substring(i + 2, 2);
+                        if (byte.TryParse(hex, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out byte value))
+                            output.Append(ansiEncoding.GetString(new[] { value }));
+                    }
+
+                    i += 3;
+                    continue;
+                }
+
+                if (next == '*')
+                {
+                    markNextDestination = true;
+                    i++;
+                    continue;
+                }
+
+                if (!char.IsLetter(next))
+                {
+                    if (!skipGroup)
+                    {
+                        switch (next)
+                        {
+                            case '~':
+                                output.Append(' ');
+                                break;
+                            case '-':
+                                output.Append('-');
+                                break;
+                            case '_':
+                                output.Append('-');
+                                break;
+                        }
+                    }
+
+                    i++;
+                    continue;
+                }
+
+                int wordStart = i + 1;
+                int wordEnd = wordStart;
+                while (wordEnd < rtf.Length && char.IsLetter(rtf[wordEnd]))
+                    wordEnd++;
+
+                string controlWord = rtf.Substring(wordStart, wordEnd - wordStart);
+                int valueStart = wordEnd;
+                bool hasNumericValue = false;
+                int numericValue = 0;
+
+                if (valueStart < rtf.Length && (rtf[valueStart] == '-' || char.IsDigit(rtf[valueStart])))
+                {
+                    hasNumericValue = true;
+                    int sign = 1;
+                    if (rtf[valueStart] == '-')
+                    {
+                        sign = -1;
+                        valueStart++;
+                    }
+
+                    int digitsStart = valueStart;
+                    while (valueStart < rtf.Length && char.IsDigit(rtf[valueStart]))
+                        valueStart++;
+
+                    if (valueStart > digitsStart)
+                        numericValue = int.Parse(rtf.Substring(digitsStart, valueStart - digitsStart), System.Globalization.CultureInfo.InvariantCulture) * sign;
+                }
+
+                bool hasDelimiter = valueStart < rtf.Length && rtf[valueStart] == ' ';
+                i = hasDelimiter ? valueStart : valueStart - 1;
+
+                if (markNextDestination)
+                {
+                    skipGroup = true;
+                    markNextDestination = false;
+                }
+
+                if (string.IsNullOrEmpty(controlWord))
+                    continue;
+
+                switch (controlWord)
+                {
+                    case "par":
+                    case "line":
+                        if (!skipGroup)
+                            output.Append("\n\n");
+                        break;
+                    case "tab":
+                        if (!skipGroup)
+                            output.Append('\t');
+                        break;
+                    case "emdash":
+                    case "endash":
+                        if (!skipGroup)
+                            output.Append('-');
+                        break;
+                    case "bullet":
+                        if (!skipGroup)
+                            output.Append("* ");
+                        break;
+                    case "lquote":
+                    case "rquote":
+                        if (!skipGroup)
+                            output.Append('\'');
+                        break;
+                    case "ldblquote":
+                    case "rdblquote":
+                        if (!skipGroup)
+                            output.Append('"');
+                        break;
+                    case "u":
+                        if (!skipGroup && hasNumericValue)
+                        {
+                            int codePoint = numericValue < 0 ? numericValue + 65536 : numericValue;
+                            output.Append(char.ConvertFromUtf32(Math.Clamp(codePoint, 0, 0x10FFFF)));
+                            pendingFallbackSkip = unicodeSkipCount;
+                        }
+                        break;
+                    case "uc":
+                        if (hasNumericValue)
+                            unicodeSkipCount = Math.Max(0, numericValue);
+                        break;
+                    case "ansicpg":
+                        if (hasNumericValue)
+                            ansiEncoding = GetEncodingOrFallback(numericValue, ansiEncoding);
+                        break;
+                    case "ansi":
+                        ansiEncoding = GetEncodingOrFallback(1252, ansiEncoding);
+                        break;
+                    case "fonttbl":
+                    case "colortbl":
+                    case "stylesheet":
+                    case "info":
+                    case "pict":
+                    case "object":
+                    case "header":
+                    case "footer":
+                    case "footnote":
+                    case "annotation":
+                        skipGroup = true;
+                        break;
+                }
+            }
+
+            return WebUtility.HtmlDecode(output.ToString());
+        }
+
+        private static int SkipRtfControlToken(string rtf, int index)
+        {
+            if (index < 0 || index >= rtf.Length - 1 || rtf[index] != '\\')
+                return index;
+
+            int i = index + 1;
+
+            if (i < rtf.Length && rtf[i] == '\'')
+                return Math.Min(i + 2, rtf.Length - 1);
+
+            if (i < rtf.Length && !char.IsLetter(rtf[i]))
+                return i;
+
+            while (i < rtf.Length && char.IsLetter(rtf[i]))
+                i++;
+
+            if (i < rtf.Length && (rtf[i] == '-' || char.IsDigit(rtf[i])))
+            {
+                if (rtf[i] == '-')
+                    i++;
+
+                while (i < rtf.Length && char.IsDigit(rtf[i]))
+                    i++;
+            }
+
+            if (i < rtf.Length && rtf[i] == ' ')
+                return i;
+
+            return i - 1;
+        }
+
+        private static void TryRegisterCodePages()
+        {
+            try
+            {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            }
+            catch
+            {
+            }
+        }
+
+        private static Encoding GetEncodingOrFallback(int codePage, Encoding? fallback = null)
+        {
+            try
+            {
+                return Encoding.GetEncoding(codePage);
+            }
+            catch
+            {
+                return fallback ?? Encoding.UTF8;
+            }
         }
 
         #endregion
@@ -576,185 +943,6 @@ namespace E_Book.Services
 
         #endregion
 
-        #region HTML Section Split
-
-        private static List<string> SplitHtmlIntoSections(string html)
-        {
-            var sections = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(html))
-            {
-                sections.Add("<p>(Empty)</p>");
-                return sections;
-            }
-
-            html = UnwrapSingleContainer(html);
-
-            var headingMatches = Regex.Matches(
-                html,
-                @"<h[1-2][^>]*>.*?</h[1-2]>",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            if (headingMatches.Count >= 2)
-            {
-                for (int i = 0; i < headingMatches.Count; i++)
-                {
-                    int start = headingMatches[i].Index;
-                    int end = (i < headingMatches.Count - 1)
-                        ? headingMatches[i + 1].Index
-                        : html.Length;
-
-                    string section = html[start..end].Trim();
-                    if (!string.IsNullOrWhiteSpace(section))
-                        sections.Add(section);
-                }
-
-                return SplitLargeSections(sections);
-            }
-
-            var blocks = Regex.Matches(
-                    html,
-                    @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline)
-                .Select(m => m.Value.Trim())
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .ToList();
-
-            if (blocks.Count == 0)
-            {
-                blocks = Regex.Matches(
-                        html,
-                        @"(<div[^>]*>.*?</div>)",
-                        RegexOptions.IgnoreCase | RegexOptions.Singleline)
-                    .Select(m => m.Value.Trim())
-                    .Where(s => !string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(StripHtmlTags(s)))
-                    .Take(2000)
-                    .ToList();
-            }
-
-            if (blocks.Count == 0)
-            {
-                sections.Add(html);
-                return SplitLargeSections(sections);
-            }
-
-            const int blocksPerSection = 56;
-
-            for (int i = 0; i < blocks.Count; i += blocksPerSection)
-            {
-                string section = string.Join(Environment.NewLine, blocks.Skip(i).Take(blocksPerSection));
-                if (!string.IsNullOrWhiteSpace(section))
-                    sections.Add(section);
-            }
-
-            return SplitLargeSections(sections);
-        }
-
-        private static List<string> SplitLargeSections(List<string> input)
-        {
-            var output = new List<string>();
-
-            foreach (var section in input)
-            {
-                if (string.IsNullOrWhiteSpace(section))
-                    continue;
-
-                if (section.Length <= 11000)
-                {
-                    output.Add(section);
-                    continue;
-                }
-
-                var blocks = Regex.Matches(
-                        section,
-                        @"(<p[^>]*>.*?</p>|<blockquote[^>]*>.*?</blockquote>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<table[^>]*>.*?</table>|<hr[^>]*?/?>)",
-                        RegexOptions.IgnoreCase | RegexOptions.Singleline)
-                    .Select(m => m.Value.Trim())
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .ToList();
-
-                if (blocks.Count == 0)
-                {
-                    output.Add(section);
-                    continue;
-                }
-
-                var sb = new StringBuilder();
-
-                foreach (var block in blocks)
-                {
-                    if (sb.Length > 0 && sb.Length + block.Length > 6200)
-                    {
-                        output.Add(sb.ToString().Trim());
-                        sb.Clear();
-                    }
-
-                    sb.AppendLine(block);
-                }
-
-                if (sb.Length > 0)
-                    output.Add(sb.ToString().Trim());
-            }
-
-            return output;
-        }
-
-        private static string UnwrapSingleContainer(string html)
-        {
-            if (string.IsNullOrWhiteSpace(html))
-                return html;
-
-            string trimmed = html.Trim();
-
-            var htmlMatch = Regex.Match(
-                trimmed,
-                @"^\s*<html[^>]*>.*?<body[^>]*>(?<inner>.*)</body>.*?</html>\s*$",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            if (htmlMatch.Success)
-                trimmed = htmlMatch.Groups["inner"].Value.Trim();
-
-            var bodyMatch = Regex.Match(
-                trimmed,
-                @"^\s*<body[^>]*>(?<inner>.*)</body>\s*$",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            if (bodyMatch.Success)
-                trimmed = bodyMatch.Groups["inner"].Value.Trim();
-
-            bool changed = true;
-
-            while (changed)
-            {
-                changed = false;
-
-                var singleContainer = Regex.Match(
-                    trimmed,
-                    @"^\s*<(div|section|article)[^>]*>(?<inner>.*)</\1>\s*$",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                if (singleContainer.Success)
-                {
-                    string inner = singleContainer.Groups["inner"].Value.Trim();
-
-                    int blockCount = Regex.Matches(
-                        inner,
-                        @"<(p|div|blockquote|ul|ol|table|hr|h1|h2|h3)\b",
-                        RegexOptions.IgnoreCase).Count;
-
-                    if (blockCount >= 3)
-                    {
-                        trimmed = inner;
-                        changed = true;
-                    }
-                }
-            }
-
-            return trimmed;
-        }
-
-        #endregion
-
         #region Title Extraction
 
         private static string ExtractDocumentHeadingForService(string html)
@@ -821,6 +1009,63 @@ namespace E_Book.Services
             return string.Empty;
         }
 
+        private static string UnwrapSingleContainer(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return html;
+
+            string trimmed = html.Trim();
+
+            var htmlMatch = Regex.Match(
+                trimmed,
+                @"^\s*<html[^>]*>.*?<body[^>]*>(?<inner>.*)</body>.*?</html>\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            if (htmlMatch.Success)
+                trimmed = htmlMatch.Groups["inner"].Value.Trim();
+
+            var bodyMatch = Regex.Match(
+                trimmed,
+                @"^\s*<body[^>]*>(?<inner>.*)</body>\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            if (bodyMatch.Success)
+                trimmed = bodyMatch.Groups["inner"].Value.Trim();
+
+            bool changed = true;
+
+            while (changed)
+            {
+                changed = false;
+
+                var singleContainer = Regex.Match(
+                    trimmed,
+                    @"^\s*<(div|section|article)[^>]*>(?<inner>.*)</\1>\s*$",
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+                if (singleContainer.Success)
+                {
+                    string inner = singleContainer.Groups["inner"].Value.Trim();
+
+                    int blockCount = Regex.Matches(
+                        inner,
+                        @"<(p|div|blockquote|ul|ol|table|hr|h1|h2|h3)\b",
+                        RegexOptions.IgnoreCase).Count;
+
+                    if (blockCount >= 3)
+                    {
+                        trimmed = inner;
+                        changed = true;
+                    }
+                }
+            }
+
+            return trimmed;
+        }
+
         #endregion
     }
 }
+
+
+

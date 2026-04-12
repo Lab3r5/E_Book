@@ -292,7 +292,9 @@ namespace E_Book.Pages
             else
                 UserSession.Logout();
 
-            Application.Current!.MainPage = new AppShell();
+            var app = Application.Current;
+            if (app?.Windows.Count > 0)
+                app.Windows[0].Page = new AppShell();
         }
     }
 }

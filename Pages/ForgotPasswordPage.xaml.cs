@@ -292,7 +292,7 @@ public partial class ForgotPasswordPage : ContentPage
         await AnimateBackAndGoAsync();
     }
 
-    private void OnEntryFocused(object sender, FocusEventArgs e)
+    private void OnEntryFocused(object? sender, FocusEventArgs e)
     {
         if (sender == EmailEntry)
             EmailBorder.Stroke = Color.FromArgb("#A48BFF");
@@ -301,7 +301,7 @@ public partial class ForgotPasswordPage : ContentPage
             AnswerBorder.Stroke = Color.FromArgb("#A48BFF");
     }
 
-    private void OnEntryUnfocused(object sender, FocusEventArgs e)
+    private void OnEntryUnfocused(object? sender, FocusEventArgs e)
     {
         EmailBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
             ? Color.FromArgb("#2D2D35")
@@ -312,7 +312,7 @@ public partial class ForgotPasswordPage : ContentPage
             : Color.FromArgb("#E8E0F8");
     }
 
-    private async void OnInputFocused(object sender, FocusEventArgs e)
+    private async void OnInputFocused(object? sender, FocusEventArgs e)
     {
         await ScrollEntryIntoViewAsync(sender as VisualElement);
     }

@@ -17,6 +17,7 @@ namespace E_Book.Pages
         public ObservableCollection<BookItem> Results { get; } = new();
 
         private readonly List<BookItem> _allBooks = new();
+        private string _loadedStorageKey = string.Empty;
 
         private bool _isLoaded;
         private bool _hasPlayedEntrance;
@@ -35,7 +36,7 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
-            LoadBooksToCache();
+            await EnsureBooksLoadedAsync();
             RenderHistory();
             RestoreStateFromCurrentInput();
 
@@ -81,20 +82,45 @@ namespace E_Book.Pages
 #endif
         }
 
-        private void LoadBooksToCache()
+        private async Task EnsureBooksLoadedAsync(bool forceRefresh = false)
         {
-            _allBooks.Clear();
+            string storageKey = UserSession.StorageKey;
+            bool needsReload =
+                forceRefresh ||
+                !_isLoaded ||
+                !string.Equals(_loadedStorageKey, storageKey, StringComparison.Ordinal);
 
-            var books = LibraryService.LoadBooks();
-            foreach (var book in books)
+            if (!needsReload)
+                return;
+
+            var books = await Task.Run(() =>
             {
-                ReadingMetaStore.ApplyToBook(book);
-                _allBooks.Add(book);
-            }
+                var loaded = LibraryService.LoadBooks(forceRefresh);
+                var metaMap = ReadingMetaStore.LoadSnapshotMap();
 
+                foreach (var book in loaded)
+                {
+                    string key = (book.FullPath ?? string.Empty).Trim().ToLowerInvariant();
+                    if (metaMap.TryGetValue(key, out var meta))
+                    {
+                        book.ReadingProgress = meta.Progress;
+                        book.LastOpenedTicks = meta.LastOpenedTicks;
+                        book.LastReadPage = meta.LastReadPage;
+                        book.TotalPages = meta.TotalPages;
+                        book.TotalReadingSeconds = meta.TotalReadingSeconds;
+                    }
+
+                    book.RefreshVisualMeta();
+                }
+
+                return loaded;
+            });
+
+            _allBooks.Clear();
+            _allBooks.AddRange(books);
+            _loadedStorageKey = storageKey;
             _isLoaded = true;
         }
-
         private async void FocusSearchLater()
         {
             await Task.Delay(220);
@@ -484,7 +510,7 @@ namespace E_Book.Pages
             {
                 await DisplayAlert("Error", "File not found!", "OK");
 
-                LoadBooksToCache();
+                await EnsureBooksLoadedAsync(forceRefresh: true);
 
                 string keyword = (SearchEntry.Text ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(keyword))

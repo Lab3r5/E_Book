@@ -1,4 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 
 #if ANDROID
@@ -20,9 +20,27 @@ namespace E_Book.Services
         private const string ChannelDescription = "Reading reminders and library updates";
 #endif
 
-        public async Task<bool> RequestPermissionAsync()
+        public Task<bool> RequestPermissionAsync()
         {
 #if ANDROID
+            return RequestPermissionInternalAsync();
+#else
+            return Task.FromResult(true);
+#endif
+        }
+
+        public Task ShowNowAsync(string title, string message)
+        {
+#if ANDROID
+            return ShowNowInternalAsync(title, message);
+#else
+            return Task.CompletedTask;
+#endif
+        }
+
+#if ANDROID
+        private async Task<bool> RequestPermissionInternalAsync()
+        {
             CreateNotificationChannel();
 
             if (!OperatingSystem.IsAndroidVersionAtLeast(33))
@@ -34,15 +52,11 @@ namespace E_Book.Services
 
             status = await Permissions.RequestAsync<NotificationPermission>();
             return status == PermissionStatus.Granted;
-#else
-            return true;
-#endif
         }
 
-        public async Task ShowNowAsync(string title, string message)
+        private async Task ShowNowInternalAsync(string title, string message)
         {
-#if ANDROID
-            bool granted = await RequestPermissionAsync();
+            bool granted = await RequestPermissionInternalAsync();
             if (!granted)
                 return;
 
@@ -58,10 +72,8 @@ namespace E_Book.Services
 
             NotificationManagerCompat.From(context)
                 .Notify((int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), builder.Build());
-#endif
         }
 
-#if ANDROID
         private void CreateNotificationChannel()
         {
             if (Build.VERSION.SdkInt < BuildVersionCodes.O)

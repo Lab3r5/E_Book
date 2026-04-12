@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Maui.Storage;
 using E_Book.Models;
+using Microsoft.Maui.Storage;
 
 namespace E_Book.Services
 {
@@ -16,6 +16,14 @@ namespace E_Book.Services
             ".txt", ".epub", ".pdf", ".html", ".htm", ".docx", ".rtf",
             ".jpg", ".jpeg", ".png", ".webp"
         };
+
+        private static readonly HashSet<string> SupportedExtensionSet =
+            new(SupportedExtensions, StringComparer.OrdinalIgnoreCase);
+
+        private static readonly object CacheLock = new();
+        private static List<BookItem>? _cachedBooks;
+        private static string _cachedLibraryPath = string.Empty;
+        private static DateTime _cachedDirectoryLastWriteUtc;
 
         public static string UsersRootPath =>
             Path.Combine(FileSystem.AppDataDirectory, "Users");
@@ -50,6 +58,16 @@ namespace E_Book.Services
                 Directory.CreateDirectory(LibraryPath);
         }
 
+        public static void InvalidateCache()
+        {
+            lock (CacheLock)
+            {
+                _cachedBooks = null;
+                _cachedLibraryPath = string.Empty;
+                _cachedDirectoryLastWriteUtc = DateTime.MinValue;
+            }
+        }
+
         private static void EnsureLegacySharedLibraryMigratedToGuest()
         {
             if (Preferences.Get(LegacyMigrationFlag, false))
@@ -65,11 +83,7 @@ namespace E_Book.Services
 
                 if (Directory.Exists(LegacySharedLibraryPath))
                 {
-                    var files = Directory.GetFiles(LegacySharedLibraryPath)
-                        .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                        .ToList();
-
-                    foreach (var sourceFile in files)
+                    foreach (var sourceFile in Directory.EnumerateFiles(LegacySharedLibraryPath).Where(IsSupportedFile))
                     {
                         string fileName = Path.GetFileName(sourceFile);
                         string targetFile = Path.Combine(GuestLibraryPath, fileName);
@@ -86,21 +100,45 @@ namespace E_Book.Services
             }
         }
 
-        public static List<BookItem> LoadBooks()
+        public static List<BookItem> LoadBooks(bool forceRefresh = false)
         {
             EnsureLibraryExists();
 
-            var files = Directory.GetFiles(LibraryPath)
-                .Where(f => SupportedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => Path.GetFileName(f))
+            string libraryPath = LibraryPath;
+            var directory = new DirectoryInfo(libraryPath);
+            DateTime directoryLastWriteUtc = directory.Exists ? directory.LastWriteTimeUtc : DateTime.MinValue;
+
+            lock (CacheLock)
+            {
+                if (!forceRefresh &&
+                    _cachedBooks != null &&
+                    string.Equals(_cachedLibraryPath, libraryPath, StringComparison.OrdinalIgnoreCase) &&
+                    _cachedDirectoryLastWriteUtc == directoryLastWriteUtc)
+                {
+                    return CloneBooks(_cachedBooks);
+                }
+            }
+
+            var files = Directory.EnumerateFiles(libraryPath)
+                .Where(IsSupportedFile)
+                .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            return files.Select(f => new BookItem
+            var books = files.Select(f => new BookItem
             {
                 FileName = Path.GetFileName(f),
                 FullPath = f,
                 Format = GetFormatTag(f)
             }).ToList();
+
+            lock (CacheLock)
+            {
+                _cachedBooks = CloneBooks(books);
+                _cachedLibraryPath = libraryPath;
+                _cachedDirectoryLastWriteUtc = directoryLastWriteUtc;
+            }
+
+            return books;
         }
 
         public static List<BookItem> SearchFromCache(IEnumerable<BookItem> books, string keyword)
@@ -114,20 +152,20 @@ namespace E_Book.Services
             return all
                 .Where(b =>
                 {
-                    string title = Path.GetFileNameWithoutExtension(b.FileName ?? "");
-                    string format = b.Format ?? "";
+                    string title = Path.GetFileNameWithoutExtension(b.FileName ?? string.Empty);
+                    string format = b.Format ?? string.Empty;
 
                     return title.Contains(keyword, StringComparison.OrdinalIgnoreCase)
                            || format.Contains(keyword, StringComparison.OrdinalIgnoreCase);
                 })
                 .OrderByDescending(b =>
-                    Path.GetFileNameWithoutExtension(b.FileName ?? "")
+                    Path.GetFileNameWithoutExtension(b.FileName ?? string.Empty)
                         .Equals(keyword, StringComparison.OrdinalIgnoreCase))
                 .ThenByDescending(b =>
-                    Path.GetFileNameWithoutExtension(b.FileName ?? "")
+                    Path.GetFileNameWithoutExtension(b.FileName ?? string.Empty)
                         .StartsWith(keyword, StringComparison.OrdinalIgnoreCase))
                 .ThenByDescending(b => b.LastOpenedTicks)
-                .ThenBy(b => b.DisplayFileName)
+                .ThenBy(b => b.DisplayFileName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
@@ -151,5 +189,18 @@ namespace E_Book.Services
                 _ => "FILE"
             };
         }
+
+        private static List<BookItem> CloneBooks(IEnumerable<BookItem> books)
+        {
+            return books.Select(book => new BookItem
+            {
+                FileName = book.FileName,
+                FullPath = book.FullPath,
+                Format = book.Format
+            }).ToList();
+        }
+
+        private static bool IsSupportedFile(string path) =>
+            SupportedExtensionSet.Contains(Path.GetExtension(path));
     }
 }

@@ -253,7 +253,7 @@ public partial class ResetPasswordPage : ContentPage
         await AnimateBackAndGoAsync();
     }
 
-    private void OnEntryFocused(object sender, FocusEventArgs e)
+    private void OnEntryFocused(object? sender, FocusEventArgs e)
     {
         if (sender == PasswordEntry)
             PasswordBorder.Stroke = Color.FromArgb("#A48BFF");
@@ -262,7 +262,7 @@ public partial class ResetPasswordPage : ContentPage
             ConfirmBorder.Stroke = Color.FromArgb("#A48BFF");
     }
 
-    private void OnEntryUnfocused(object sender, FocusEventArgs e)
+    private void OnEntryUnfocused(object? sender, FocusEventArgs e)
     {
         PasswordBorder.Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
             ? Color.FromArgb("#2D2D35")
@@ -273,7 +273,7 @@ public partial class ResetPasswordPage : ContentPage
             : Color.FromArgb("#E8E0F8");
     }
 
-    private async void OnInputFocused(object sender, FocusEventArgs e)
+    private async void OnInputFocused(object? sender, FocusEventArgs e)
     {
         await ScrollEntryIntoViewAsync(sender as VisualElement);
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -86,6 +86,12 @@ namespace E_Book.Pages
         private bool _hasPlayedEntrance;
         private bool _isEmptyIconBreathing;
         private bool _hasLoadedOnce;
+        private bool _aggregateMetricsDirty = true;
+        private int _selectedCountCached;
+        private int _inProgressCountCached;
+        private int _completedCountCached;
+        private long _totalReadingSecondsCached;
+        private bool _showReadingSummaryCached;
 
         private bool _refreshOnNextAppear = true;
         private bool _animateListOnNextAppear = true;
@@ -141,8 +147,8 @@ namespace E_Book.Pages
         {
             get
             {
-                int count = Books.Count(b => b.IsSelected);
-                return count == 0 ? TextSelectBooks : $"{count} {TextSelectedSuffix}";
+                EnsureAggregateMetrics();
+                return _selectedCountCached == 0 ? TextSelectBooks : $"{_selectedCountCached} {TextSelectedSuffix}";
             }
         }
 
@@ -212,18 +218,16 @@ namespace E_Book.Pages
             }
         }
 
-        public string InProgressCountText =>
-            Books.Count(b => b.ReadingProgress > 0 && b.ReadingProgress < 0.999).ToString();
+        public string InProgressCountText => GetInProgressCountText();
 
-        public string CompletedCountText =>
-            Books.Count(b => b.ReadingProgress >= 0.999).ToString();
+        public string CompletedCountText => GetCompletedCountText();
 
         public string TotalReadingTimeText
         {
             get
             {
-                long totalSeconds = Books.Sum(b => b.TotalReadingSeconds);
-                var ts = TimeSpan.FromSeconds(totalSeconds);
+                EnsureAggregateMetrics();
+                var ts = TimeSpan.FromSeconds(_totalReadingSecondsCached);
 
                 if (ts.TotalHours >= 1)
                     return $"{(int)ts.TotalHours}h {ts.Minutes}m";
@@ -237,7 +241,14 @@ namespace E_Book.Pages
 
         public bool ShowBottomAddBookArea => !IsMultiSelectMode;
 
-        public bool ShowReadingSummary => Books.Count > 0;
+        public bool ShowReadingSummary
+        {
+            get
+            {
+                EnsureAggregateMetrics();
+                return _showReadingSummaryCached;
+            }
+        }
 
         #endregion
 
@@ -431,8 +442,57 @@ namespace E_Book.Pages
             OnPropertyChanged(nameof(EmptyStateSecondaryHint));
         }
 
+        private void EnsureAggregateMetrics()
+        {
+            if (!_aggregateMetricsDirty)
+                return;
+
+            int selectedCount = 0;
+            int inProgressCount = 0;
+            int completedCount = 0;
+            long totalReadingSeconds = 0;
+
+            foreach (var book in Books)
+            {
+                if (book.IsSelected)
+                    selectedCount++;
+
+                if (book.ReadingProgress >= 0.999)
+                    completedCount++;
+                else if (book.ReadingProgress > 0)
+                    inProgressCount++;
+
+                totalReadingSeconds += Math.Max(0, book.TotalReadingSeconds);
+            }
+
+            _selectedCountCached = selectedCount;
+            _inProgressCountCached = inProgressCount;
+            _completedCountCached = completedCount;
+            _totalReadingSecondsCached = totalReadingSeconds;
+            _showReadingSummaryCached = Books.Count > 0;
+            _aggregateMetricsDirty = false;
+        }
+
+        private void MarkAggregateMetricsDirty()
+        {
+            _aggregateMetricsDirty = true;
+        }
+
+        private string GetInProgressCountText()
+        {
+            EnsureAggregateMetrics();
+            return _inProgressCountCached.ToString();
+        }
+
+        private string GetCompletedCountText()
+        {
+            EnsureAggregateMetrics();
+            return _completedCountCached.ToString();
+        }
+
         private void RaiseSummaryProperties()
         {
+            MarkAggregateMetricsDirty();
             OnPropertyChanged(nameof(InProgressCountText));
             OnPropertyChanged(nameof(CompletedCountText));
             OnPropertyChanged(nameof(TotalReadingTimeText));
@@ -440,6 +500,7 @@ namespace E_Book.Pages
 
         private void RaiseCommonUiProperties()
         {
+            MarkAggregateMetricsDirty();
             OnPropertyChanged(nameof(SelectedCountText));
             OnPropertyChanged(nameof(ShowBottomAddBookArea));
             OnPropertyChanged(nameof(ShowReadingSummary));
@@ -1002,6 +1063,7 @@ read anytime, anywhere.
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
+                MarkAggregateMetricsDirty();
                 UpdateSelectAllText();
                 UpdateConfirmState();
                 OnPropertyChanged(nameof(SelectedCountText));
@@ -1571,7 +1633,7 @@ read anytime, anywhere.
             EnterMultiSelectMode();
         }
 
-        private async void OnSwipeDelete(object sender, EventArgs e)
+        private void OnSwipeDelete(object sender, EventArgs e)
         {
             if (IsImporting || IsMultiSelectMode)
                 return;
@@ -2010,6 +2072,7 @@ read anytime, anywhere.
                     Books.Move(oldIndex, 0);
 
                 RaiseSummaryProperties();
+                RaiseCommonUiProperties();
             });
         }
 
@@ -2047,7 +2110,7 @@ read anytime, anywhere.
 
         public new event PropertyChangedEventHandler? PropertyChanged;
 
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
+        private new void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
@@ -2055,3 +2118,4 @@ read anytime, anywhere.
         #endregion
     }
 }
+

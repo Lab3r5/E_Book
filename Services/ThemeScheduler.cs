@@ -1,4 +1,4 @@
-﻿using Microsoft.Maui.Storage;
+using Microsoft.Maui.Storage;
 
 namespace E_Book.Services
 {
@@ -38,9 +38,14 @@ namespace E_Book.Services
         public static void StartTimer()
         {
             if (_timerStarted) return;
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null)
+                return;
+
             _timerStarted = true;
 
-            Device.StartTimer(TimeSpan.FromMinutes(1), () =>
+            dispatcher.StartTimer(TimeSpan.FromMinutes(1), () =>
             {
                 if (Mode == ThemeMode.Auto)
                     ApplyNow();
