@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
@@ -97,6 +98,7 @@ namespace E_Book.Pages
         private DateTime _sessionStartUtc;
         private bool _sessionOpened;
         private bool _shouldRestoreImmersiveChrome = true;
+        private bool _continueReadingReminderSentThisExit;
 
         private const uint PageAnimMs = 120;
         private const double SlideDistance = 28;
@@ -173,6 +175,9 @@ namespace E_Book.Pages
         {
             base.OnAppearing();
 
+            _continueReadingReminderSentThisExit = false;
+
+
             if (string.IsNullOrWhiteSpace(FilePath))
             {
                 HideReaderContentForLoading();
@@ -203,7 +208,7 @@ namespace E_Book.Pages
                 await SaveReadingProgress();
                 SaveReadingDuration();
                 await SaveCurrentReadingSettings();
-                SaveContinueReadingReminderState();
+                await HandleContinueReadingReminderOnExitAsync();
             }
             catch
             {
@@ -707,6 +712,52 @@ namespace E_Book.Pages
             {
                 _sessionOpened = false;
                 _sessionStartUtc = DateTime.UtcNow;
+            }
+        }
+
+        private async Task HandleContinueReadingReminderOnExitAsync()
+        {
+            SaveContinueReadingReminderState();
+
+            if (_continueReadingReminderSentThisExit)
+                return;
+
+            _continueReadingReminderSentThisExit = true;
+
+            try
+            {
+                bool notificationsEnabled = Preferences.Get(NotificationPrefs.NotificationsEnabled, true);
+                bool continueEnabled = Preferences.Get(NotificationPrefs.ContinueReadingEnabled, true);
+
+                if (!notificationsEnabled || !continueEnabled)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(FilePath))
+                    return;
+
+                int totalPages = GetTotalPages();
+                if (totalPages <= 0)
+                    return;
+
+                string bookTitle = Path.GetFileNameWithoutExtension(FilePath);
+                int pageNumber = Math.Max(1, currentPage + 1);
+
+                var notificationService = Application.Current?
+                    .Handler?
+                    .MauiContext?
+                    .Services
+                    .GetService<INotificationService>();
+
+                if (notificationService == null)
+                    return;
+
+                await notificationService.ShowNowAsync(
+                    "Continue reading",
+                    $"Resume \"{bookTitle}\" at page {pageNumber}."
+                );
+            }
+            catch
+            {
             }
         }
 
@@ -3206,7 +3257,7 @@ namespace E_Book.Pages
                 await SaveReadingProgress();
                 SaveReadingDuration();
                 await SaveCurrentReadingSettings();
-                SaveContinueReadingReminderState();
+                await HandleContinueReadingReminderOnExitAsync();
             }
             catch
             {
@@ -3662,6 +3713,10 @@ namespace E_Book.Pages
         #endregion
     }
 }
+
+
+
+
 
 
 

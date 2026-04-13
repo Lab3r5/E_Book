@@ -590,7 +590,7 @@
                             x:Name="BookCollectionView"
                             ItemsSource="{Binding Books}"
                             SelectionMode="None"
-                            ItemSizingStrategy="MeasureFirstItem"
+                            ItemSizingStrategy="MeasureAllItems"
                             Opacity="1">
 
                             <CollectionView.Triggers>
@@ -702,7 +702,8 @@
                                             Padding="10"
                                             Margin="0,0,0,8"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
-                                            Loaded="OnBookCardLoaded">
+                                            Loaded="OnBookCardLoaded"
+                                            BindingContextChanged="OnBookCardBindingContextChanged">
 
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer
@@ -1345,6 +1346,8 @@
 
     </Grid>
 </ContentPage>
+
+
 
 
 

@@ -1288,11 +1288,23 @@ read anytime, anywhere.
 
         #region Card Mapping / Highlight
 
+        private void OnBookCardBindingContextChanged(object? sender, EventArgs e)
+        {
+            if (sender is not Border border)
+                return;
+
+            ResetBookCardVisualState(border);
+
+            if (border.BindingContext is BookItem book && !string.IsNullOrWhiteSpace(book.FullPath))
+                _bookCardMap[book.FullPath] = new WeakReference<Border>(border);
+        }
+
         private async void OnBookCardLoaded(object sender, EventArgs e)
         {
             if (sender is not Border border) return;
             if (border.BindingContext is not BookItem book) return;
 
+            ResetBookCardVisualState(border);
             _bookCardMap[book.FullPath] = new WeakReference<Border>(border);
 
             if (book.IsFreshlyImported)
@@ -1318,6 +1330,16 @@ read anytime, anywhere.
             }
         }
 
+        private static void ResetBookCardVisualState(Border border)
+        {
+            border.AbortAnimation(nameof(VisualElement.Opacity));
+            border.AbortAnimation(nameof(VisualElement.Scale));
+            border.AbortAnimation(nameof(VisualElement.TranslationY));
+            border.Opacity = 1;
+            border.Scale = 1;
+            border.TranslationX = 0;
+            border.TranslationY = 0;
+        }
         private async Task TryHighlightPendingBookAsync()
         {
             if (string.IsNullOrWhiteSpace(_pendingHighlightBookPath))
@@ -1724,6 +1746,7 @@ read anytime, anywhere.
 
             RaiseSummaryProperties();
             RaiseCommonUiProperties();
+            RefreshBookListLayout();
 
             if (Books.Count < 30)
                 await AnimateBookListAppearance();
@@ -1792,6 +1815,17 @@ read anytime, anywhere.
                 await Task.WhenAll(tasks);
         }
 
+
+        private void RefreshBookListLayout()
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                BookCollectionView?.InvalidateMeasure();
+                MainCard?.InvalidateMeasure();
+                RootGrid?.InvalidateMeasure();
+                RootHost?.InvalidateMeasure();
+            });
+        }
         #endregion
 
         #region Header Animation
