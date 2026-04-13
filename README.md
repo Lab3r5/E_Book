@@ -288,18 +288,18 @@ The project follows a relatively clear page + service + local data structure.
 
 项目整体采用较清晰的“页面 + 服务 + 本地数据”结构：
 
-- MAUI Shell navigation for route-based navigation
-- SQLite/local database helpers for app data persistence
-- Preferences API for lightweight settings storage
-- Service layer for parsing, caching, library loading, notifications, and animations
-- User-based isolation for library, settings, and history
+- **MAUI Shell navigation** for route-based navigation
+- **SQLite/local database helpers** for app data persistence
+- **Preferences API** for lightweight settings storage
+- **Service layer** for parsing, caching, library loading, notifications, and animations
+- **User-based isolation** for library, settings, and history
 
 核心架构包括：
 
-- 基于 MAUI Shell 的路由导航
-- 基于 SQLite / 本地数据库工具 的数据持久化
-- 使用 Preferences API 存储轻量设置
-- 使用 Service 层 管理解析、缓存、书库、通知、动画等逻辑
+- 基于 **MAUI Shell** 的路由导航
+- 基于 **SQLite / 本地数据库工具** 的数据持久化
+- 使用 **Preferences API** 存储轻量设置
+- 使用 **Service 层** 管理解析、缓存、书库、通知、动画等逻辑
 - 基于用户身份隔离书库、设置与历史数据
 
 ---
@@ -345,19 +345,19 @@ E_Book
 ├── AppShell.xaml
 ├── MauiProgram.cs
 └── E_Book.csproj
-````
+```
 
 ---
 
 # 🔧 Tech Stack | 技术栈
 
-* C#
-* .NET MAUI
-* SQLite / local persistence
-* Shell Navigation
-* Preferences API
-* XAML UI
-* Service-oriented application structure
+- C#
+- .NET MAUI
+- SQLite / local persistence
+- Shell Navigation
+- Preferences API
+- XAML UI
+- Service-oriented application structure
 
 ---
 
@@ -369,21 +369,23 @@ git clone https://github.com/Lab3r5/E_Book.git
 
 Open the project in:
 
+```text
 Visual Studio 2022 or later
 .NET MAUI workload installed
+```
 
 Recommended run targets:
 
-* Android Emulator
-* Android Device
-* Windows (for local build verification)
+- Android Emulator
+- Android Device
+- Windows (for local build verification)
 
 推荐环境：
 
-* Visual Studio 2022+
-* 已安装 .NET MAUI workload
-* Android 模拟器或真机
-* Windows 本地构建验证环境
+- Visual Studio 2022+
+- 已安装 .NET MAUI workload
+- Android 模拟器或真机
+- Windows 本地构建验证环境
 
 ---
 
@@ -397,78 +399,78 @@ dotnet build E_Book.csproj -f net9.0-windows10.0.19041.0
 
 Notes:
 
-* Windows build is useful for fast verification during development.
-* Android build requires the corresponding Android SDK workload and platform packages.
+- Windows build is useful for fast verification during development.
+- Android build requires the corresponding Android SDK workload and platform packages.
 
 说明：
 
-* Windows 构建适合开发阶段快速验证。
-* Android 构建需要安装对应 Android SDK 与 MAUI workload。
+- Windows 构建适合开发阶段快速验证。
+- Android 构建需要安装对应 Android SDK 与 MAUI workload。
 
 ---
 
 # 📊 Version Evolution | 版本演进
 
-| Version | Description                                                |
-| ------- | ---------------------------------------------------------- |
-| v1.01   | Base reading system                                        |
-| v1.02   | UI layout refinement                                       |
-| v1.03   | Animated TabBar                                            |
-| v1.04   | Settings redesign                                          |
-| v1.05   | Smart bookshelf                                            |
-| v1.06   | UI improvements                                            |
-| v1.07   | Multi-user isolation                                       |
-| v1.08   | Settings refinement                                        |
-| v1.09   | Account security system                                    |
-| v1.10   | Stability, reader optimization, caching, and UX refinement |
+| Version   | Description |
+| --------- | ----------- |
+| v1.01     | Base reading system |
+| v1.02     | UI layout refinement |
+| v1.03     | Animated TabBar |
+| v1.04     | Settings redesign |
+| v1.05     | Smart bookshelf |
+| v1.06     | UI improvements |
+| v1.07     | Multi-user isolation |
+| v1.08     | Settings refinement |
+| v1.09     | Account security system |
+| **v1.10** | Stability, reader optimization, caching, and UX refinement |
 
 ---
 
 # 🎯 Design Philosophy | 设计理念
 
-* Clean UI
-* Smooth interaction
-* Structured architecture
-* Practical local-first experience
-* Real-world product alignment
+- Clean UI
+- Smooth interaction
+- Structured architecture
+- Practical local-first experience
+- Real-world product alignment
 
 设计目标：
 
-* 简洁界面
-* 流畅交互
-* 清晰结构
-* 以本地优先体验为核心
-* 尽量接近真实产品形态
+- 简洁界面
+- 流畅交互
+- 清晰结构
+- 以本地优先体验为核心
+- 尽量接近真实产品形态
 
 ---
 
 # 🛣 Future Roadmap | 后续规划
 
-* Further MVVM refactoring
-* Broader platform polishing
-* More reader analytics
-* Smarter recommendations
-* Additional performance tuning
+- Further MVVM refactoring
+- Broader platform polishing
+- More reader analytics
+- Smarter recommendations
+- Additional performance tuning
 
 后续方向：
 
-* 进一步推进 MVVM 化
-* 完善更多平台体验
-* 增加阅读分析能力
-* 更智能的推荐能力
-* 持续性能优化
+- 进一步推进 MVVM 化
+- 完善更多平台体验
+- 增加阅读分析能力
+- 更智能的推荐能力
+- 持续性能优化
 
 ---
 
 # 👨‍💻 Developer | 开发者
 
-Shen Jiawei
+**Shen Jiawei**  
 University of Newcastle
 
 ---
 
 # 📜 License | 许可
 
-This project is developed for educational purposes.
+This project is developed for **educational purposes**.
 
-本项目主要用于学习与课程开发用途。
+本项目主要用于**学习与课程开发用途**。
