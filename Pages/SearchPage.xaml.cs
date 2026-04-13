@@ -389,11 +389,11 @@ namespace E_Book.Pages
 
             var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
 
-            var keywordFrame = new Frame
+            var keywordFrame = new Border
             {
                 Padding = new Thickness(12, 6),
-                CornerRadius = 14,
-                HasShadow = false,
+                StrokeThickness = 0,
+                StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(14) },
                 BackgroundColor = isDark
                     ? Color.FromArgb("#2B2B2F")
                     : Color.FromArgb("#F4F1FF"),

@@ -1,6 +1,6 @@
 # 📚 E_Book
 
-> A modern cross-platform e-book reader built with **.NET MAUI**
+> A modern cross-platform e-book reader built with **.NET MAUI**  
 > 基于 **.NET MAUI** 构建的现代跨平台电子书阅读应用
 
 ---
@@ -12,124 +12,67 @@
 ![Status](https://img.shields.io/badge/status-active-success)
 ![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-**Current Version:** `v1.10 – Stability Improvements & Reading Experience Refinement`
-**当前版本：** `v1.10 – 稳定性提升与阅读体验优化`
+**Current Version:** `v1.10 - Stability Improvements, Reader Optimization & UX Refinement`  
+**当前版本：** `v1.10 - 稳定性增强、阅读器优化与体验完善`
 
 ---
 
 # ✨ Project Overview | 项目简介
 
-**E_Book** is a cross-platform mobile reading application developed with **.NET MAUI**.
+**E_Book** is a cross-platform mobile reading application developed with **.NET MAUI**.  
+It is designed to provide a smooth, product-like reading experience with local persistence, user isolation, and support for multiple book formats.
 
-The goal of the project is to build a **modern mobile reading experience** with:
+**E_Book** 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是提供接近真实产品的阅读体验，并兼顾：
 
-* Clean UI design
-* Structured application architecture
-* Lightweight local storage
-* Smooth reading interactions
-* Realistic account system
+- Modern reading UI
+- Structured application architecture
+- Lightweight local data persistence
+- Multi-user isolation
+- Smooth reading interaction
+- Practical bookshelf and search workflows
 
-E_Book 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是打造：
+项目特性包括：
 
-* 现代化阅读界面
-* 清晰结构化架构
-* 轻量级本地数据存储
-* 流畅阅读体验
-* 接近真实产品的账号系统
+- 现代化阅读界面
+- 清晰可维护的应用架构
+- 轻量级本地数据存储
+- 多用户数据隔离
+- 流畅阅读交互
+- 实用的书架与搜索体验
 
-Developed for:
-
-**INFT2051 – Mobile Application Development**
-University of Newcastle
-
----
-
-# 🚀 Latest Release – v1.10
-
-# 最新版本 – v1.10
-
-Version **v1.10** focuses on improving overall system stability and refining the reading experience across the application.
-
-v1.10 版本重点提升系统稳定性，并进一步优化整体阅读体验，使应用更加流畅与一致。
-
-Key improvements include:
-
-• Improved navigation reliability
-• Enhanced reading interaction stability
-• Refined UI consistency across pages
-• Improved search behaviour responsiveness
-• Better session handling reliability
-
-该版本重点优化：
-
-• 导航流程稳定性
-• 阅读交互体验
-• 页面视觉一致性
-• 搜索交互响应速度
-• 用户会话管理可靠性
+Developed for:  
+**INFT2051 - Mobile Application Development**  
+**University of Newcastle**
 
 ---
 
-# 📖 Reading Experience Improvements
+# 🚀 Latest Release - v1.10
 
-# 阅读体验优化
+# 最新版本 - v1.10
 
-Version **v1.10** improves reading responsiveness and interaction smoothness.
+Version **v1.10** focuses on stabilizing the overall application, improving reader performance, refining navigation behaviour, and making the reading flow more consistent across supported formats.
 
-v1.10 对阅读模块进行了优化，使阅读体验更加流畅：
+**v1.10** 重点在于提升应用整体稳定性、优化阅读器性能、改善导航与页面衔接，并让多格式阅读体验更加一致。
 
-* Improved content loading behaviour
-* More stable page transitions
-* Better interaction consistency
-* Reduced unexpected UI refresh
+### Key improvements | 重点改进
 
-优化效果：
+- Improved reader loading behaviour for large documents
+- Added parsing and pagination cache for supported document formats
+- Improved TOC accuracy for EPUB and document-based reading
+- Better bookshelf refresh behaviour after reading
+- Improved search preloading and result responsiveness
+- Reduced redundant UI refresh and repeated calculations
+- Refined page-level UI consistency across major modules
 
-* 页面加载更加稳定
-* 阅读交互更加自然
-* 页面切换更加顺畅
-* 减少不必要刷新
+具体优化包括：
 
----
-
-# 🔎 Search Experience Improvements
-
-# 搜索体验优化
-
-Search interaction flow has been refined to improve usability and consistency.
-
-搜索体验进一步优化：
-
-* More consistent search behaviour
-* Improved result interaction logic
-* Better responsiveness when navigating results
-
-改进：
-
-* 搜索流程更加清晰
-* 结果交互更加稳定
-* 页面响应更加流畅
-
----
-
-# 👤 Session & Navigation Stability
-
-# 会话与导航稳定性
-
-Version **v1.10** enhances navigation reliability and session consistency.
-
-提升：
-
-* More predictable navigation flow
-* Improved login state handling
-* Better page transition reliability
-* Reduced unexpected behaviour
-
-效果：
-
-* 页面跳转更稳定
-* 登录状态更加可靠
-* 减少异常情况
+- 优化大文档打开流程
+- 为支持的文档格式加入解析缓存与分页缓存
+- 提升 EPUB 与文档类书籍的 TOC 准确性
+- 改善阅读返回书架后的进度刷新
+- 优化搜索页预加载与结果响应速度
+- 减少重复 UI 刷新与重复计算
+- 提升主要页面的视觉一致性
 
 ---
 
@@ -139,10 +82,21 @@ Version **v1.10** enhances navigation reliability and session consistency.
 
 ## 智能书架系统
 
-* Reading progress display
-* Continue reading indicators
-* Recently opened sorting
-* Automatic book cover generation
+- Reading progress display
+- Continue reading indicator
+- Reading percentage and latest progress info
+- Recent reading metadata updates
+- Auto-generated color cover for local files
+- User-based library isolation
+
+功能包括：
+
+- 阅读进度显示
+- 继续阅读标识
+- 阅读百分比与最近阅读信息
+- 最近阅读元数据更新
+- 本地图书自动生成封面色块
+- 按用户隔离书库数据
 
 ---
 
@@ -152,12 +106,19 @@ Version **v1.10** enhances navigation reliability and session consistency.
 
 Each user has independent:
 
-* Library
-* Reading progress
-* Settings
-* Search history
+- Library
+- Reading progress
+- Reading settings
+- Search history
+- Session data
 
-账号之间完全隔离。
+每个账号拥有独立的：
+
+- 书库
+- 阅读进度
+- 阅读设置
+- 搜索历史
+- 会话数据
 
 ---
 
@@ -165,10 +126,15 @@ Each user has independent:
 
 ## Guest 模式
 
-* Independent storage profile
-* No impact on registered users
+- Independent storage profile
+- No impact on registered users
+- Suitable for quick local usage
 
-访客模式与注册用户数据互不影响。
+特点：
+
+- 独立存储空间
+- 不影响注册用户数据
+- 适合快速本地体验
 
 ---
 
@@ -176,68 +142,177 @@ Each user has independent:
 
 ## 阅读系统
 
-Supported formats:
+### Supported formats | 支持格式
 
-* TXT
-* EPUB
-* DOCX
-* RTF
-* PDF
+- TXT
+- EPUB
+- HTML / HTM
+- DOCX
+- RTF
+- PDF
+- Image-based reading files
 
-Features:
+### Reading features | 阅读功能
 
-* Font size control
-* Theme switching
-* Progress saving
-* Resume reading
+- Font size control
+- Line spacing adjustment
+- Theme switching
+- Progress saving and resume reading
+- TOC navigation
+- Page-based reading interaction
+- Reading duration tracking
+- Per-book reading settings
 
-支持多种格式阅读，并提供主题切换与进度保存功能。
+支持的阅读能力包括：
+
+- 字体大小调整
+- 行距调整
+- 阅读主题切换
+- 进度保存与断点续读
+- TOC 目录跳转
+- 分页式阅读交互
+- 阅读时长统计
+- 按书保存阅读设置
 
 ---
 
-# 🎨 UI & UX Improvements | 界面优化
+## 🔎 Search Experience
 
-Version **v1.10** further improves UI consistency across multiple modules:
+## 搜索体验
 
-* Unified visual style across pages
-* Improved layout consistency
-* More stable interaction behaviour
-* Cleaner visual hierarchy
+- Real-time local search
+- Search history chip list
+- Result card interaction
+- Fast re-entry with cached library loading
 
-整体界面更加统一，交互更稳定。
+功能包括：
+
+- 本地图书实时搜索
+- 搜索历史记录标签
+- 搜索结果卡片交互
+- 基于缓存的快速重新进入搜索页
 
 ---
 
-# ⚡ Performance Optimization
+## 🔔 Notification Support
 
-# 性能优化
+## 通知支持
 
-* Improved page responsiveness
-* Reduced redundant UI refresh
-* Improved navigation performance
-* More stable interaction feedback
+- Reading reminder preferences
+- Continue reading reminders
+- Import-related notification settings
 
-提升整体流畅度。
+支持内容：
+
+- 阅读提醒偏好设置
+- 继续阅读提醒
+- 导入相关通知设置
+
+---
+
+# 📖 Reading Experience Improvements
+
+# 阅读体验优化
+
+Version **v1.10** significantly improves the reader pipeline, especially for document-based formats such as **DOCX / RTF / HTML**.
+
+**v1.10** 对阅读器链路进行了较大优化，尤其针对 **DOCX / RTF / HTML** 这类文档格式进行了重点提升。
+
+### Improvements | 优化内容
+
+- Cached document parsing results
+- Added disk-backed pagination cache
+- Faster reopen for previously opened large books
+- More stable restore-to-progress behaviour
+- Better TOC positioning logic
+- More reliable first-page display flow
+
+具体效果：
+
+- 文档解析结果可缓存
+- 新增分页结果磁盘缓存
+- 再次打开大书时速度更快
+- 阅读进度恢复更加稳定
+- TOC 定位逻辑更准确
+- 首屏展示流程更可靠
+
+---
+
+# ⚡ Performance Optimization | 性能优化
+
+The project includes several practical performance improvements focused on real user scenarios.
+
+项目目前已经包含多项围绕真实使用场景的性能优化：
+
+- Library directory caching
+- Search page async preload
+- Bookshelf summary aggregation caching
+- Document parsing cache
+- Document pagination cache
+- Reduced redundant progress and metadata refresh
+
+已经落地的优化包括：
+
+- 书库目录缓存
+- 搜索页异步预加载
+- 书架顶部摘要聚合缓存
+- 文档解析缓存
+- 文档分页结果缓存
+- 减少重复进度保存与元数据刷新
+
+---
+
+# 🎨 UI & UX Improvements | 界面与交互优化
+
+Version **v1.10** also improves UI consistency across multiple key modules.
+
+v1.10 同时对多个关键页面做了视觉与交互统一：
+
+- Cleaner page hierarchy
+- Improved consistency across authentication, bookshelf, search, and settings modules
+- More stable animation behaviour
+- Better visual feedback for reading and search flows
+
+改进方向包括：
+
+- 更清晰的页面层次
+- 认证、书架、搜索、设置页视觉更统一
+- 动画表现更稳定
+- 阅读与搜索流程反馈更自然
 
 ---
 
 # 🏗 Architecture | 技术架构
 
-* MAUI Shell navigation
-* SQLite local database
-* Preferences API
-* Service layer design
-* User-based data isolation
+The project follows a relatively clear page + service + local data structure.
 
-结构保持清晰可维护。
+项目整体采用较清晰的“页面 + 服务 + 本地数据”结构：
+
+- **MAUI Shell navigation** for route-based navigation
+- **SQLite/local database helpers** for app data persistence
+- **Preferences API** for lightweight settings storage
+- **Service layer** for parsing, caching, library loading, notifications, and animations
+- **User-based isolation** for library, settings, and history
+
+核心架构包括：
+
+- 基于 **MAUI Shell** 的路由导航
+- 基于 **SQLite / 本地数据库工具** 的数据持久化
+- 使用 **Preferences API** 存储轻量设置
+- 使用 **Service 层** 管理解析、缓存、书库、通知、动画等逻辑
+- 基于用户身份隔离书库、设置与历史数据
 
 ---
 
 # 📂 Project Structure | 项目结构
 
-```
+```text
 E_Book
 │
+├── Common
+├── Controls
+├── Data
+│   └── Database.cs
 ├── Models
 ├── Pages
 │   ├── LoginPage
@@ -246,26 +321,43 @@ E_Book
 │   ├── ResetPasswordPage
 │   ├── BookshelfPage
 │   ├── ReadingPage
+│   ├── PdfReaderPage
 │   ├── SearchPage
 │   ├── SettingsHomePage
-│
-├── Services
-├── Data
-│   └── Database.cs
-│
+│   ├── EditProfilePage
+│   ├── AppearancePage
+│   ├── NotificationsPage
+│   ├── HelpCenterPage
+│   └── PrivacyPolicyPage
+├── Platforms
+├── Properties
 ├── Resources
-└── AppShell.xaml
+├── Services
+│   ├── CachedDocumentContentService.cs
+│   ├── DocumentContentService.cs
+│   ├── DocumentPaginationCacheService.cs
+│   ├── LibraryService.cs
+│   ├── NotificationService.cs
+│   ├── ReadingMetaStore.cs
+│   ├── SearchHistoryStore.cs
+│   └── UIAnimationService.cs
+├── App.xaml
+├── AppShell.xaml
+├── MauiProgram.cs
+└── E_Book.csproj
 ```
 
 ---
 
 # 🔧 Tech Stack | 技术栈
 
-* C#
-* .NET MAUI
-* SQLite
-* Shell Navigation
-* Preferences API
+- C#
+- .NET MAUI
+- SQLite / local persistence
+- Shell Navigation
+- Preferences API
+- XAML UI
+- Service-oriented application structure
 
 ---
 
@@ -275,61 +367,104 @@ E_Book
 git clone https://github.com/Lab3r5/E_Book.git
 ```
 
-Open in:
+Open the project in:
 
+```text
+Visual Studio 2022 or later
+.NET MAUI workload installed
 ```
-Visual Studio 2022+
+
+Recommended run targets:
+
+- Android Emulator
+- Android Device
+- Windows (for local build verification)
+
+推荐环境：
+
+- Visual Studio 2022+
+- 已安装 .NET MAUI workload
+- Android 模拟器或真机
+- Windows 本地构建验证环境
+
+---
+
+# ▶️ Build Notes | 构建说明
+
+For Windows local verification:
+
+```powershell
+dotnet build E_Book.csproj -f net9.0-windows10.0.19041.0
 ```
 
-Run on:
+Notes:
 
-* Android Emulator
-* Android Device
+- Windows build is useful for fast verification during development.
+- Android build requires the corresponding Android SDK workload and platform packages.
+
+说明：
+
+- Windows 构建适合开发阶段快速验证。
+- Android 构建需要安装对应 Android SDK 与 MAUI workload。
 
 ---
 
 # 📊 Version Evolution | 版本演进
 
-| Version   | Description                    |
-| --------- | ------------------------------ |
-| v1.01     | Base reading system            |
-| v1.02     | UI layout refinement           |
-| v1.03     | Animated TabBar                |
-| v1.04     | Settings redesign              |
-| v1.05     | Smart bookshelf                |
-| v1.06     | UI improvements                |
-| v1.07     | Multi-user isolation           |
-| v1.08     | Settings refinement            |
-| v1.09     | Account security system        |
-| **v1.10** | Stability & reading refinement |
+| Version   | Description |
+| --------- | ----------- |
+| v1.01     | Base reading system |
+| v1.02     | UI layout refinement |
+| v1.03     | Animated TabBar |
+| v1.04     | Settings redesign |
+| v1.05     | Smart bookshelf |
+| v1.06     | UI improvements |
+| v1.07     | Multi-user isolation |
+| v1.08     | Settings refinement |
+| v1.09     | Account security system |
+| **v1.10** | Stability, reader optimization, caching, and UX refinement |
 
 ---
 
 # 🎯 Design Philosophy | 设计理念
 
-* Clean UI
-* Smooth interaction
-* Structured architecture
-* Minimalist design
-* Real-world product alignment
+- Clean UI
+- Smooth interaction
+- Structured architecture
+- Practical local-first experience
+- Real-world product alignment
 
-以真实产品体验为目标。
+设计目标：
+
+- 简洁界面
+- 流畅交互
+- 清晰结构
+- 以本地优先体验为核心
+- 尽量接近真实产品形态
 
 ---
 
 # 🛣 Future Roadmap | 后续规划
 
-* Reading analytics dashboard
-* Smart recommendations
-* MVVM architecture
-* iOS support
-* Performance enhancements
+- Further MVVM refactoring
+- Broader platform polishing
+- More reader analytics
+- Smarter recommendations
+- Additional performance tuning
+
+后续方向：
+
+- 进一步推进 MVVM 化
+- 完善更多平台体验
+- 增加阅读分析能力
+- 更智能的推荐能力
+- 持续性能优化
 
 ---
 
 # 👨‍💻 Developer | 开发者
 
-**Shen Jiawei**
+**Shen Jiawei**  
 University of Newcastle
 
 ---
@@ -337,3 +472,5 @@ University of Newcastle
 # 📜 License | 许可
 
 This project is developed for **educational purposes**.
+
+本项目主要用于**学习与课程开发用途**。

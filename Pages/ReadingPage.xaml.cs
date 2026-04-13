@@ -3610,7 +3610,7 @@ namespace E_Book.Pages
 
         private void StyleSegmentButton(Button button, bool selected)
         {
-            button.Shadow = null;
+            button.Shadow = new Shadow { Brush = Colors.Transparent, Opacity = 0 };
             button.BorderWidth = 0;
 
             if (selected)
@@ -3637,7 +3637,7 @@ namespace E_Book.Pages
 
         private void StyleThemeChip(Button button, bool selected, string bgHex, bool isDarkChip)
         {
-            button.Shadow = null;
+            button.Shadow = new Shadow { Brush = Colors.Transparent, Opacity = 0 };
             button.BackgroundColor = Color.FromArgb(bgHex);
             button.BorderWidth = selected ? 2 : 0;
             button.BorderColor =
@@ -3662,6 +3662,7 @@ namespace E_Book.Pages
         #endregion
     }
 }
+
 
 
 
