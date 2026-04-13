@@ -146,7 +146,7 @@ Each user has independent:
 
 - TXT
 - EPUB
-- HTML / HTM
+- HTML
 - DOCX
 - RTF
 - PDF
