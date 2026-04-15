@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -127,6 +127,7 @@ namespace E_Book.Models
         }
 
         private int _totalPages;
+        private bool _hasReliableTotalPages;
         public int TotalPages
         {
             get => _totalPages;
@@ -136,6 +137,21 @@ namespace E_Book.Models
                 if (_totalPages == normalized) return;
 
                 _totalPages = normalized;
+
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasLastReadPage));
+                OnPropertyChanged(nameof(LastReadPageText));
+            }
+        }
+
+        public bool HasReliableTotalPages
+        {
+            get => _hasReliableTotalPages;
+            set
+            {
+                if (_hasReliableTotalPages == value) return;
+
+                _hasReliableTotalPages = value;
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasLastReadPage));
@@ -268,18 +284,18 @@ namespace E_Book.Models
             {
                 if (LastReadPage > 0)
                 {
-                    if (TotalPages > 0)
+                    if (HasReliableTotalPages && TotalPages > 0)
                         return $"Last read: page {LastReadPage} / {TotalPages}";
 
-                    return $"Last read: page {LastReadPage}";
+                    return $"Last read: page {LastReadPage} / ...";
                 }
 
                 if (IsCompleted)
                 {
-                    if (TotalPages > 0)
+                    if (HasReliableTotalPages && TotalPages > 0)
                         return $"Finished: page {TotalPages} / {TotalPages}";
 
-                    return "Finished reading";
+                    return "Finished: page ... / ...";
                 }
 
                 return string.Empty;
@@ -338,6 +354,7 @@ namespace E_Book.Models
             OnPropertyChanged(nameof(ReadButtonText));
             OnPropertyChanged(nameof(HasLastReadPage));
             OnPropertyChanged(nameof(LastReadPageText));
+            OnPropertyChanged(nameof(HasReliableTotalPages));
             OnPropertyChanged(nameof(HasReadingTime));
             OnPropertyChanged(nameof(ReadingTimeText));
             OnPropertyChanged(nameof(SelectionMark));

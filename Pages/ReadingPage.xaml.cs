@@ -94,6 +94,7 @@ namespace E_Book.Pages
         private double _pendingRestoreProgress = 0;
         private int _lastSavedPage = -1;
         private int _lastSavedTotalPages = -1;
+        private int _reliableTotalPages = 0;
 
         private DateTime _sessionStartUtc;
         private bool _sessionOpened;
@@ -278,10 +279,22 @@ namespace E_Book.Pages
                 await LoadByTypeAsync(FilePath, _documentLoadCts.Token);
 
                 var progress = await dbHelper.GetReadingProgressRecordAsync(GetReadingKey());
+                _reliableTotalPages = Math.Max(_reliableTotalPages, progress.TotalPages);
+                if (ReadingMetaStore.TryGetSnapshot(FilePath, out var snapshot) && snapshot.HasReliableTotalPages)
+                    _reliableTotalPages = Math.Max(_reliableTotalPages, snapshot.TotalPages);
+
+                if (((mode == ReaderMode.TxtPaged && _txtPaginationIsPartial) || (mode == ReaderMode.DocumentPaged && _documentPaginationIsPartial))
+                    && _reliableTotalPages > 0
+                    && _reliableTotalPages <= GetTotalPages())
+                {
+                    _reliableTotalPages = 0;
+                    ReadingMetaStore.InvalidateReliableTotalPages(FilePath);
+                }
+
                 if (mode == ReaderMode.DocumentPaged &&
                     _usedCachedDocumentPagination &&
-                    progress.LastPage > 0 &&
-                    progress.LastPage >= GetTotalPages())
+                    progress.TotalPages > 0 &&
+                    (progress.LastPage >= GetTotalPages() || progress.TotalPages > GetTotalPages()))
                 {
                     await Task.Run(() => RebuildHtmlPagination(null), _documentLoadCts.Token);
                     BuildDocumentTocFromPages();
@@ -353,7 +366,9 @@ namespace E_Book.Pages
                     _hasDisplayedInitialPage = true;
                     _ = SaveReadingProgress();
 
-                    if (mode == ReaderMode.DocumentPaged && _documentPaginationIsPartial)
+                    if (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial)
+                        _ = StartBackgroundFullTxtPaginationAsync();
+                    else if (mode == ReaderMode.DocumentPaged && _documentPaginationIsPartial)
                         _ = StartBackgroundFullDocumentPaginationAsync();
                 }
                 ReadingMetaStore.UpdateLastOpened(FilePath);
@@ -2353,12 +2368,26 @@ namespace E_Book.Pages
 
         private void UpdateProgressUI()
         {
-            int total = GetTotalPages();
-            int current = total <= 0 ? 1 : currentPage + 1;
-            double percent = total <= 0 ? 100 : (current * 100.0 / total);
+            int actualTotal = GetTotalPages();
+            int current = actualTotal <= 0 ? 1 : currentPage + 1;
+            bool hasReliableTotal = _reliableTotalPages > 0;
+            bool isPartial =
+                (mode == ReaderMode.DocumentPaged && _documentPaginationIsPartial) ||
+                (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial);
 
-            ProgressText.Text = $"{Math.Max(1, current)} / {Math.Max(1, total)} ({percent:0}%)";
-            ReadingProgressBar.Progress = total <= 1 ? 1 : (current / (double)total);
+            if (!hasReliableTotal && isPartial)
+            {
+                ProgressText.Text = $"{Math.Max(1, current)} / ...";
+                ReadingProgressBar.Progress = 0;
+                return;
+            }
+
+            int total = hasReliableTotal ? _reliableTotalPages : actualTotal;
+            total = Math.Max(1, total);
+            double percent = current * 100.0 / total;
+
+            ProgressText.Text = $"{Math.Max(1, current)} / {total} ({percent:0}%)";
+            ReadingProgressBar.Progress = total <= 1 ? 1 : (Math.Max(1, current) / (double)total);
         }
 
         #endregion
@@ -2373,6 +2402,14 @@ namespace E_Book.Pages
                 await DisplayAlert("TOC", "No additional pages or chapters available.", "OK");
                 return;
             }
+
+            bool hasReliableTotal = _reliableTotalPages > 0;
+            bool isPartial =
+                (mode == ReaderMode.DocumentPaged && _documentPaginationIsPartial) ||
+                (mode == ReaderMode.TxtPaged && _txtPaginationIsPartial);
+            string displayTotal = hasReliableTotal
+                ? _reliableTotalPages.ToString()
+                : (isPartial ? "..." : total.ToString());
 
             if (tocItems.Count == 0)
             {
@@ -2405,7 +2442,7 @@ namespace E_Book.Pages
             for (int i = 0; i < show.Count; i++)
             {
                 var item = show[i];
-                string opt = $"{i + 1}. {item.Title}  (p.{item.PageIndex + 1}/{total})";
+                string opt = $"{i + 1}. {item.Title}  (p.{item.PageIndex + 1}/{displayTotal})";
                 map[opt] = item.PageIndex;
                 options.Add(opt);
             }
@@ -2413,7 +2450,7 @@ namespace E_Book.Pages
             options.Add("Go to page...");
 
             string choice = await DisplayActionSheet(
-                $"TOC (Current: p.{currentPage + 1}/{total})",
+                $"TOC (Current: p.{currentPage + 1}/{displayTotal})",
                 "Cancel",
                 null,
                 options.ToArray());
@@ -2425,9 +2462,13 @@ namespace E_Book.Pages
 
             if (choice == "Go to page...")
             {
+                string promptMessage = hasReliableTotal
+                    ? $"Enter page/chapter number (1 - {_reliableTotalPages})"
+                    : "Enter page/chapter number";
+
                 string? input = await DisplayPromptAsync(
                     title: "Go to",
-                    message: $"Enter page/chapter number (1 - {total})",
+                    message: promptMessage,
                     accept: "Go",
                     cancel: "Cancel");
 
@@ -2446,7 +2487,6 @@ namespace E_Book.Pages
             else if (map.TryGetValue(choice, out int idx))
             {
                 int adjusted = idx;
-
                 target = Math.Clamp(adjusted, 0, total - 1);
             }
 
@@ -2457,7 +2497,6 @@ namespace E_Book.Pages
             RefreshCurrentPage();
             await SaveReadingProgress();
         }
-
         private void BuildTxtToc()
         {
             tocItems.Clear();
@@ -3159,15 +3198,27 @@ namespace E_Book.Pages
             _lastSavedPage = currentPage;
             _lastSavedTotalPages = totalPages;
 
+            bool hasReliableTotalPages =
+                (mode == ReaderMode.DocumentPaged && !_documentPaginationIsPartial) ||
+                (mode == ReaderMode.TxtPaged && !_txtPaginationIsPartial);
+
+            if (hasReliableTotalPages)
+                _reliableTotalPages = Math.Max(_reliableTotalPages, totalPages);
+
+            int persistedTotalPages = hasReliableTotalPages
+                ? totalPages
+                : Math.Max(0, _reliableTotalPages);
+
             await dbHelper.SaveReadingProgressAsync(
                 GetReadingKey(),
                 currentPage,
-                totalPages);
+                persistedTotalPages);
 
             ReadingMetaStore.UpdateProgress(
                 FilePath,
                 currentPage + 1,
-                totalPages);
+                hasReliableTotalPages ? totalPages : persistedTotalPages,
+                hasReliableTotalPages);
         }
 
         private async Task SaveCurrentReadingSettings()

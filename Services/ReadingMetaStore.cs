@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.Maui.Storage;
@@ -19,6 +19,7 @@ namespace E_Book.Services
             public long LastOpenedTicks { get; set; }
             public int LastReadPage { get; set; }
             public int TotalPages { get; set; }
+            public bool HasReliableTotalPages { get; set; }
             public long TotalReadingSeconds { get; set; }
         }
 
@@ -29,6 +30,7 @@ namespace E_Book.Services
             public long LastOpenedTicks { get; init; }
             public int LastReadPage { get; init; }
             public int TotalPages { get; init; }
+            public bool HasReliableTotalPages { get; init; }
             public long TotalReadingSeconds { get; init; }
             public bool Removed { get; init; }
         }
@@ -40,12 +42,14 @@ namespace E_Book.Services
                 long lastOpenedTicks,
                 int lastReadPage,
                 int totalPages,
+                bool hasReliableTotalPages,
                 long totalReadingSeconds)
             {
                 Progress = progress;
                 LastOpenedTicks = lastOpenedTicks;
                 LastReadPage = lastReadPage;
                 TotalPages = totalPages;
+                HasReliableTotalPages = hasReliableTotalPages;
                 TotalReadingSeconds = totalReadingSeconds;
             }
 
@@ -53,6 +57,7 @@ namespace E_Book.Services
             public long LastOpenedTicks { get; }
             public int LastReadPage { get; }
             public int TotalPages { get; }
+            public bool HasReliableTotalPages { get; }
             public long TotalReadingSeconds { get; }
         }
 
@@ -82,9 +87,9 @@ namespace E_Book.Services
             RaiseMetaChanged(fullPath, all[key], false);
         }
 
-        public static void UpdateProgress(string fullPath, int currentPage, int totalPages)
+        public static void UpdateProgress(string fullPath, int currentPage, int totalPages, bool hasReliableTotalPages = true)
         {
-            if (string.IsNullOrWhiteSpace(fullPath) || totalPages <= 0)
+            if (string.IsNullOrWhiteSpace(fullPath) || currentPage <= 0)
                 return;
 
             var all = LoadAll();
@@ -93,17 +98,52 @@ namespace E_Book.Services
             if (!all.ContainsKey(key))
                 all[key] = new ReadingMeta();
 
-            double progress = (double)currentPage / totalPages;
-            progress = Math.Max(0, Math.Min(1, progress));
+            int normalizedTotalPages = Math.Max(0, totalPages);
+            int effectiveTotalPages = 0;
 
-            all[key].Progress = progress;
+            if (hasReliableTotalPages)
+            {
+                all[key].TotalPages = Math.Max(all[key].TotalPages, Math.Max(1, normalizedTotalPages));
+                all[key].HasReliableTotalPages = true;
+                effectiveTotalPages = all[key].TotalPages;
+            }
+            else if (all[key].HasReliableTotalPages && all[key].TotalPages > 0)
+            {
+                effectiveTotalPages = all[key].TotalPages;
+            }
+
+            if (effectiveTotalPages > 0)
+            {
+                double progress = (double)currentPage / effectiveTotalPages;
+                progress = Math.Max(0, Math.Min(1, progress));
+                all[key].Progress = progress;
+            }
+
             all[key].LastOpenedTicks = DateTime.UtcNow.Ticks;
             all[key].LastReadPage = Math.Max(1, currentPage);
-            all[key].TotalPages = Math.Max(1, totalPages);
+            all[key].TotalReadingSeconds = Math.Max(0, all[key].TotalReadingSeconds);
 
             SaveAll(all);
 
             RaiseMetaChanged(fullPath, all[key], false);
+        }
+
+        public static void InvalidateReliableTotalPages(string fullPath)
+        {
+            if (string.IsNullOrWhiteSpace(fullPath))
+                return;
+
+            var all = LoadAll();
+            var key = Normalize(fullPath);
+
+            if (!all.TryGetValue(key, out var meta))
+                return;
+
+            meta.TotalPages = 0;
+            meta.HasReliableTotalPages = false;
+
+            SaveAll(all);
+            RaiseMetaChanged(fullPath, meta, false);
         }
 
         public static void AddReadingDuration(string fullPath, long secondsToAdd)
@@ -139,6 +179,7 @@ namespace E_Book.Services
                 book.LastOpenedTicks = meta.LastOpenedTicks;
                 book.LastReadPage = meta.LastReadPage;
                 book.TotalPages = meta.TotalPages;
+                book.HasReliableTotalPages = meta.HasReliableTotalPages;
                 book.TotalReadingSeconds = meta.TotalReadingSeconds;
             }
             else
@@ -147,6 +188,7 @@ namespace E_Book.Services
                 book.LastOpenedTicks = 0;
                 book.LastReadPage = 0;
                 book.TotalPages = 0;
+                book.HasReliableTotalPages = false;
                 book.TotalReadingSeconds = 0;
             }
 
@@ -171,6 +213,7 @@ namespace E_Book.Services
                 meta.LastOpenedTicks,
                 meta.LastReadPage,
                 meta.TotalPages,
+                meta.HasReliableTotalPages,
                 meta.TotalReadingSeconds);
 
             return true;
@@ -191,6 +234,7 @@ namespace E_Book.Services
                     meta.LastOpenedTicks,
                     meta.LastReadPage,
                     meta.TotalPages,
+                    meta.HasReliableTotalPages,
                     meta.TotalReadingSeconds);
             }
 
@@ -279,6 +323,7 @@ namespace E_Book.Services
                 LastOpenedTicks = meta.LastOpenedTicks,
                 LastReadPage = meta.LastReadPage,
                 TotalPages = meta.TotalPages,
+                HasReliableTotalPages = meta.HasReliableTotalPages,
                 TotalReadingSeconds = meta.TotalReadingSeconds,
                 Removed = removed
             });

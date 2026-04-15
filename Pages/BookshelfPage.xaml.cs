@@ -937,6 +937,7 @@ read anytime, anywhere.
                         book.LastOpenedTicks = meta.LastOpenedTicks;
                         book.LastReadPage = meta.LastReadPage;
                         book.TotalPages = meta.TotalPages;
+                        book.HasReliableTotalPages = meta.HasReliableTotalPages;
                         book.TotalReadingSeconds = meta.TotalReadingSeconds;
                     }
                     else
@@ -945,6 +946,7 @@ read anytime, anywhere.
                         book.LastOpenedTicks = 0;
                         book.LastReadPage = 0;
                         book.TotalPages = 0;
+                        book.HasReliableTotalPages = false;
                         book.TotalReadingSeconds = 0;
                     }
 
@@ -2098,6 +2100,7 @@ read anytime, anywhere.
                 book.LastOpenedTicks = e.LastOpenedTicks;
                 book.LastReadPage = e.LastReadPage;
                 book.TotalPages = e.TotalPages;
+                book.HasReliableTotalPages = e.HasReliableTotalPages;
                 book.TotalReadingSeconds = e.TotalReadingSeconds;
                 book.RefreshVisualMeta();
 

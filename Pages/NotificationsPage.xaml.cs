@@ -18,9 +18,6 @@ namespace E_Book.Pages
             BackCommand = new Command(async () => await GoBackAsync());
             BindingContext = this;
 
-#if DEBUG
-            DebugSection.IsVisible = true;
-#endif
         }
 
         protected override void OnAppearing()
@@ -86,52 +83,5 @@ namespace E_Book.Pages
         {
             Preferences.Set(NotificationPrefs.ImportAlertEnabled, e.Value);
         }
-#if DEBUG
-
-        private async void OnDebugImportNotificationClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                var service = Application.Current?
-                    .Handler?
-                    .MauiContext?
-                    .Services
-                    .GetService<INotificationService>();
-
-                if (service == null)
-                    return;
-
-                await service.ShowNowAsync(
-                    "Book imported successfully",
-                    "\"Debug_Book.pdf\" has been added to your library.");
-            }
-            catch
-            {
-            }
-        }
-
-        private async void OnDebugContinueReadingClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                var service = Application.Current?
-                    .Handler?
-                    .MauiContext?
-                    .Services
-                    .GetService<INotificationService>();
-
-                if (service == null)
-                    return;
-
-                await service.ShowNowAsync(
-                    "Continue reading",
-                    "Resume \"Debug Book\" at page 18.");
-            }
-            catch
-            {
-            }
-        }
-
-#endif
     }
 }

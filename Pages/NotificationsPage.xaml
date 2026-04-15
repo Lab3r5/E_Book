@@ -166,46 +166,6 @@
 
                     </VerticalStackLayout>
                 </Frame>
-                <!-- DEBUG -->
-                <VerticalStackLayout x:Name="DebugSection"
-                     IsVisible="False"
-                     Spacing="10">
-
-                    <Label Text="Debug"
-           FontSize="13"
-           FontAttributes="Bold"
-           TextColor="{AppThemeBinding Light=#8A869E, Dark=#A9A4BB}" />
-
-                    <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackground}, Dark={StaticResource Gray950}}"
-           CornerRadius="22"
-           Padding="16"
-           HasShadow="True">
-
-                        <VerticalStackLayout Spacing="10">
-
-                            <Button Text="Test Import Notification"
-                    Clicked="OnDebugImportNotificationClicked"
-                    HeightRequest="42"
-                    CornerRadius="14"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    BackgroundColor="{AppThemeBinding Light=#F1EBFF, Dark=#2A214F}"
-                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
-
-                            <Button Text="Test Continue Reading Notification"
-                    Clicked="OnDebugContinueReadingClicked"
-                    HeightRequest="42"
-                    CornerRadius="14"
-                    FontSize="13"
-                    FontAttributes="Bold"
-                    BackgroundColor="{AppThemeBinding Light=#F1EBFF, Dark=#2A214F}"
-                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}" />
-
-                        </VerticalStackLayout>
-
-                    </Frame>
-
-                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
     </Grid>
