@@ -118,6 +118,10 @@ namespace E_Book.Services
                 progress = Math.Max(0, Math.Min(1, progress));
                 all[key].Progress = progress;
             }
+            else
+            {
+                all[key].Progress = 0;
+            }
 
             all[key].LastOpenedTicks = DateTime.UtcNow.Ticks;
             all[key].LastReadPage = Math.Max(1, currentPage);
@@ -141,6 +145,7 @@ namespace E_Book.Services
 
             meta.TotalPages = 0;
             meta.HasReliableTotalPages = false;
+            meta.Progress = 0;
 
             SaveAll(all);
             RaiseMetaChanged(fullPath, meta, false);

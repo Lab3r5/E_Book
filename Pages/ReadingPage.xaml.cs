@@ -591,6 +591,17 @@ namespace E_Book.Pages
 
         #region Repagination / Save Scheduling
 
+        private void InvalidateReliableTotalPagesForCurrentLayout()
+        {
+            _reliableTotalPages = 0;
+            _lastSavedTotalPages = -1;
+
+            if (string.IsNullOrWhiteSpace(FilePath))
+                return;
+
+            ReadingMetaStore.InvalidateReliableTotalPages(FilePath);
+            _ = dbHelper.SaveReadingProgressAsync(GetReadingKey(), currentPage, 0);
+        }
         private void RequestRepaginate()
         {
             if (_documentParseRunning)

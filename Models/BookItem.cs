@@ -212,17 +212,17 @@ namespace E_Book.Models
             }
         }
 
-        public bool HasProgress => ReadingProgress > 0;
+        public bool HasProgress => HasReliableTotalPages && ReadingProgress > 0;
 
-        public bool ShowProgressBar => ReadingProgress > 0 && ReadingProgress < 0.995;
+        public bool ShowProgressBar => HasReliableTotalPages && ReadingProgress > 0 && ReadingProgress < 0.995;
 
         public bool HasLastOpened => LastOpenedTicks > 0;
 
         public bool IsUnread => LastOpenedTicks <= 0;
 
-        public bool IsCompleted => ReadingProgress >= 0.995;
+        public bool IsCompleted => HasReliableTotalPages && ReadingProgress >= 0.995;
 
-        public bool IsAlmostFinished => ReadingProgress >= 0.90 && ReadingProgress < 0.995;
+        public bool IsAlmostFinished => HasReliableTotalPages && ReadingProgress >= 0.90 && ReadingProgress < 0.995;
 
         public bool ShowReadingBadge => !string.IsNullOrWhiteSpace(ReadingStatusText);
 
@@ -235,7 +235,9 @@ namespace E_Book.Models
 
         public bool IsTextReadable => !IsPdf && !IsImage;
         public string ProgressPercentText =>
-    $"{Math.Clamp(ReadingProgress > 0 && ReadingProgress < 0.01 ? 1 : (int)Math.Round(ReadingProgress * 100), 0, 100)}%";
+            HasReliableTotalPages
+                ? $"{Math.Clamp(ReadingProgress > 0 && ReadingProgress < 0.01 ? 1 : (int)Math.Round(ReadingProgress * 100), 0, 100)}%"
+                : "...";
 
         public string ReadingStatusText
         {
@@ -243,7 +245,7 @@ namespace E_Book.Models
             {
                 if (IsCompleted) return "Completed";
                 if (IsAlmostFinished) return "Almost finished";
-                if (ReadingProgress > 0) return "Continue reading";
+                if (LastReadPage > 0 || ReadingProgress > 0) return "Continue reading";
                 return string.Empty;
             }
         }
@@ -253,7 +255,7 @@ namespace E_Book.Models
             get
             {
                 if (IsCompleted) return "Read again";
-                if (ReadingProgress > 0) return "Resume";
+                if (LastReadPage > 0 || ReadingProgress > 0) return "Resume";
                 return "Read";
             }
         }
