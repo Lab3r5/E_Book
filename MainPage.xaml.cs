@@ -1,6 +1,6 @@
 ﻿using E_Book.Data;
 
-namespace EZ_Read
+namespace E_Book
 {
     public partial class MainPage : ContentPage
     {
@@ -23,7 +23,7 @@ namespace EZ_Read
             if (!needPassword)
             {
                 // No need to enter a password, jump directly to the home page.
-                await Navigation.PushAsync(new Pages.Homepage());
+                await Navigation.PushAsync(new Pages.BookshelfPage());
             }
             else
             {
@@ -41,7 +41,7 @@ namespace EZ_Read
 
             if (inputPassword == savedPassword)
             {
-                await Navigation.PushAsync(new Pages.Homepage());
+                await Navigation.PushAsync(new Pages.BookshelfPage());
             }
             else
             {

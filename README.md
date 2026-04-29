@@ -1,226 +1,476 @@
-> 🎓 **课程作业说明**  
-> 本项目为 University of Newcastle 的 **INFT2051 – Mobile Application Development (.NET MAUI)** 课程作业示例，  
-> 主要用于展示 .NET MAUI 跨平台应用的基础架构设计、本地数据存储（SQLite）、页面导航以及用户设置与状态持久化等核心概念。
+# 📚 E_Book
 
-# E-Book 📚
-
-E-Book 是一个基于 **.NET MAUI** 的跨平台电子书阅读应用，支持 Android / iOS / macOS / Windows（受平台与目标框架支持限制）。  
-项目提供基础而完整的电子书阅读能力，包括 **阅读设置、阅读进度保存、应用级设置以及 SQLite 本地数据存储**，适合课程项目、学习 .NET MAUI 或作为二次开发的起点。
-
-E-Book is a cross-platform e-book reader built with **.NET MAUI**, targeting Android / iOS / macOS / Windows (subject to platform and target framework support).  
-It provides essential e-book reading features such as **reading preferences, progress tracking, app-level settings, and SQLite-based local storage**, making it suitable for coursework, learning, and further extension.
+> A modern cross-platform e-book reader built with **.NET MAUI**  
+> 基于 **.NET MAUI** 构建的现代跨平台电子书阅读应用
 
 ---
 
-## ✨ 功能概览 | Features
+# 🏷 Version | 版本信息
 
-### 📖 阅读体验 | Reading Experience
-- 字体大小设置并可持久化保存  
-- 阅读背景颜色设置并自动恢复  
-- 简洁阅读界面，专注内容本身  
+![Version](https://img.shields.io/badge/version-v1.10-purple)
+![Platform](https://img.shields.io/badge/platform-.NET%20MAUI-blue)
+![Status](https://img.shields.io/badge/status-active-success)
+![GitHub stars](https://img.shields.io/github/stars/Lab3r5/E_Book)
 
-- Adjustable font size with persistence  
-- Customizable background color with auto-restore  
-- Clean and distraction-free reading interface  
-
-### ⏱ 阅读进度 | Reading Progress
-- 按书籍/文件记录上次阅读位置  
-- 再次打开时自动跳转至上次阅读位置  
-
-- Per-book/file reading progress tracking  
-- Automatically resumes from last reading position  
-
-### ⚙️ 应用设置 | App Settings
-- 启动密码（可选）  
-- 退出锁定（可选）  
-- 保持屏幕常亮（可选）  
-
-- Optional startup passcode  
-- Optional exit lock  
-- Optional keep-screen-on setting  
-
-### 💾 数据与样式 | Data & Styling
-- SQLite 本地数据库存储用户设置与阅读进度  
-- 使用 ResourceDictionary 统一管理颜色与控件样式  
-
-- SQLite local database for settings and progress  
-- Centralized theming via ResourceDictionary  
+**Current Version:** `v1.10 - Stability Improvements, Reader Optimization & UX Refinement`  
+**当前版本：** `v1.10 - 稳定性增强、阅读器优化与体验完善`
 
 ---
 
-## 🧱 技术栈 | Tech Stack
-- **.NET MAUI**
-- **C#**
-- **SQLite**
+# ✨ Project Overview | 项目简介
+
+**E_Book** is a cross-platform mobile reading application developed with **.NET MAUI**.  
+It is designed to provide a smooth, product-like reading experience with local persistence, user isolation, and support for multiple book formats.
+
+**E_Book** 是一个基于 **.NET MAUI** 构建的跨平台移动阅读应用，目标是提供接近真实产品的阅读体验，并兼顾：
+
+- Modern reading UI
+- Structured application architecture
+- Lightweight local data persistence
+- Multi-user isolation
+- Smooth reading interaction
+- Practical bookshelf and search workflows
+
+项目特性包括：
+
+- 现代化阅读界面
+- 清晰可维护的应用架构
+- 轻量级本地数据存储
+- 多用户数据隔离
+- 流畅阅读交互
+- 实用的书架与搜索体验
+
+Developed for:  
+**INFT2051 - Mobile Application Development**  
+**University of Newcastle**
 
 ---
 
-## 📂 项目结构 | Project Structure
+# 🚀 Latest Release - v1.10
 
+# 最新版本 - v1.10
+
+Version **v1.10** focuses on stabilizing the overall application, improving reader performance, refining navigation behaviour, and making the reading flow more consistent across supported formats.
+
+**v1.10** 重点在于提升应用整体稳定性、优化阅读器性能、改善导航与页面衔接，并让多格式阅读体验更加一致。
+
+### Key improvements | 重点改进
+
+- Improved reader loading behaviour for large documents
+- Added parsing and pagination cache for supported document formats
+- Improved TOC accuracy for EPUB and document-based reading
+- Better bookshelf refresh behaviour after reading
+- Improved search preloading and result responsiveness
+- Reduced redundant UI refresh and repeated calculations
+- Refined page-level UI consistency across major modules
+
+具体优化包括：
+
+- 优化大文档打开流程
+- 为支持的文档格式加入解析缓存与分页缓存
+- 提升 EPUB 与文档类书籍的 TOC 准确性
+- 改善阅读返回书架后的进度刷新
+- 优化搜索页预加载与结果响应速度
+- 减少重复 UI 刷新与重复计算
+- 提升主要页面的视觉一致性
+
+---
+
+# ⭐ Key Features | 核心功能
+
+## 📚 Smart Bookshelf System
+
+## 智能书架系统
+
+- Reading progress display
+- Continue reading indicator
+- Reading percentage and latest progress info
+- Recent reading metadata updates
+- Auto-generated color cover for local files
+- User-based library isolation
+
+功能包括：
+
+- 阅读进度显示
+- 继续阅读标识
+- 阅读百分比与最近阅读信息
+- 最近阅读元数据更新
+- 本地图书自动生成封面色块
+- 按用户隔离书库数据
+
+---
+
+## 👤 Multi-User Account System
+
+## 多用户账号系统
+
+Each user has independent:
+
+- Library
+- Reading progress
+- Reading settings
+- Search history
+- Session data
+
+每个账号拥有独立的：
+
+- 书库
+- 阅读进度
+- 阅读设置
+- 搜索历史
+- 会话数据
+
+---
+
+## 👤 Guest Mode
+
+## Guest 模式
+
+- Independent storage profile
+- No impact on registered users
+- Suitable for quick local usage
+
+特点：
+
+- 独立存储空间
+- 不影响注册用户数据
+- 适合快速本地体验
+
+---
+
+## 📖 Reading Engine
+
+## 阅读系统
+
+### Supported formats | 支持格式
+
+- TXT
+- EPUB
+- HTML
+- DOCX
+- RTF
+- PDF
+- Image-based reading files
+
+### Reading features | 阅读功能
+
+- Font size control
+- Line spacing adjustment
+- Theme switching
+- Progress saving and resume reading
+- TOC navigation
+- Page-based reading interaction
+- Reading duration tracking
+- Per-book reading settings
+
+支持的阅读能力包括：
+
+- 字体大小调整
+- 行距调整
+- 阅读主题切换
+- 进度保存与断点续读
+- TOC 目录跳转
+- 分页式阅读交互
+- 阅读时长统计
+- 按书保存阅读设置
+
+---
+
+## 🔎 Search Experience
+
+## 搜索体验
+
+- Real-time local search
+- Search history chip list
+- Result card interaction
+- Fast re-entry with cached library loading
+
+功能包括：
+
+- 本地图书实时搜索
+- 搜索历史记录标签
+- 搜索结果卡片交互
+- 基于缓存的快速重新进入搜索页
+
+---
+
+## 🔔 Notification Support
+
+## 通知支持
+
+- Reading reminder preferences
+- Continue reading reminders
+- Import-related notification settings
+
+支持内容：
+
+- 阅读提醒偏好设置
+- 继续阅读提醒
+- 导入相关通知设置
+
+---
+
+# 📖 Reading Experience Improvements
+
+# 阅读体验优化
+
+Version **v1.10** significantly improves the reader pipeline, especially for document-based formats such as **DOCX / RTF / HTML**.
+
+**v1.10** 对阅读器链路进行了较大优化，尤其针对 **DOCX / RTF / HTML** 这类文档格式进行了重点提升。
+
+### Improvements | 优化内容
+
+- Cached document parsing results
+- Added disk-backed pagination cache
+- Faster reopen for previously opened large books
+- More stable restore-to-progress behaviour
+- Better TOC positioning logic
+- More reliable first-page display flow
+
+具体效果：
+
+- 文档解析结果可缓存
+- 新增分页结果磁盘缓存
+- 再次打开大书时速度更快
+- 阅读进度恢复更加稳定
+- TOC 定位逻辑更准确
+- 首屏展示流程更可靠
+
+---
+
+# ⚡ Performance Optimization | 性能优化
+
+The project includes several practical performance improvements focused on real user scenarios.
+
+项目目前已经包含多项围绕真实使用场景的性能优化：
+
+- Library directory caching
+- Search page async preload
+- Bookshelf summary aggregation caching
+- Document parsing cache
+- Document pagination cache
+- Reduced redundant progress and metadata refresh
+
+已经落地的优化包括：
+
+- 书库目录缓存
+- 搜索页异步预加载
+- 书架顶部摘要聚合缓存
+- 文档解析缓存
+- 文档分页结果缓存
+- 减少重复进度保存与元数据刷新
+
+---
+
+# 🎨 UI & UX Improvements | 界面与交互优化
+
+Version **v1.10** also improves UI consistency across multiple key modules.
+
+v1.10 同时对多个关键页面做了视觉与交互统一：
+
+- Cleaner page hierarchy
+- Improved consistency across authentication, bookshelf, search, and settings modules
+- More stable animation behaviour
+- Better visual feedback for reading and search flows
+
+改进方向包括：
+
+- 更清晰的页面层次
+- 认证、书架、搜索、设置页视觉更统一
+- 动画表现更稳定
+- 阅读与搜索流程反馈更自然
+
+---
+
+# 🏗 Architecture | 技术架构
+
+The project follows a relatively clear page + service + local data structure.
+
+项目整体采用较清晰的“页面 + 服务 + 本地数据”结构：
+
+- **MAUI Shell navigation** for route-based navigation
+- **SQLite/local database helpers** for app data persistence
+- **Preferences API** for lightweight settings storage
+- **Service layer** for parsing, caching, library loading, notifications, and animations
+- **User-based isolation** for library, settings, and history
+
+核心架构包括：
+
+- 基于 **MAUI Shell** 的路由导航
+- 基于 **SQLite / 本地数据库工具** 的数据持久化
+- 使用 **Preferences API** 存储轻量设置
+- 使用 **Service 层** 管理解析、缓存、书库、通知、动画等逻辑
+- 基于用户身份隔离书库、设置与历史数据
+
+---
+
+# 📂 Project Structure | 项目结构
+
+```text
+E_Book
+│
+├── Common
+├── Controls
+├── Data
+│   └── Database.cs
+├── Models
+├── Pages
+│   ├── LoginPage
+│   ├── SignUpPage
+│   ├── ForgotPasswordPage
+│   ├── ResetPasswordPage
+│   ├── BookshelfPage
+│   ├── ReadingPage
+│   ├── PdfReaderPage
+│   ├── SearchPage
+│   ├── SettingsHomePage
+│   ├── EditProfilePage
+│   ├── AppearancePage
+│   ├── NotificationsPage
+│   ├── HelpCenterPage
+│   └── PrivacyPolicyPage
+├── Platforms
+├── Properties
+├── Resources
+├── Services
+│   ├── CachedDocumentContentService.cs
+│   ├── DocumentContentService.cs
+│   ├── DocumentPaginationCacheService.cs
+│   ├── LibraryService.cs
+│   ├── NotificationService.cs
+│   ├── ReadingMetaStore.cs
+│   ├── SearchHistoryStore.cs
+│   └── UIAnimationService.cs
+├── App.xaml
+├── AppShell.xaml
+├── MauiProgram.cs
+└── E_Book.csproj
 ```
 
-E-Book/
-├─ Data/                # SQLite 数据库、数据模型、初始化逻辑
-├─ Pages/               # 应用页面（阅读页、设置页等）
-├─ Resources/
-│  ├─ Styles/           # 颜色与控件样式资源
-│  └─ Fonts/            # 字体资源
-├─ Platforms/           # 平台相关代码（Android / iOS / Windows / macOS）
-├─ AppShell.xaml        # 路由与页面注册
-└─ MauiProgram.cs       # 应用启动与依赖注册
+---
 
-````
+# 🔧 Tech Stack | 技术栈
+
+- C#
+- .NET MAUI
+- SQLite / local persistence
+- Shell Navigation
+- Preferences API
+- XAML UI
+- Service-oriented application structure
 
 ---
 
-## ✅ 环境要求 | Requirements
-
-> ⚠️ 项目使用 .NET 9 目标框架。若仅安装 .NET 8 或缺少 MAUI 工作负载，将无法成功构建。
-
-- **.NET SDK 9.x**
-- **.NET MAUI workload** (`maui`)
-- Android 运行：Android SDK + Emulator / 真实设备  
-- iOS / macCatalyst 运行：macOS + Xcode  
-- Windows 运行：仅支持 Windows 系统
-
-### 🔍 验证环境 | Verify Environment
-```bash
-dotnet --info
-dotnet workload list
-````
-
-### 🧩 安装 / 修复 MAUI Workload
+# 📦 Installation | 安装方式
 
 ```bash
-dotnet workload install maui
-dotnet workload repair
+git clone https://github.com/Lab3r5/E_Book.git
 ```
 
----
+Open the project in:
 
-## 🚀 快速开始 | Getting Started
-
-### 1️⃣ 克隆仓库 | Clone Repository
-
-```bash
-git clone https://github.com/Lab3r5/E-Book.git
-cd E-Book
+```text
+Visual Studio 2022 or later
+.NET MAUI workload installed
 ```
 
-### 2️⃣ 还原依赖 | Restore Dependencies
+Recommended run targets:
 
-```bash
-dotnet restore
+- Android Emulator
+- Android Device
+- Windows (for local build verification)
+
+推荐环境：
+
+- Visual Studio 2022+
+- 已安装 .NET MAUI workload
+- Android 模拟器或真机
+- Windows 本地构建验证环境
+
+---
+
+# ▶️ Build Notes | 构建说明
+
+For Windows local verification:
+
+```powershell
+dotnet build E_Book.csproj -f net9.0-windows10.0.19041.0
 ```
 
-### 3️⃣ 运行 Android | Run on Android
+Notes:
 
-> 需要已启动模拟器或连接真实设备
+- Windows build is useful for fast verification during development.
+- Android build requires the corresponding Android SDK workload and platform packages.
 
-```bash
-dotnet build -t:Run -f net9.0-android
-```
+说明：
 
-### 4️⃣ 运行 Windows | Run on Windows
-
-> 仅可在 Windows 系统上运行
-
-```bash
-dotnet build -t:Run -f net9.0-windows10.0.19041.0
-```
+- Windows 构建适合开发阶段快速验证。
+- Android 构建需要安装对应 Android SDK 与 MAUI workload。
 
 ---
 
-## 🗃️ 数据库与存储 | Database & Storage
+# 📊 Version Evolution | 版本演进
 
-* **数据库类型**：SQLite
-
-* **存储位置**：应用私有 AppData 目录
-
-* **用途**：
-
-  * 用户应用设置（启动密码、常亮等）
-  * 阅读设置（字体大小、背景颜色）
-  * 阅读进度（按书籍/文件记录）
-
-* **Database**: SQLite
-
-* **Location**: Platform-specific AppData directory
-
-* **Used for**:
-
-  * App-level settings
-  * Reading preferences
-  * Reading progress per book/file
-
-数据库在应用首次启动时自动初始化，确保表结构与默认设置可用。
+| Version   | Description |
+| --------- | ----------- |
+| v1.01     | Base reading system |
+| v1.02     | UI layout refinement |
+| v1.03     | Animated TabBar |
+| v1.04     | Settings redesign |
+| v1.05     | Smart bookshelf |
+| v1.06     | UI improvements |
+| v1.07     | Multi-user isolation |
+| v1.08     | Settings refinement |
+| v1.09     | Account security system |
+| **v1.10** | Stability, reader optimization, caching, and UX refinement |
 
 ---
 
-## 🛠 常见问题 | Troubleshooting
+# 🎯 Design Philosophy | 设计理念
 
-### ❓ MAUI workload 或 SDK 版本错误
+- Clean UI
+- Smooth interaction
+- Structured architecture
+- Practical local-first experience
+- Real-world product alignment
 
-**原因**：未安装 .NET MAUI 工作负载或 SDK 版本不匹配
-**解决**：
+设计目标：
 
-```bash
-dotnet workload install maui
-dotnet workload repair
-```
-
----
-
-### ❓ SQLite 报错：`no such table: UserSettings`
-
-**原因**：数据库初始化未完成或旧数据损坏
-**解决**：
-
-* 清理应用数据或卸载重装
-* 确保数据库初始化方法在查询前已 `await`
+- 简洁界面
+- 流畅交互
+- 清晰结构
+- 以本地优先体验为核心
+- 尽量接近真实产品形态
 
 ---
 
-### ❓ `StaticResource not found`
+# 🛣 Future Roadmap | 后续规划
 
-**原因**：颜色或样式 key 未定义，或资源字典未正确合并
-**解决**：
+- Further MVVM refactoring
+- Broader platform polishing
+- More reader analytics
+- Smarter recommendations
+- Additional performance tuning
 
-* 检查 `Resources/Styles/Colors.xaml` 中是否包含所有 key
-* 确认 `App.xaml` 中已正确合并资源字典
+后续方向：
 
----
-
-### ❓ 字体相关错误
-
-**原因**：不支持的 `FontAttributes` 枚举或字体未注册
-**解决**：
-
-* 使用已注册字体族名（如 `OpenSansRegular`）
-* 通过 `FontAttributes="Bold"` 实现加粗
+- 进一步推进 MVVM 化
+- 完善更多平台体验
+- 增加阅读分析能力
+- 更智能的推荐能力
+- 持续性能优化
 
 ---
 
-## 🧭 未来计划 | Roadmap
+# 👨‍💻 Developer | 开发者
 
-* [ ] 书架与本地文件导入
-* [ ] EPUB / PDF 格式支持
-* [ ] 目录、书签与阅读笔记
-* [ ] 搜索与文本高亮
-* [ ] 云同步与多设备进度同步
+**Shen Jiawei**  
+University of Newcastle
 
 ---
 
-## 🤝 贡献 | Contributing
+# 📜 License | 许可
 
-欢迎提出 Issue 或 Pull Request。
-建议在提交前说明修改内容，并附上必要的截图或说明。
+This project is developed for **educational purposes**.
 
----
-
-## 📄 License
-
-本项目目前未指定 License，仅用于学习与课程作业目的。
-如需开源复用，可自行添加 MIT / Apache-2.0 License。
-
----
+本项目主要用于**学习与课程开发用途**。
